@@ -197,6 +197,8 @@ const LOCAL_RULES = [
   }
 ];
 
+import { ML_API_URL } from '../config/apiConfig';
+
 // ─── Main Analysis Function ───────────────────────────────────────────────────
 export const analyzeSymptoms = async (userAnswers) => {
   const { rawText = "", isEmergency = false } = userAnswers;
@@ -224,7 +226,7 @@ export const analyzeSymptoms = async (userAnswers) => {
 
   // ── Try ML API ─────────────────────────────────────────────────────────────
   try {
-    const response = await fetch("http://localhost:8000/predict", {
+    const response = await fetch(`${ML_API_URL}/predict`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ input: rawText, input_type: "text", language: "en", mode: "text" }),
