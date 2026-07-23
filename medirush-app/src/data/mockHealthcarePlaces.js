@@ -1,0 +1,92 @@
+export const mockHealthcarePlaces = [
+  {
+    id: "p1",
+    name: "City Central Pharmacy",
+    type: "Pharmacy",
+    latitude: 40.7128,
+    longitude: -74.0060,
+    address: "123 Main St, New York",
+    phone: "+1 555-0101",
+    rating: 4.8,
+    isOpen: true,
+    is24x7: false,
+    emergencySupport: false,
+    deliveryAvailable: true,
+    image: "https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=800&q=80"
+  },
+  {
+    id: "h1",
+    name: "General City Hospital",
+    type: "Hospital",
+    latitude: 40.7150,
+    longitude: -74.0100,
+    address: "456 Healthcare Blvd, New York",
+    phone: "+1 555-0202",
+    rating: 4.9,
+    isOpen: true,
+    is24x7: true,
+    emergencySupport: true,
+    deliveryAvailable: false,
+    image: "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=800&q=80"
+  },
+  {
+    id: "c1",
+    name: "Downtown Clinic",
+    type: "Clinic",
+    latitude: 40.7200,
+    longitude: -73.9900,
+    address: "789 Wellness Way, New York",
+    phone: "+1 555-0303",
+    rating: 4.5,
+    isOpen: false,
+    is24x7: false,
+    emergencySupport: true,
+    deliveryAvailable: false,
+    image: "https://images.unsplash.com/photo-1581056771107-24ca5f033842?w=800&q=80"
+  },
+  {
+    id: "ms1",
+    name: "QuickCare Medical Store",
+    type: "Medical store",
+    latitude: 40.7050,
+    longitude: -74.0150,
+    address: "321 Quick St, New York",
+    phone: "+1 555-0404",
+    rating: 4.2,
+    isOpen: true,
+    is24x7: true,
+    emergencySupport: false,
+    deliveryAvailable: true,
+    image: "https://images.unsplash.com/photo-1576602976047-174e57a47881?w=800&q=80"
+  },
+  {
+    id: "h2",
+    name: "Riverside Trauma Center",
+    type: "Hospital",
+    latitude: 40.7800, // ~7.5km away from center
+    longitude: -73.9500,
+    address: "999 River Road, New York",
+    phone: "+1 555-0909",
+    rating: 5.0,
+    isOpen: true,
+    is24x7: true,
+    emergencySupport: true,
+    deliveryAvailable: false,
+    image: "https://images.unsplash.com/photo-1538108149393-cebb47ac1136?w=800&q=80"
+  },
+  {
+    id: "p2",
+    name: "Brooklyn Care Pharmacy",
+    type: "Pharmacy",
+    latitude: 40.6782, // ~4km away
+    longitude: -73.9442,
+    address: "500 Brooklyn Ave, New York",
+    phone: "+1 555-1010",
+    rating: 4.6,
+    isOpen: true,
+    is24x7: true,
+    emergencySupport: false,
+    deliveryAvailable: true,
+    image: "https://images.unsplash.com/photo-1550572017-edb79930ce2c?w=800&q=80"
+  }
+];
