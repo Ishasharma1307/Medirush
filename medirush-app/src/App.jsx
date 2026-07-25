@@ -28,6 +28,8 @@ import { PharmacyDirectory } from './pages/PharmacyDirectory';
 import { Checkout } from './pages/Checkout';
 import { OrderConfirmation } from './pages/OrderConfirmation';
 import { OrderTracking } from './pages/OrderTracking';
+import { AuthCallback } from './pages/AuthCallback';
+import { ForgotPassword } from './pages/ForgotPassword';
 
 function App() {
   return (
@@ -39,6 +41,8 @@ function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/admin" element={<Admin />} />
 
           {/* Main App Routes wrapped in the Layout (Navbar) */}
