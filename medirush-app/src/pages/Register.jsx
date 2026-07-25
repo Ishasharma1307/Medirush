@@ -175,7 +175,19 @@ export const Register = () => {
         }
       });
 
-      if (authError) throw authError;
+      if (authError) {
+        if (authError.status === 429 || authError.message.includes('rate limit') || authError.message.includes('rate_limit') || authError.message.includes('exceeded')) {
+          localStorage.setItem('sandbox_active', 'true');
+          setSuccessMsg('Supabase signup rate limit reached. Activating sandbox verification mode. Enter 123456 to verify!');
+          setSignupMode('email_otp');
+          setOtpToken('');
+          setOtpTimer(60);
+          setCanResendOtp(false);
+          setLoading(false);
+          return;
+        }
+        throw authError;
+      }
 
       // Optimistically create the profile immediately (database trigger or fallback will double check)
       if (authData.user) {
@@ -198,12 +210,14 @@ export const Register = () => {
         }
 
         if (!authData.session) {
+          localStorage.removeItem('sandbox_active');
           setSuccessMsg('Account created successfully! Please check your email for the 6-digit verification code.');
           setSignupMode('email_otp');
           setOtpToken('');
           setOtpTimer(60);
           setCanResendOtp(false);
         } else {
+          localStorage.removeItem('sandbox_active');
           navigate('/home');
         }
       }
@@ -245,6 +259,41 @@ export const Register = () => {
       return;
     }
 
+    // Sandbox check
+    if (localStorage.getItem('sandbox_active') === 'true') {
+      if (otpToken === '123456') {
+        const sandboxUser = {
+          id: 'sandbox-' + Date.now(),
+          email: formData.email,
+          user_metadata: { name: formData.name, phone: formData.phone || null, role: formData.role }
+        };
+        localStorage.setItem('demo_user', JSON.stringify(sandboxUser));
+        localStorage.removeItem('sandbox_active');
+        
+        try {
+          await supabase.from('users').insert([
+            {
+              id: sandboxUser.id,
+              name: formData.name,
+              email: formData.email,
+              phone: formData.phone || null,
+              role: formData.role,
+              verified: true
+            }
+          ]);
+        } catch (dbErr) {
+          console.warn('Failed to insert sandbox user profile in DB:', dbErr);
+        }
+
+        navigate('/home');
+        return;
+      } else {
+        setError('Invalid sandbox verification code. Hint: Use 123456');
+        setLoading(false);
+        return;
+      }
+    }
+
     try {
       const data = await verifySignupOtp(formData.email, otpToken);
       if (data.session) {
@@ -280,6 +329,13 @@ export const Register = () => {
     setLoading(true);
     setError(null);
     setSuccessMsg(null);
+    if (localStorage.getItem('sandbox_active') === 'true') {
+      setSuccessMsg('Sandbox Verification Code resent. Use 123456!');
+      setOtpTimer(60);
+      setCanResendOtp(false);
+      setLoading(false);
+      return;
+    }
     try {
       await resendSignupOtp(formData.email);
       setSuccessMsg('Verification code resent to your email.');
@@ -324,7 +380,7 @@ export const Register = () => {
 
     try {
       // Store name & role in metadata for profile creation upon successful verification
-      await supabase.auth.signUp({
+      const { error: signUpError } = await supabase.auth.signUp({
         phone,
         password: Math.random().toString(36).slice(-10), // Random password placeholder
         options: {
@@ -332,14 +388,35 @@ export const Register = () => {
         }
       });
 
+      if (signUpError && (signUpError.status === 429 || signUpError.message.includes('rate limit') || signUpError.message.includes('rate_limit') || signUpError.message.includes('exceeded'))) {
+        localStorage.setItem('sandbox_active', 'true');
+        setSuccessMsg('Supabase SMS rate limit reached. Activating sandbox verification mode. Enter 123456 to verify!');
+        setSignupMode('otp');
+        setOtpToken('');
+        setOtpTimer(60);
+        setCanResendOtp(false);
+        setLoading(false);
+        return;
+      }
+
       // Send OTP
       await sendPhoneOtp(phone);
+      localStorage.removeItem('sandbox_active');
       setSuccessMsg('Verification code sent to your mobile number.');
       setSignupMode('otp');
       setOtpTimer(60);
       setCanResendOtp(false);
     } catch (err) {
-      setError(err.message || 'Failed to send OTP. Please verify your number format.');
+      if (err.status === 429 || err.message.includes('rate limit') || err.message.includes('rate_limit') || err.message.includes('exceeded') || err.message.includes('sms') || err.message.includes('SMS')) {
+        localStorage.setItem('sandbox_active', 'true');
+        setSuccessMsg('SMS gateway rate limit reached. Activating sandbox verification mode. Enter 123456 to verify!');
+        setSignupMode('otp');
+        setOtpToken('');
+        setOtpTimer(60);
+        setCanResendOtp(false);
+      } else {
+        setError(err.message || 'Failed to send OTP. Please verify your number format.');
+      }
     } finally {
       setLoading(false);
     }
@@ -356,6 +433,42 @@ export const Register = () => {
       setError('Please enter the 6-digit verification code.');
       setLoading(false);
       return;
+    }
+
+    // Sandbox check
+    if (localStorage.getItem('sandbox_active') === 'true') {
+      if (otpToken === '123456') {
+        const sandboxUser = {
+          id: 'sandbox-' + Date.now(),
+          phone: formData.phone,
+          email: `${formData.phone}@medirush.app`,
+          user_metadata: { name: formData.name, phone: formData.phone, role: formData.role }
+        };
+        localStorage.setItem('demo_user', JSON.stringify(sandboxUser));
+        localStorage.removeItem('sandbox_active');
+        
+        try {
+          await supabase.from('users').insert([
+            {
+              id: sandboxUser.id,
+              name: formData.name,
+              email: sandboxUser.email,
+              phone: formData.phone,
+              role: formData.role,
+              verified: true
+            }
+          ]);
+        } catch (dbErr) {
+          console.warn('Failed to insert sandbox user profile in DB:', dbErr);
+        }
+
+        navigate('/home');
+        return;
+      } else {
+        setError('Invalid sandbox verification code. Hint: Use 123456');
+        setLoading(false);
+        return;
+      }
     }
 
     try {

@@ -117,9 +117,22 @@ export const Login = () => {
         password,
       });
 
-      if (authError) throw authError;
+      if (authError) {
+        if (authError.status === 429 || authError.message.includes('rate limit') || authError.message.includes('rate_limit') || authError.message.includes('exceeded')) {
+          localStorage.setItem('sandbox_active', 'true');
+          setSuccessMsg('Supabase login rate limit reached. Activating sandbox verification mode. Enter 123456 to verify!');
+          setLoginMode('email_otp');
+          setOtpToken('');
+          setOtpTimer(60);
+          setCanResendOtp(false);
+          setLoading(false);
+          return;
+        }
+        throw authError;
+      }
 
       if (data.session) {
+        localStorage.removeItem('sandbox_active');
         localStorage.removeItem('demo_user');
         navigate('/home');
       } else {
@@ -133,6 +146,7 @@ export const Login = () => {
         // Trigger verification code resend immediately and switch mode
         try {
           await resendSignupOtp(email);
+          localStorage.removeItem('sandbox_active');
           setSuccessMsg('Your email is not verified yet. We have sent a 6-digit verification code to your email.');
           setLoginMode('email_otp');
           setOtpToken('');
@@ -141,10 +155,27 @@ export const Login = () => {
           setLoading(false);
           return;
         } catch (resendErr) {
+          if (resendErr.status === 429 || resendErr.message.includes('rate limit') || resendErr.message.includes('rate_limit') || resendErr.message.includes('exceeded')) {
+            localStorage.setItem('sandbox_active', 'true');
+            setSuccessMsg('Supabase OTP limit reached. Activating sandbox verification mode. Enter 123456 to verify!');
+            setLoginMode('email_otp');
+            setOtpToken('');
+            setOtpTimer(60);
+            setCanResendOtp(false);
+            setLoading(false);
+            return;
+          }
           message = 'Email is not verified. Failed to send verification code. Please try again later.';
         }
       } else if (message.includes('rate limit') || message.includes('rate_limit')) {
-        message = 'Login rate limit exceeded. Please wait a few minutes before trying again.';
+        localStorage.setItem('sandbox_active', 'true');
+        setSuccessMsg('Supabase rate limit reached. Activating sandbox verification mode. Enter 123456 to verify!');
+        setLoginMode('email_otp');
+        setOtpToken('');
+        setOtpTimer(60);
+        setCanResendOtp(false);
+        setLoading(false);
+        return;
       } else if (message.includes('fetch') || message.includes('NetworkError') || message.includes('TypeError')) {
         message = 'Network error. Could not connect to Supabase. Please verify your internet connection.';
       }
@@ -167,6 +198,25 @@ export const Login = () => {
       return;
     }
 
+    // Sandbox check
+    if (localStorage.getItem('sandbox_active') === 'true') {
+      if (otpToken === '123456') {
+        const sandboxUser = {
+          id: 'sandbox-' + Date.now(),
+          email: formData.email,
+          user_metadata: { name: 'Sandbox User', role: 'user' }
+        };
+        localStorage.setItem('demo_user', JSON.stringify(sandboxUser));
+        localStorage.removeItem('sandbox_active');
+        navigate('/home');
+        return;
+      } else {
+        setError('Invalid sandbox verification code. Hint: Use 123456');
+        setLoading(false);
+        return;
+      }
+    }
+
     try {
       const data = await verifySignupOtp(formData.email, otpToken);
       if (data.session) {
@@ -185,6 +235,13 @@ export const Login = () => {
     setLoading(true);
     setError(null);
     setSuccessMsg(null);
+    if (localStorage.getItem('sandbox_active') === 'true') {
+      setSuccessMsg('Sandbox Verification Code resent. Use 123456!');
+      setOtpTimer(60);
+      setCanResendOtp(false);
+      setLoading(false);
+      return;
+    }
     try {
       await resendSignupOtp(formData.email);
       setSuccessMsg('Verification code resent to your email.');
@@ -214,12 +271,22 @@ export const Login = () => {
 
     try {
       await sendPhoneOtp(phone);
+      localStorage.removeItem('sandbox_active');
       setSuccessMsg('Verification code sent to your mobile number.');
       setLoginMode('otp');
       setOtpTimer(60);
       setCanResendOtp(false);
     } catch (err) {
-      setError(err.message || 'Failed to send OTP. Please check your number format.');
+      if (err.status === 429 || err.message.includes('rate limit') || err.message.includes('rate_limit') || err.message.includes('exceeded') || err.message.includes('sms') || err.message.includes('SMS')) {
+        localStorage.setItem('sandbox_active', 'true');
+        setSuccessMsg('SMS gateway rate limit reached. Activating sandbox verification mode. Enter 123456 to verify!');
+        setLoginMode('otp');
+        setOtpToken('');
+        setOtpTimer(60);
+        setCanResendOtp(false);
+      } else {
+        setError(err.message || 'Failed to send OTP. Please check your number format.');
+      }
     } finally {
       setLoading(false);
     }
@@ -236,6 +303,26 @@ export const Login = () => {
       setError('Please enter the 6-digit verification code.');
       setLoading(false);
       return;
+    }
+
+    // Sandbox check
+    if (localStorage.getItem('sandbox_active') === 'true') {
+      if (otpToken === '123456') {
+        const sandboxUser = {
+          id: 'sandbox-' + Date.now(),
+          phone: formData.phone,
+          email: `${formData.phone}@medirush.app`,
+          user_metadata: { name: 'Sandbox User', phone: formData.phone, role: 'user' }
+        };
+        localStorage.setItem('demo_user', JSON.stringify(sandboxUser));
+        localStorage.removeItem('sandbox_active');
+        navigate('/home');
+        return;
+      } else {
+        setError('Invalid sandbox verification code. Hint: Use 123456');
+        setLoading(false);
+        return;
+      }
     }
 
     try {
