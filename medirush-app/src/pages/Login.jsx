@@ -26,14 +26,16 @@ export const Login = () => {
     loginWithGoogle, 
     loginWithApple, 
     sendPhoneOtp, 
-    verifyPhoneOtp 
+    verifyPhoneOtp,
+    resendSignupOtp,
+    verifySignupOtp
   } = useAuth();
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [successMsg, setSuccessMsg] = useState(null);
   
-  // View states: 'email' (standard form), 'phone' (enter phone details), 'otp' (verify phone OTP)
+  // View states: 'email' (standard form), 'phone' (enter phone details), 'otp' (verify phone OTP), 'email_otp' (verify email OTP)
   const [loginMode, setLoginMode] = useState('email'); 
   const [showPassword, setShowPassword] = useState(false);
   
@@ -53,7 +55,7 @@ export const Login = () => {
   // Countdown timer for resending OTP
   useEffect(() => {
     let interval = null;
-    if (loginMode === 'otp' && otpTimer > 0) {
+    if ((loginMode === 'otp' || loginMode === 'email_otp') && otpTimer > 0) {
       interval = setInterval(() => {
         setOtpTimer((prev) => prev - 1);
       }, 1000);
@@ -128,13 +130,68 @@ export const Login = () => {
       if (message.includes('Invalid login credentials') || message.includes('invalid_credentials')) {
         message = 'Incorrect email or password. Please try again.';
       } else if (message.includes('Email not confirmed') || message.includes('email_not_confirmed')) {
-        message = 'Please verify your email address before logging in.';
+        // Trigger verification code resend immediately and switch mode
+        try {
+          await resendSignupOtp(email);
+          setSuccessMsg('Your email is not verified yet. We have sent a 6-digit verification code to your email.');
+          setLoginMode('email_otp');
+          setOtpToken('');
+          setOtpTimer(60);
+          setCanResendOtp(false);
+          setLoading(false);
+          return;
+        } catch (resendErr) {
+          message = 'Email is not verified. Failed to send verification code. Please try again later.';
+        }
       } else if (message.includes('rate limit') || message.includes('rate_limit')) {
         message = 'Login rate limit exceeded. Please wait a few minutes before trying again.';
       } else if (message.includes('fetch') || message.includes('NetworkError') || message.includes('TypeError')) {
         message = 'Network error. Could not connect to Supabase. Please verify your internet connection.';
       }
       setError(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 1b. Email OTP Verification Handler
+  const handleEmailVerifyOtp = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setSuccessMsg(null);
+
+    if (otpToken.length < 6) {
+      setError('Please enter the 6-digit verification code.');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const data = await verifySignupOtp(formData.email, otpToken);
+      if (data.session) {
+        localStorage.removeItem('demo_user');
+        navigate('/home');
+      }
+    } catch (err) {
+      setError(err.message || 'Invalid or expired verification code. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 1c. Resend Email OTP Handler
+  const handleResendEmailOtp = async () => {
+    setLoading(true);
+    setError(null);
+    setSuccessMsg(null);
+    try {
+      await resendSignupOtp(formData.email);
+      setSuccessMsg('Verification code resent to your email.');
+      setOtpTimer(60);
+      setCanResendOtp(false);
+    } catch (err) {
+      setError(err.message || 'Failed to resend code. Please try again later.');
     } finally {
       setLoading(false);
     }
@@ -445,6 +502,60 @@ export const Login = () => {
             </form>
           )}
 
+          {loginMode === 'email_otp' && (
+            /* ================= EMAIL OTP VERIFICATION ================= */
+            <form className="space-y-6 animate-fadeIn" onSubmit={handleEmailVerifyOtp}>
+              <div>
+                <label className="block text-[11px] uppercase tracking-widest font-extrabold text-gray-700 mb-2 ml-1">
+                  Enter 6-Digit OTP sent to {formData.email}
+                </label>
+                <input
+                  type="text"
+                  maxLength={6}
+                  required
+                  value={otpToken}
+                  onChange={(e) => setOtpToken(e.target.value.replace(/\D/g, ''))}
+                  className="w-full text-center tracking-[1.5em] pl-6 py-4 bg-white/60 backdrop-blur-sm border border-white/60 rounded-2xl focus:bg-white focus:ring-2 focus:ring-primary/35 focus:border-primary outline-none transition-all font-extrabold text-xl text-gray-900 shadow-inner"
+                  placeholder="000000"
+                />
+              </div>
+
+              <div className="flex items-center justify-between px-1 text-xs">
+                <span className="text-gray-500 font-bold">
+                  {otpTimer > 0 ? `Resend OTP in ${otpTimer}s` : 'Did not receive code?'}
+                </span>
+                {canResendOtp && (
+                  <button
+                    type="button"
+                    onClick={handleResendEmailOtp}
+                    className="font-extrabold text-primary hover:text-blue-800 transition-colors"
+                  >
+                    Resend OTP
+                  </button>
+                )}
+              </div>
+
+              <div className="flex gap-3">
+                <Button 
+                  type="button" 
+                  variant="glass"
+                  className="flex-1 py-4 text-xs font-bold rounded-2xl" 
+                  onClick={() => setLoginMode('email')}
+                >
+                  Back
+                </Button>
+                <Button 
+                  type="submit" 
+                  variant="primary" 
+                  className="flex-1 py-4 text-xs font-bold rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20" 
+                  disabled={loading}
+                >
+                  {loading ? 'Verifying...' : 'Verify & Log In'}
+                </Button>
+              </div>
+            </form>
+          )}
+
           {loginMode === 'otp' && (
             /* ================= PHONE OTP VERIFICATION ================= */
             <form className="space-y-6 animate-fadeIn" onSubmit={handlePhoneVerifyOtp}>
@@ -499,7 +610,7 @@ export const Login = () => {
             </form>
           )}
 
-          {loginMode !== 'otp' && (
+          {loginMode !== 'otp' && loginMode !== 'email_otp' && (
             /* ================= THIRD-PARTY OAUTH PROVIDERS ================= */
             <div className="mt-8 pt-6 border-t border-gray-200/50 space-y-4">
               <div className="relative flex py-2 items-center">

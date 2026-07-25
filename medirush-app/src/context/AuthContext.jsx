@@ -115,6 +115,31 @@ export const AuthProvider = ({ children }) => {
     return data;
   };
 
+  const resendSignupOtp = async (email) => {
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`
+      }
+    });
+    if (error) throw error;
+  };
+
+  const verifySignupOtp = async (email, token) => {
+    const { data, error } = await supabase.auth.verifyOtp({
+      email,
+      token,
+      type: 'signup'
+    });
+    if (error) throw error;
+    
+    if (data.user) {
+      await checkAndCreateProfile(data.user);
+    }
+    return data;
+  };
+
   useEffect(() => {
     const storedDemo = localStorage.getItem('demo_user');
     if (storedDemo) {
@@ -168,6 +193,8 @@ export const AuthProvider = ({ children }) => {
       loginWithApple,
       sendPhoneOtp,
       verifyPhoneOtp,
+      resendSignupOtp,
+      verifySignupOtp,
       checkAndCreateProfile
     }}>
       {!loading && children}
