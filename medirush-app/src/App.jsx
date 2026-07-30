@@ -56,6 +56,7 @@ function App() {
               <Route path="/nearby" element={<NearbyHealthcare />} />
               <Route path="/symptom-checker" element={<SymptomChecker />} />
               <Route path="/emergency-request" element={<EmergencyRequest />} />
+              <Route path="/emergency" element={<EmergencyRequest />} />
               <Route path="/prescription-upload" element={<PrescriptionUpload />} />
               <Route path="/medicine-reminder" element={<MedicineReminder />} />
               <Route path="/report-simplifier" element={<MedicalReportSimplifier />} />
