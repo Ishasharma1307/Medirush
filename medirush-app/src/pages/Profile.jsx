@@ -8,7 +8,7 @@ import { cn } from '../utils/cn';
 
 export const Profile = () => {
   // 1. Get logged-in user from AuthContext
-  const { user } = useAuth();
+  const { user, checkAndCreateProfile } = useAuth();
   
   // State management
   const [profile, setProfile] = useState(null);
@@ -41,15 +41,43 @@ export const Profile = () => {
         .from('users')
         .select('*')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
         
       if (fetchError) throw fetchError;
       
-      setProfile(data);
-      setFormData({
-        name: data.name || '',
-        phone: data.phone || ''
-      });
+      if (data) {
+        setProfile(data);
+        setFormData({
+          name: data.name || '',
+          phone: data.phone || ''
+        });
+      } else {
+        // Self-healing fallback: if profile is not yet in public.users, use session metadata
+        const fallbackName = user.user_metadata?.name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
+        const fallbackEmail = user.email || '';
+        const fallbackPhone = user.phone || '';
+        
+        const fallbackProfile = {
+          id: user.id,
+          name: fallbackName,
+          email: fallbackEmail,
+          phone: fallbackPhone,
+          role: 'user',
+          verified: false,
+          created_at: user.created_at || new Date().toISOString()
+        };
+        
+        setProfile(fallbackProfile);
+        setFormData({
+          name: fallbackName,
+          phone: fallbackPhone
+        });
+        
+        // Attempt to create the missing database profile asynchronously in the background
+        if (checkAndCreateProfile) {
+          checkAndCreateProfile(user);
+        }
+      }
     } catch (err) {
       setError('Could not load profile data: ' + err.message);
     } finally {
