@@ -156,10 +156,10 @@ export const AuthProvider = ({ children }) => {
     }
 
     // Check for an active session on mount
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         setUser(session.user);
-        await checkAndCreateProfile(session.user);
+        checkAndCreateProfile(session.user);
       } else {
         setUser(null);
       }
@@ -167,11 +167,11 @@ export const AuthProvider = ({ children }) => {
     });
 
     // Listen for auth events (login, logout, token refresh)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
         setUser(session.user);
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          await checkAndCreateProfile(session.user);
+          checkAndCreateProfile(session.user);
         }
       } else {
         setUser(null);
