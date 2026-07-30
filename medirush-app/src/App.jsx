@@ -1,7 +1,7 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from './components/Layout';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
@@ -30,6 +30,11 @@ import { OrderConfirmation } from './pages/OrderConfirmation';
 import { OrderTracking } from './pages/OrderTracking';
 import { AuthCallback } from './pages/AuthCallback';
 import { ForgotPassword } from './pages/ForgotPassword';
+
+function NotFoundRedirect() {
+  const { user } = useAuth();
+  return <Navigate to={user ? "/home" : "/"} replace />;
+}
 
 function App() {
   return (
@@ -70,6 +75,7 @@ function App() {
               <Route path="/profile" element={<Profile />} />
             </Route>
           </Route>
+          <Route path="*" element={<NotFoundRedirect />} />
         </Routes>
       </BrowserRouter>
       </CartProvider>
