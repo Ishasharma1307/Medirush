@@ -819,76 +819,74 @@ export const Profile = () => {
                 className="hidden" 
               />
 
-              {/* Photo Options Modal */}
+              {/* WhatsApp/Instagram Style Bottom Sheet */}
               <AnimatePresence>
                 {showPhotoMenu && (
-                  <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                  <>
+                    {/* Backdrop click to close */}
+                    <div 
+                      className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[99] cursor-pointer"
+                      onClick={() => setShowPhotoMenu(false)}
+                    ></div>
+                    
                     <motion.div 
-                      initial={{ scale: 0.95, opacity: 0 }} 
-                      animate={{ scale: 1, opacity: 1 }} 
-                      exit={{ scale: 0.95, opacity: 0 }}
-                      className="bg-white p-6 rounded-[2.5rem] shadow-2xl max-w-sm w-full border border-white/60 text-center"
+                      initial={{ y: "100%" }}
+                      animate={{ y: 0 }}
+                      exit={{ y: "100%" }}
+                      transition={{ type: "spring", damping: 30, stiffness: 300 }}
+                      className="fixed bottom-0 left-0 right-0 w-full bg-white rounded-t-[2.5rem] shadow-2xl z-[100] border-t border-gray-100 pb-8 pt-4 px-6 md:max-w-md md:mx-auto md:rounded-[2.5rem] md:bottom-10 md:border md:shadow-2xl"
                     >
-                      <div className="flex justify-between items-center border-b border-gray-100 pb-3 mb-5">
-                        <h3 className="text-base font-black text-gray-900 uppercase tracking-wider">Profile Photo Options</h3>
-                        <button onClick={() => setShowPhotoMenu(false)} className="text-gray-400 hover:text-gray-600 transition-colors"><X size={20} /></button>
+                      {/* Grab Handle */}
+                      <div 
+                        className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-5 cursor-pointer hover:bg-gray-300 transition-colors"
+                        onClick={() => setShowPhotoMenu(false)}
+                      ></div>
+
+                      <div className="flex justify-between items-center pb-4 mb-4 border-b border-gray-100">
+                        <h3 className="text-base font-black text-gray-900 uppercase tracking-wider">Profile Photo</h3>
+                        <button onClick={() => setShowPhotoMenu(false)} className="text-gray-400 hover:text-gray-650 transition-colors p-1"><X size={20} /></button>
                       </div>
 
-                      <div className="space-y-3">
-                        {/* Option 1: Open Camera */}
+                      {/* Options Grid */}
+                      <div className="grid grid-cols-3 gap-4 py-4 justify-items-center">
+                        {/* 1. Camera Option */}
                         <button 
                           onClick={startCamera}
-                          className="w-full py-4 px-5 bg-blue-50/50 hover:bg-blue-50 border border-blue-100/70 rounded-2xl flex items-center gap-4 transition-all text-left"
+                          className="flex flex-col items-center gap-2.5 group cursor-pointer"
                         >
-                          <div className="p-2.5 bg-blue-500 text-white rounded-xl">
-                            <Camera size={20} />
+                          <div className="w-16 h-16 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100 group-hover:bg-blue-500 group-hover:text-white transition-all shadow-md">
+                            <Camera size={24} />
                           </div>
-                          <div>
-                            <h4 className="text-sm font-extrabold text-gray-800">Open Camera</h4>
-                            <p className="text-xs text-gray-400 font-medium mt-0.5">Take a live photo using your camera</p>
-                          </div>
+                          <span className="text-xs font-black text-gray-700 tracking-wide uppercase">Camera</span>
                         </button>
 
-                        {/* Option 2: Choose from Gallery */}
+                        {/* 2. Gallery Option */}
                         <button 
                           onClick={() => { setShowPhotoMenu(false); galleryInputRef.current.click(); }}
-                          className="w-full py-4 px-5 bg-emerald-50/50 hover:bg-emerald-50 border border-emerald-100/70 rounded-2xl flex items-center gap-4 transition-all text-left"
+                          className="flex flex-col items-center gap-2.5 group cursor-pointer"
                         >
-                          <div className="p-2.5 bg-emerald-500 text-white rounded-xl">
-                            <Globe size={20} />
+                          <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100 group-hover:bg-emerald-500 group-hover:text-white transition-all shadow-md">
+                            <Globe size={24} />
                           </div>
-                          <div>
-                            <h4 className="text-sm font-extrabold text-gray-800">Choose from Gallery</h4>
-                            <p className="text-xs text-gray-400 font-medium mt-0.5">Upload an existing photo from your device</p>
-                          </div>
+                          <span className="text-xs font-black text-gray-700 tracking-wide uppercase">Gallery</span>
                         </button>
 
-                        {/* Option 3: Remove Photo */}
-                        {avatarUrl && (
-                          <button 
-                            onClick={handleRemovePhoto}
-                            className="w-full py-4 px-5 bg-red-50/50 hover:bg-red-50 border border-red-100/70 rounded-2xl flex items-center gap-4 transition-all text-left"
-                          >
-                            <div className="p-2.5 bg-red-500 text-white rounded-xl">
-                              <Trash2 size={20} />
-                            </div>
-                            <div>
-                              <h4 className="text-sm font-extrabold text-red-650">Remove Profile Photo</h4>
-                              <p className="text-xs text-red-400/80 font-medium mt-0.5">Delete your current photo</p>
-                            </div>
-                          </button>
-                        )}
+                        {/* 3. Remove Option */}
+                        <button 
+                          onClick={avatarUrl ? handleRemovePhoto : () => { setShowPhotoMenu(false); showToast('No photo to remove.'); }}
+                          className={cn(
+                            "flex flex-col items-center gap-2.5 group cursor-pointer",
+                            !avatarUrl && "opacity-40 cursor-not-allowed"
+                          )}
+                        >
+                          <div className="w-16 h-16 rounded-full bg-red-50 text-red-650 flex items-center justify-center border border-red-100 group-hover:bg-red-500 group-hover:text-white transition-all shadow-md">
+                            <Trash2 size={24} />
+                          </div>
+                          <span className="text-xs font-black text-gray-700 tracking-wide uppercase">Remove</span>
+                        </button>
                       </div>
-
-                      <Button 
-                        variant="glass" 
-                        className="w-full mt-5 rounded-2xl py-3 font-extrabold text-xs uppercase" 
-                        onClick={() => setShowPhotoMenu(false)}
-                      >
-                        Cancel
-                      </Button>
                     </motion.div>
-                  </div>
+                  </>
                 )}
               </AnimatePresence>
             </div>
