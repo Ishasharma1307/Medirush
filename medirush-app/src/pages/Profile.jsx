@@ -819,42 +819,76 @@ export const Profile = () => {
                 className="hidden" 
               />
 
-              {/* Dropdown Options Menu */}
+              {/* Photo Options Modal */}
               <AnimatePresence>
                 {showPhotoMenu && (
-                  <>
-                    <div className="fixed inset-0 z-20" onClick={() => setShowPhotoMenu(false)}></div>
+                  <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
                     <motion.div 
-                      initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                      animate={{ opacity: 1, scale: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                      className="absolute left-0 mt-2 w-48 bg-white border border-gray-200 rounded-2xl shadow-xl z-30 py-2 overflow-hidden"
+                      initial={{ scale: 0.95, opacity: 0 }} 
+                      animate={{ scale: 1, opacity: 1 }} 
+                      exit={{ scale: 0.95, opacity: 0 }}
+                      className="bg-white p-6 rounded-[2.5rem] shadow-2xl max-w-sm w-full border border-white/60 text-center"
                     >
-                      <button 
-                        onClick={startCamera}
-                        className="w-full text-left px-4 py-2.5 hover:bg-gray-50 text-xs font-bold uppercase tracking-wider text-gray-700 flex items-center gap-2"
-                      >
-                        <Camera size={14} className="text-primary" />
-                        <span>Open Camera</span>
-                      </button>
-                      <button 
-                        onClick={() => { setShowPhotoMenu(false); galleryInputRef.current.click(); }}
-                        className="w-full text-left px-4 py-2.5 hover:bg-gray-50 text-xs font-bold uppercase tracking-wider text-gray-700 flex items-center gap-2"
-                      >
-                        <Globe size={14} className="text-primary" />
-                        <span>Choose from Gallery</span>
-                      </button>
-                      {avatarUrl && (
+                      <div className="flex justify-between items-center border-b border-gray-100 pb-3 mb-5">
+                        <h3 className="text-base font-black text-gray-900 uppercase tracking-wider">Profile Photo Options</h3>
+                        <button onClick={() => setShowPhotoMenu(false)} className="text-gray-400 hover:text-gray-600 transition-colors"><X size={20} /></button>
+                      </div>
+
+                      <div className="space-y-3">
+                        {/* Option 1: Open Camera */}
                         <button 
-                          onClick={handleRemovePhoto}
-                          className="w-full text-left px-4 py-2.5 hover:bg-red-50 text-xs font-bold uppercase tracking-wider text-red-600 flex items-center gap-2 border-t border-gray-100"
+                          onClick={startCamera}
+                          className="w-full py-4 px-5 bg-blue-50/50 hover:bg-blue-50 border border-blue-100/70 rounded-2xl flex items-center gap-4 transition-all text-left"
                         >
-                          <Trash2 size={14} className="text-red-500" />
-                          <span>Remove Photo</span>
+                          <div className="p-2.5 bg-blue-500 text-white rounded-xl">
+                            <Camera size={20} />
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-extrabold text-gray-800">Open Camera</h4>
+                            <p className="text-xs text-gray-400 font-medium mt-0.5">Take a live photo using your camera</p>
+                          </div>
                         </button>
-                      )}
+
+                        {/* Option 2: Choose from Gallery */}
+                        <button 
+                          onClick={() => { setShowPhotoMenu(false); galleryInputRef.current.click(); }}
+                          className="w-full py-4 px-5 bg-emerald-50/50 hover:bg-emerald-50 border border-emerald-100/70 rounded-2xl flex items-center gap-4 transition-all text-left"
+                        >
+                          <div className="p-2.5 bg-emerald-500 text-white rounded-xl">
+                            <Globe size={20} />
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-extrabold text-gray-800">Choose from Gallery</h4>
+                            <p className="text-xs text-gray-400 font-medium mt-0.5">Upload an existing photo from your device</p>
+                          </div>
+                        </button>
+
+                        {/* Option 3: Remove Photo */}
+                        {avatarUrl && (
+                          <button 
+                            onClick={handleRemovePhoto}
+                            className="w-full py-4 px-5 bg-red-50/50 hover:bg-red-50 border border-red-100/70 rounded-2xl flex items-center gap-4 transition-all text-left"
+                          >
+                            <div className="p-2.5 bg-red-500 text-white rounded-xl">
+                              <Trash2 size={20} />
+                            </div>
+                            <div>
+                              <h4 className="text-sm font-extrabold text-red-650">Remove Profile Photo</h4>
+                              <p className="text-xs text-red-400/80 font-medium mt-0.5">Delete your current photo</p>
+                            </div>
+                          </button>
+                        )}
+                      </div>
+
+                      <Button 
+                        variant="glass" 
+                        className="w-full mt-5 rounded-2xl py-3 font-extrabold text-xs uppercase" 
+                        onClick={() => setShowPhotoMenu(false)}
+                      >
+                        Cancel
+                      </Button>
                     </motion.div>
-                  </>
+                  </div>
                 )}
               </AnimatePresence>
             </div>
