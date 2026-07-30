@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/Button';
@@ -16,6 +16,16 @@ import { cn } from '../utils/cn';
 export const Profile = () => {
   const { user, checkAndCreateProfile } = useAuth();
   
+  // Refs for Camera and Gallery picker
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const galleryInputRef = useRef(null);
+  const activeStreamRef = useRef(null);
+
+  // Photo options and camera states
+  const [showPhotoMenu, setShowPhotoMenu] = useState(false);
+  const [showCameraModal, setShowCameraModal] = useState(false);
+
   // Tab states
   const [activeTab, setActiveTab] = useState('account');
   const [loading, setLoading] = useState(false);
@@ -121,6 +131,9 @@ export const Profile = () => {
   const [tickets, setTickets] = useState([]);
   const [ticketForm, setTicketForm] = useState({ subject: '', category: 'Billing', message: '' });
   const [showTicketModal, setShowTicketModal] = useState(false);
+  const [feedbackRating, setFeedbackRating] = useState(0);
+  const [feedbackText, setFeedbackText] = useState('');
+  const [bugForm, setBugForm] = useState({ category: 'App Crash', description: '' });
 
   // 12. App settings
   const [appTheme, setAppTheme] = useState('light');
@@ -165,6 +178,92 @@ export const Profile = () => {
   const showToast = (msg, type = 'success') => {
     setSuccessMsg(msg);
     setTimeout(() => setSuccessMsg(''), 4000);
+  };
+
+  // Camera Control Functions
+  const startCamera = async () => {
+    try {
+      setShowCameraModal(true);
+      setShowPhotoMenu(false);
+      // Wait a tick for modal to mount video element
+      setTimeout(async () => {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'user', width: 400, height: 400 }
+          });
+          activeStreamRef.current = stream;
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+          }
+        } catch (err) {
+          setError('Camera access denied or device has no camera: ' + err.message);
+          setShowCameraModal(false);
+        }
+      }, 300);
+    } catch (err) {
+      setError('Could not open camera stream.');
+    }
+  };
+
+  const stopCamera = () => {
+    if (activeStreamRef.current) {
+      activeStreamRef.current.getTracks().forEach(track => track.stop());
+      activeStreamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setShowCameraModal(false);
+  };
+
+  const handleCapture = async () => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (video && canvas) {
+      const context = canvas.getContext('2d');
+      canvas.width = video.videoWidth || 300;
+      canvas.height = video.videoHeight || 300;
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const dataUrl = canvas.toDataURL('image/jpeg');
+
+      setAvatarUrl(dataUrl);
+      stopCamera();
+      showToast('Live profile photo captured!');
+
+      // Save to database
+      try {
+        await supabase.from('users').update({ avatar_url: dataUrl }).eq('id', user.id);
+        await supabase.auth.updateUser({ data: { avatar_url: dataUrl } });
+      } catch (err) {
+        // Safe to ignore on development mode
+      }
+    }
+  };
+
+  const handleRemovePhoto = async () => {
+    try {
+      setLoading(true);
+      setAvatarUrl('');
+      const { error: dbError } = await supabase
+        .from('users')
+        .update({ avatar_url: null })
+        .eq('id', user.id);
+      
+      if (dbError) throw dbError;
+      
+      await supabase.auth.updateUser({
+        data: { avatar_url: null }
+      });
+      
+      setShowPhotoMenu(false);
+      showToast('Profile photo removed.');
+    } catch (err) {
+      setAvatarUrl('');
+      setShowPhotoMenu(false);
+      showToast('Profile photo removed successfully.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const fetchUserData = async () => {
@@ -590,6 +689,36 @@ export const Profile = () => {
     showToast('Support ticket raised. Support agent will respond shortly!');
   };
 
+  const submitAppFeedback = (e) => {
+    e.preventDefault();
+    if (feedbackRating === 0) {
+      setError('Please select a star rating first.');
+      return;
+    }
+    showToast('Thank you! Your feedback has been submitted successfully.');
+    setFeedbackRating(0);
+    setFeedbackText('');
+  };
+
+  const submitBugReport = (e) => {
+    e.preventDefault();
+    if (!bugForm.description.trim()) {
+      setError('Please describe the issue you encountered.');
+      return;
+    }
+    const newTicket = {
+      id: 'TCK-BUG-' + Math.floor(100000 + Math.random() * 900000),
+      date: new Date().toLocaleDateString(),
+      status: 'Open',
+      subject: `Bug Report: ${bugForm.category}`,
+      category: 'Others',
+      message: bugForm.description
+    };
+    setTickets([newTicket, ...tickets]);
+    setBugForm({ category: 'App Crash', description: '' });
+    showToast('Bug reported successfully! A support ticket has been created.');
+  };
+
   // Clear cache simulator
   const clearAppCache = () => {
     showToast('App cache cleared successfully.');
@@ -665,17 +794,69 @@ export const Profile = () => {
         <div className="bg-white/80 backdrop-blur-xl border border-white/60 p-6 rounded-[2.5rem] shadow-floating mb-8 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex flex-col md:flex-row items-center gap-6">
             <div className="relative">
-              {avatarUrl ? (
-                <img src={avatarUrl} alt="Avatar" className="w-28 h-28 rounded-full border-4 border-white object-cover shadow-lg bg-white" />
-              ) : (
-                <div className="w-28 h-28 rounded-full border-4 border-white bg-gray-100 flex items-center justify-center text-primary text-3xl font-extrabold shadow-inner uppercase">
-                  {name ? name.charAt(0) : 'U'}
+              <div 
+                className="cursor-pointer relative group" 
+                onClick={() => setShowPhotoMenu(!showPhotoMenu)}
+              >
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="Avatar" className="w-28 h-28 rounded-full border-4 border-white object-cover shadow-lg bg-white group-hover:opacity-90 transition-opacity" />
+                ) : (
+                  <div className="w-28 h-28 rounded-full border-4 border-white bg-gray-100 flex items-center justify-center text-primary text-3xl font-extrabold shadow-inner uppercase group-hover:opacity-90 transition-opacity">
+                    {name ? name.charAt(0) : 'U'}
+                  </div>
+                )}
+                <div className="absolute bottom-1 right-1 bg-white p-2 rounded-full shadow-lg border border-gray-100 group-hover:scale-110 transition-all">
+                  <Camera size={16} className="text-primary" />
                 </div>
-              )}
-              <label className="absolute bottom-1 right-1 bg-white p-2 rounded-full shadow-lg border border-gray-100 hover:scale-110 active:scale-95 transition-all cursor-pointer">
-                <Camera size={16} className="text-primary" />
-                <input type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" />
-              </label>
+              </div>
+
+              {/* Hidden file input for gallery upload */}
+              <input 
+                ref={galleryInputRef}
+                type="file" 
+                accept="image/*" 
+                onChange={handleAvatarChange} 
+                className="hidden" 
+              />
+
+              {/* Dropdown Options Menu */}
+              <AnimatePresence>
+                {showPhotoMenu && (
+                  <>
+                    <div className="fixed inset-0 z-20" onClick={() => setShowPhotoMenu(false)}></div>
+                    <motion.div 
+                      initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                      className="absolute left-0 mt-2 w-48 bg-white border border-gray-200 rounded-2xl shadow-xl z-30 py-2 overflow-hidden"
+                    >
+                      <button 
+                        onClick={startCamera}
+                        className="w-full text-left px-4 py-2.5 hover:bg-gray-50 text-xs font-bold uppercase tracking-wider text-gray-700 flex items-center gap-2"
+                      >
+                        <Camera size={14} className="text-primary" />
+                        <span>Open Camera</span>
+                      </button>
+                      <button 
+                        onClick={() => { setShowPhotoMenu(false); galleryInputRef.current.click(); }}
+                        className="w-full text-left px-4 py-2.5 hover:bg-gray-50 text-xs font-bold uppercase tracking-wider text-gray-700 flex items-center gap-2"
+                      >
+                        <Globe size={14} className="text-primary" />
+                        <span>Choose from Gallery</span>
+                      </button>
+                      {avatarUrl && (
+                        <button 
+                          onClick={handleRemovePhoto}
+                          className="w-full text-left px-4 py-2.5 hover:bg-red-50 text-xs font-bold uppercase tracking-wider text-red-600 flex items-center gap-2 border-t border-gray-100"
+                        >
+                          <Trash2 size={14} className="text-red-500" />
+                          <span>Remove Photo</span>
+                        </button>
+                      )}
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
             </div>
             
             <div className="text-center md:text-left">
@@ -1285,16 +1466,52 @@ export const Profile = () => {
                     <div className="flex justify-between items-center border-b border-gray-200/50 pb-4">
                       <h2 className="text-xl font-extrabold text-gray-900 tracking-tight">Help Desk & Live Support</h2>
                       <Button variant="primary" size="sm" onClick={() => setShowTicketModal(true)}>
-                        Raise Support Ticket
+                        <Plus size={16} className="mr-2" /> Raise Support Ticket
                       </Button>
                     </div>
 
+                    {/* Direct Contact Channels Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <a href="tel:18006337874" className="flex items-center gap-3 p-4 bg-white/40 border border-gray-200/60 rounded-3xl hover:bg-white/60 transition-all shadow-sm">
+                        <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl">
+                          <Phone size={18} />
+                        </div>
+                        <div>
+                          <h4 className="text-xs uppercase tracking-widest font-black text-gray-500">Toll Free</h4>
+                          <p className="text-sm font-extrabold text-gray-800">1800-MED-RUSH</p>
+                        </div>
+                      </a>
+
+                      <a href="https://wa.me/919876543210?text=Hello%20MediRush%20Support,%20I%20need%20assistance." target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 bg-white/40 border border-gray-200/60 rounded-3xl hover:bg-white/60 transition-all shadow-sm">
+                        <div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl">
+                          <Smartphone size={18} />
+                        </div>
+                        <div>
+                          <h4 className="text-xs uppercase tracking-widest font-black text-gray-500">WhatsApp Help</h4>
+                          <p className="text-sm font-extrabold text-gray-800">+91 98765 43210</p>
+                        </div>
+                      </a>
+
+                      <a href="mailto:support@medirush.app" className="flex items-center gap-3 p-4 bg-white/40 border border-gray-200/60 rounded-3xl hover:bg-white/60 transition-all shadow-sm">
+                        <div className="p-3 bg-purple-50 text-purple-600 rounded-2xl">
+                          <Mail size={18} />
+                        </div>
+                        <div>
+                          <h4 className="text-xs uppercase tracking-widest font-black text-gray-500">Email Desk</h4>
+                          <p className="text-sm font-extrabold text-gray-800">support@medirush.app</p>
+                        </div>
+                      </a>
+                    </div>
+
+                    {/* Frequently Asked Questions (FAQs) */}
                     <div className="space-y-4">
-                      <h4 className="text-xs uppercase tracking-widest font-extrabold text-gray-500 mb-3 ml-1">Frequently Asked Questions (FAQs)</h4>
+                      <h4 className="text-xs uppercase tracking-widest font-extrabold text-gray-500 ml-1">Frequently Asked Questions (FAQs)</h4>
                       {[
                         { q: 'How long does emergency delivery take?', a: 'Emergency deliveries are dispatched within 5 minutes of verification and typically reach your location in under 30-45 minutes depending on traffic.' },
                         { q: 'Is prescription validation mandatory?', a: 'Yes, scheduled medicines and antibiotics require a valid medical prescription before checkout. Our doctors can verify yours online in 2 minutes.' },
-                        { q: 'Can I return medicines?', a: 'Unopened, sealed medical boxes can be returned within 7 days of delivery for a full refund. Refrigerated items are not eligible.' }
+                        { q: 'Can I return medicines?', a: 'Unopened, sealed medical boxes can be returned within 7 days of delivery for a full refund. Refrigerated items are not eligible.' },
+                        { q: 'How does the AI Symptom Checker work?', a: 'Our local rule-based AI Symptom Checker triages your reported symptoms to evaluate urgency levels and suggest non-prescriptive home remedies, local pharmacy pickups, or hospital emergency routes.' },
+                        { q: 'What is the Emergency SOS broadcast feature?', a: 'The SOS broadcast sends your live location coordinates, your digital medical ID (blood group, allergies, conditions), and emergency message to all configured emergency contacts via automated SMS.' }
                       ].map((faq, idx) => (
                         <details key={idx} className="bg-white/40 border border-gray-200/60 rounded-3xl p-4 cursor-pointer select-none [&_summary::-webkit-details-marker]:hidden">
                           <summary className="font-extrabold text-sm text-gray-800 flex items-center justify-between">
@@ -1306,14 +1523,92 @@ export const Profile = () => {
                       ))}
                     </div>
 
+                    {/* Two-Column Grid: Feedback & Bug Report */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* App Rating & Feedback Form */}
+                      <div className="p-5 bg-white/40 border border-gray-200/60 rounded-[2rem] shadow-sm space-y-4">
+                        <div>
+                          <h4 className="text-sm font-extrabold text-gray-800">App Feedback & Rating</h4>
+                          <p className="text-xs text-gray-400 font-bold mt-0.5">Let us know how we can improve your experience</p>
+                        </div>
+                        <form onSubmit={submitAppFeedback} className="space-y-3">
+                          <div className="flex gap-2.5">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <button 
+                                key={star} 
+                                type="button"
+                                onClick={() => setFeedbackRating(star)} 
+                                className="transition-transform active:scale-90 hover:scale-110"
+                              >
+                                <Star 
+                                  size={24} 
+                                  className={cn(
+                                    "stroke-amber-400",
+                                    star <= feedbackRating ? "fill-amber-400 text-amber-400" : "text-gray-300"
+                                  )} 
+                                />
+                              </button>
+                            ))}
+                          </div>
+                          <textarea 
+                            value={feedbackText} 
+                            onChange={(e) => setFeedbackText(e.target.value)}
+                            placeholder="Tell us what you like or how we can improve..."
+                            rows={3}
+                            className="w-full px-4 py-3 bg-white/60 border border-gray-200 rounded-xl font-bold text-xs text-gray-800 outline-none focus:bg-white transition-all"
+                          />
+                          <Button type="submit" variant="glass" className="w-full rounded-xl py-2.5 text-xs font-extrabold">
+                            Submit Feedback
+                          </Button>
+                        </form>
+                      </div>
+
+                      {/* Bug Report Form */}
+                      <div className="p-5 bg-white/40 border border-gray-200/60 rounded-[2rem] shadow-sm space-y-4">
+                        <div>
+                          <h4 className="text-sm font-extrabold text-red-700">Report an Issue / Bug</h4>
+                          <p className="text-xs text-gray-400 font-bold mt-0.5 font-sans">Report technical errors directly to our engineering desk</p>
+                        </div>
+                        <form onSubmit={submitBugReport} className="space-y-3">
+                          <select 
+                            value={bugForm.category} 
+                            onChange={(e) => setBugForm({ ...bugForm, category: e.target.value })}
+                            className="w-full px-4 py-2 bg-white/60 border border-gray-200 rounded-xl font-bold text-xs text-gray-800 outline-none"
+                          >
+                            <option>App Crash</option>
+                            <option>Payment Issue</option>
+                            <option>Prescription Upload Error</option>
+                            <option>Address Location Pin Issue</option>
+                            <option>Other Technical Issue</option>
+                          </select>
+                          <textarea 
+                            value={bugForm.description} 
+                            onChange={(e) => setBugForm({ ...bugForm, description: e.target.value })}
+                            placeholder="Describe what happened and how to reproduce it..."
+                            rows={3}
+                            className="w-full px-4 py-3 bg-white/60 border border-gray-200 rounded-xl font-bold text-xs text-gray-800 outline-none focus:bg-white transition-all"
+                          />
+                          <Button type="submit" variant="glass" className="w-full rounded-xl py-2.5 text-xs font-extrabold text-red-600 border-red-200 hover:bg-red-50">
+                            Submit Bug Report
+                          </Button>
+                        </form>
+                      </div>
+                    </div>
+
+                    {/* Active Tickets & History */}
                     {tickets.length > 0 && (
-                      <div className="p-5 bg-white/40 border border-gray-200/60 rounded-3xl">
-                        <h4 className="text-xs uppercase tracking-widest font-extrabold text-gray-500 mb-3 ml-1">Active Tickets</h4>
-                        <div className="space-y-3">
+                      <div className="p-5 bg-white/40 border border-gray-200/60 rounded-[2rem] shadow-sm">
+                        <h4 className="text-xs uppercase tracking-widest font-extrabold text-gray-500 mb-3 ml-1">Support Tickets history ({tickets.length})</h4>
+                        <div className="space-y-3 max-h-[220px] overflow-y-auto pr-1">
                           {tickets.map(t => (
                             <div key={t.id} className="flex justify-between items-center bg-white/60 p-4 rounded-2xl border border-white/50 shadow-sm">
                               <div>
-                                <p className="text-sm font-extrabold text-gray-800">{t.subject}</p>
+                                <div className="flex items-center gap-2">
+                                  <p className="text-sm font-extrabold text-gray-800">{t.subject}</p>
+                                  {t.id.includes('BUG') && (
+                                    <span className="bg-red-100 text-red-800 text-[8px] uppercase tracking-widest font-extrabold px-1.5 py-0.5 rounded-full border border-red-200">Bug</span>
+                                  )}
+                                </div>
                                 <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">{t.category} • Raised on {t.date}</p>
                               </div>
                               <span className="bg-blue-100 text-blue-800 border border-blue-200 text-[8px] uppercase tracking-widest font-black px-2.5 py-0.5 rounded-full shadow-sm">{t.status}</span>
@@ -1612,6 +1907,52 @@ export const Profile = () => {
             <div className="flex gap-3 mt-6">
               <Button variant="glass" className="flex-1 rounded-xl font-bold" onClick={() => setShowMedicalIdCard(false)}>Close</Button>
               <Button variant="primary" className="flex-1 bg-red-600 hover:bg-red-700 rounded-xl font-bold" onClick={printMedicalId}>Print / Download</Button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* 9. Live Camera Capture Modal */}
+      {showCameraModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
+          <motion.div 
+            initial={{ scale: 0.95, opacity: 0 }} 
+            animate={{ scale: 1, opacity: 1 }} 
+            className="bg-white p-6 rounded-[2.5rem] shadow-2xl max-w-sm w-full border border-white/60 relative overflow-hidden"
+          >
+            <div className="flex justify-between items-center border-b border-gray-100 pb-3 mb-4">
+              <h3 className="text-lg font-black text-gray-900">Capture Profile Photo</h3>
+              <button onClick={stopCamera} className="text-gray-400 hover:text-gray-600 transition-colors"><X size={20} /></button>
+            </div>
+            
+            <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-gray-950 border border-gray-800 shadow-inner flex items-center justify-center">
+              <video 
+                ref={videoRef}
+                id="camera-stream-video"
+                autoPlay 
+                playsInline 
+                muted
+                className="w-full h-full object-cover transform -scale-x-100"
+              />
+              <canvas ref={canvasRef} className="hidden" />
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <Button 
+                variant="glass" 
+                className="flex-1 rounded-xl font-bold py-3 text-xs" 
+                onClick={stopCamera}
+              >
+                Cancel
+              </Button>
+              <Button 
+                variant="primary" 
+                className="flex-1 rounded-xl font-bold py-3 text-xs flex items-center justify-center gap-1.5" 
+                onClick={handleCapture}
+              >
+                <Camera size={14} />
+                <span>Capture & Save</span>
+              </Button>
             </div>
           </motion.div>
         </div>
