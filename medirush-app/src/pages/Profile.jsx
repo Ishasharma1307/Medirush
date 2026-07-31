@@ -26,6 +26,14 @@ export const Profile = () => {
   const [showPhotoMenu, setShowPhotoMenu] = useState(false);
   const [showCameraModal, setShowCameraModal] = useState(false);
 
+  // Cropper states
+  const [showCropModal, setShowCropModal] = useState(false);
+  const [cropImageSrc, setCropImageSrc] = useState('');
+  const [cropScale, setCropScale] = useState(1);
+  const [cropOffset, setCropOffset] = useState({ x: 0, y: 0 });
+  const [isDraggingCrop, setIsDraggingCrop] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+
   // Tab states
   const [activeTab, setActiveTab] = useState('account');
   const [loading, setLoading] = useState(false);
@@ -46,11 +54,11 @@ export const Profile = () => {
     timezone: 'GMT+5:30 (IST)'
   });
 
-  const [avatarUrl, setAvatarUrl] = useState('');
-  const [coverUrl, setCoverUrl] = useState('');
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState(user?.user_metadata?.avatar_url || '');
+  const [coverUrl, setCoverUrl] = useState(user?.user_metadata?.coverUrl || '');
+  const [name, setName] = useState(user?.user_metadata?.full_name || user?.user_metadata?.name || '');
+  const [phone, setPhone] = useState(user?.phone || user?.user_metadata?.phone || '');
+  const [email, setEmail] = useState(user?.email || '');
 
   // 2. Addresses State
   const [addresses, setAddresses] = useState([
@@ -216,7 +224,7 @@ export const Profile = () => {
     setShowCameraModal(false);
   };
 
-  const handleCapture = async () => {
+  const handleCapture = () => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
     if (video && canvas) {
@@ -226,18 +234,121 @@ export const Profile = () => {
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
       const dataUrl = canvas.toDataURL('image/jpeg');
 
-      setAvatarUrl(dataUrl);
+      setCropImageSrc(dataUrl);
+      setCropScale(1);
+      setCropOffset({ x: 0, y: 0 });
       stopCamera();
-      showToast('Live profile photo captured!');
-
-      // Save to database
-      try {
-        await supabase.from('users').update({ avatar_url: dataUrl }).eq('id', user.id);
-        await supabase.auth.updateUser({ data: { avatar_url: dataUrl } });
-      } catch (err) {
-        // Safe to ignore on development mode
-      }
+      setShowCropModal(true);
+      showToast('Photo captured! Adjust crop now.');
     }
+  };
+
+  // Cropper interaction handlers
+  const handleCropMouseDown = (e) => {
+    setIsDraggingCrop(true);
+    setDragStart({ x: e.clientX - cropOffset.x, y: e.clientY - cropOffset.y });
+  };
+
+  const handleCropMouseMove = (e) => {
+    if (!isDraggingCrop) return;
+    setCropOffset({
+      x: e.clientX - dragStart.x,
+      y: e.clientY - dragStart.y
+    });
+  };
+
+  const handleCropMouseUp = () => {
+    setIsDraggingCrop(false);
+  };
+
+  const handleCropTouchStart = (e) => {
+    if (e.touches.length === 1) {
+      setIsDraggingCrop(true);
+      setDragStart({
+        x: e.touches[0].clientX - cropOffset.x,
+        y: e.touches[0].clientY - cropOffset.y
+      });
+    }
+  };
+
+  const handleCropTouchMove = (e) => {
+    if (!isDraggingCrop || e.touches.length !== 1) return;
+    setCropOffset({
+      x: e.touches[0].clientX - dragStart.x,
+      y: e.touches[0].clientY - dragStart.y
+    });
+  };
+
+  // Convert Base64 dataURL to Blob for Supabase upload
+  const dataURLtoBlob = (dataurl) => {
+    var arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
+        bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+    while(n--){
+        u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], {type:mime});
+  };
+
+  const saveCroppedAvatar = async (croppedDataUrl) => {
+    try {
+      setLoading(true);
+      setAvatarUrl(croppedDataUrl);
+      setShowCropModal(false);
+      setShowPhotoMenu(false);
+
+      // Convert to blob and upload to Supabase storage if online
+      const blob = dataURLtoBlob(croppedDataUrl);
+      const filePath = `avatars/${user.id}-${Date.now()}.jpg`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, blob, { contentType: 'image/jpeg' });
+
+      if (uploadError) throw uploadError;
+
+      const { data: publicUrlData } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      const publicUrl = publicUrlData.publicUrl;
+      setAvatarUrl(publicUrl);
+
+      await supabase.from('users').update({ avatar_url: publicUrl }).eq('id', user.id);
+      await supabase.auth.updateUser({ data: { avatar_url: publicUrl } });
+      showToast('Profile photo updated successfully!');
+    } catch (err) {
+      // Fallback to storing the base64/dataURL locally
+      await supabase.from('users').update({ avatar_url: croppedDataUrl }).eq('id', user.id);
+      await supabase.auth.updateUser({ data: { avatar_url: croppedDataUrl } });
+      showToast('Profile photo updated (development fallback mode).');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCropSave = () => {
+    const img = new Image();
+    img.src = cropImageSrc;
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 300;
+      canvas.height = 300;
+      const ctx = canvas.getContext('2d');
+      
+      // Draw background or white base
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, 300, 300);
+
+      // Draw the image centered, scaled, and offset
+      const targetWidth = 300 * cropScale;
+      const targetHeight = (img.height / img.width) * targetWidth;
+      const dx = (300 - targetWidth) / 2 + cropOffset.x;
+      const dy = (300 - targetHeight) / 2 + cropOffset.y;
+
+      ctx.drawImage(img, dx, dy, targetWidth, targetHeight);
+      const croppedDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+      saveCroppedAvatar(croppedDataUrl);
+    };
   };
 
   const handleRemovePhoto = async () => {
@@ -278,10 +389,15 @@ export const Profile = () => {
       if (dbError) throw dbError;
 
       if (data) {
-        setName(data.name || '');
-        setEmail(data.email || '');
-        setPhone(data.phone || '');
-        setAvatarUrl(data.avatar_url || '');
+        setName(data.name || user?.user_metadata?.full_name || user?.user_metadata?.name || '');
+        setEmail(data.email || user?.email || '');
+        setPhone(data.phone || user?.phone || user?.user_metadata?.phone || '');
+        setAvatarUrl(data.avatar_url || user?.user_metadata?.avatar_url || '');
+      } else {
+        setName(user?.user_metadata?.full_name || user?.user_metadata?.name || '');
+        setEmail(user?.email || '');
+        setPhone(user?.phone || user?.user_metadata?.phone || '');
+        setAvatarUrl(user?.user_metadata?.avatar_url || '');
       }
 
       // Check User Metadata for additional fields
@@ -388,35 +504,18 @@ export const Profile = () => {
   };
 
   // Avatar Upload
-  const handleAvatarChange = async (e) => {
-    try {
-      if (!e.target.files || e.target.files.length === 0) return;
-      const file = e.target.files[0];
-      const filePath = `avatars/${user.id}-${Date.now()}.${file.name.split('.').pop()}`;
-
-      // Upload file to Supabase storage
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: publicUrlData } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath);
-
-      const newUrl = publicUrlData.publicUrl;
-      setAvatarUrl(newUrl);
-
-      // Save url
-      await supabase.from('users').update({ avatar_url: newUrl }).eq('id', user.id);
-      showToast('Avatar updated successfully!');
-    } catch (err) {
-      // Offline fallback simulator
-      const localUrl = URL.createObjectURL(e.target.files[0]);
-      setAvatarUrl(localUrl);
-      showToast('Uploaded avatar locally (development fallback mode).');
-    }
+  const handleAvatarChange = (e) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setCropImageSrc(event.target.result);
+      setCropScale(1);
+      setCropOffset({ x: 0, y: 0 });
+      setShowCropModal(true);
+      showToast('Image loaded! Adjust crop now.');
+    };
+    reader.readAsDataURL(file);
   };
 
   // Cover photo simulation
@@ -819,74 +918,168 @@ export const Profile = () => {
                 className="hidden" 
               />
 
-              {/* WhatsApp/Instagram Style Bottom Sheet */}
+              {/* WhatsApp/Instagram Style Profile Picture Viewer & Actions Modal */}
               <AnimatePresence>
                 {showPhotoMenu && (
-                  <>
-                    {/* Backdrop click to close */}
-                    <div 
-                      className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[99] cursor-pointer"
-                      onClick={() => setShowPhotoMenu(false)}
-                    ></div>
-                    
-                    <motion.div 
-                      initial={{ y: "100%" }}
-                      animate={{ y: 0 }}
-                      exit={{ y: "100%" }}
-                      transition={{ type: "spring", damping: 30, stiffness: 300 }}
-                      className="fixed bottom-0 left-0 right-0 w-full bg-white rounded-t-[2.5rem] shadow-2xl z-[100] border-t border-gray-100 pb-8 pt-4 px-6 md:max-w-md md:mx-auto md:rounded-[2.5rem] md:bottom-10 md:border md:shadow-2xl"
+                  <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-[100] flex flex-col items-center justify-center p-4">
+                    {/* Close Button on Top Right */}
+                    <button 
+                      onClick={() => setShowPhotoMenu(false)} 
+                      className="absolute top-6 right-6 text-white/70 hover:text-white transition-colors bg-white/10 p-2.5 rounded-full backdrop-blur-md cursor-pointer"
                     >
-                      {/* Grab Handle */}
-                      <div 
-                        className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-5 cursor-pointer hover:bg-gray-300 transition-colors"
-                        onClick={() => setShowPhotoMenu(false)}
-                      ></div>
+                      <X size={24} />
+                    </button>
 
-                      <div className="flex justify-between items-center pb-4 mb-4 border-b border-gray-100">
-                        <h3 className="text-base font-black text-gray-900 uppercase tracking-wider">Profile Photo</h3>
-                        <button onClick={() => setShowPhotoMenu(false)} className="text-gray-400 hover:text-gray-650 transition-colors p-1"><X size={20} /></button>
-                      </div>
+                    {/* Title */}
+                    <h3 className="text-white text-base font-extrabold uppercase tracking-widest mb-6">Profile Photo</h3>
 
-                      {/* Options Grid */}
-                      <div className="grid grid-cols-3 gap-4 py-4 justify-items-center">
+                    {/* Large Photo Preview */}
+                    <div className="relative group max-w-sm w-full flex justify-center mb-8">
+                      {avatarUrl ? (
+                        <img 
+                          src={avatarUrl} 
+                          alt="Avatar Preview" 
+                          className="w-72 h-72 md:w-80 md:h-80 rounded-full object-cover border-4 border-white/85 shadow-2xl" 
+                        />
+                      ) : (
+                        <div className="w-72 h-72 md:w-80 md:h-80 rounded-full bg-white/10 border-4 border-white/20 flex items-center justify-center text-white text-7xl font-extrabold shadow-inner uppercase animate-pulse">
+                          {name ? name.charAt(0) : 'U'}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Actions Panel */}
+                    <div className="bg-white/10 backdrop-blur-xl border border-white/10 rounded-[2rem] p-6 max-w-sm w-full space-y-4">
+                      <p className="text-white/60 text-xs font-bold text-center uppercase tracking-wider mb-2">Change Profile Photo</p>
+                      
+                      <div className="grid grid-cols-3 gap-4 justify-items-center">
                         {/* 1. Camera Option */}
                         <button 
-                          onClick={startCamera}
-                          className="flex flex-col items-center gap-2.5 group cursor-pointer"
+                          onClick={() => { setShowPhotoMenu(false); startCamera(); }}
+                          className="flex flex-col items-center gap-2 group cursor-pointer"
                         >
-                          <div className="w-16 h-16 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100 group-hover:bg-blue-500 group-hover:text-white transition-all shadow-md">
-                            <Camera size={24} />
+                          <div className="w-14 h-14 rounded-full bg-blue-500/20 text-blue-400 border border-blue-400/30 flex items-center justify-center group-hover:bg-blue-500 group-hover:text-white transition-all shadow-md">
+                            <Camera size={20} className="text-blue-400 group-hover:text-white" />
                           </div>
-                          <span className="text-xs font-black text-gray-700 tracking-wide uppercase">Camera</span>
+                          <span className="text-[10px] font-black text-white/80 tracking-wide uppercase">Camera</span>
                         </button>
 
                         {/* 2. Gallery Option */}
                         <button 
                           onClick={() => { setShowPhotoMenu(false); galleryInputRef.current.click(); }}
-                          className="flex flex-col items-center gap-2.5 group cursor-pointer"
+                          className="flex flex-col items-center gap-2 group cursor-pointer"
                         >
-                          <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100 group-hover:bg-emerald-500 group-hover:text-white transition-all shadow-md">
-                            <Globe size={24} />
+                          <div className="w-14 h-14 rounded-full bg-emerald-500/20 text-emerald-450 border border-emerald-400/30 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-white transition-all shadow-md">
+                            <Globe size={20} className="text-emerald-400 group-hover:text-white" />
                           </div>
-                          <span className="text-xs font-black text-gray-700 tracking-wide uppercase">Gallery</span>
+                          <span className="text-[10px] font-black text-white/80 tracking-wide uppercase">Gallery</span>
                         </button>
 
                         {/* 3. Remove Option */}
                         <button 
-                          onClick={avatarUrl ? handleRemovePhoto : () => { setShowPhotoMenu(false); showToast('No photo to remove.'); }}
+                          onClick={() => {
+                            if (avatarUrl) {
+                              handleRemovePhoto();
+                            } else {
+                              setShowPhotoMenu(false);
+                              showToast('No photo to remove.');
+                            }
+                          }}
                           className={cn(
-                            "flex flex-col items-center gap-2.5 group cursor-pointer",
+                            "flex flex-col items-center gap-2 group cursor-pointer",
                             !avatarUrl && "opacity-40 cursor-not-allowed"
                           )}
                         >
-                          <div className="w-16 h-16 rounded-full bg-red-50 text-red-650 flex items-center justify-center border border-red-100 group-hover:bg-red-500 group-hover:text-white transition-all shadow-md">
-                            <Trash2 size={24} />
+                          <div className="w-14 h-14 rounded-full bg-red-500/20 text-red-400 border border-red-400/30 flex items-center justify-center group-hover:bg-red-500 group-hover:text-white transition-all shadow-md">
+                            <Trash2 size={20} className="text-red-400 group-hover:text-white" />
                           </div>
-                          <span className="text-xs font-black text-gray-700 tracking-wide uppercase">Remove</span>
+                          <span className="text-[10px] font-black text-white/80 tracking-wide uppercase">Remove</span>
                         </button>
                       </div>
+                    </div>
+                  </div>
+                )}
+              </AnimatePresence>
+
+              {/* Crop / Resize Modal */}
+              <AnimatePresence>
+                {showCropModal && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+                    <motion.div 
+                      initial={{ scale: 0.95, opacity: 0 }} 
+                      animate={{ scale: 1, opacity: 1 }} 
+                      exit={{ scale: 0.95, opacity: 0 }}
+                      className="bg-white p-6 rounded-[2.5rem] shadow-2xl max-w-sm w-full border border-white/60 text-center"
+                    >
+                      <div className="flex justify-between items-center border-b border-gray-100 pb-3 mb-5">
+                        <h3 className="text-base font-black text-gray-900 uppercase tracking-wider">Crop & Adjust</h3>
+                        <button onClick={() => setShowCropModal(false)} className="text-gray-400 hover:text-gray-605 transition-colors"><X size={20} /></button>
+                      </div>
+
+                      {/* Crop Viewport Box */}
+                      <div 
+                        className="relative w-64 h-64 mx-auto overflow-hidden bg-gray-950 rounded-full border-4 border-primary/20 shadow-inner cursor-move select-none"
+                        onMouseDown={handleCropMouseDown}
+                        onMouseMove={handleCropMouseMove}
+                        onMouseUp={handleCropMouseUp}
+                        onMouseLeave={handleCropMouseUp}
+                        onTouchStart={handleCropTouchStart}
+                        onTouchMove={handleCropTouchMove}
+                        onTouchEnd={handleCropMouseUp}
+                      >
+                        {/* Circular crop area border */}
+                        <div className="absolute inset-0 pointer-events-none border-[12px] border-black/40 rounded-full z-10"></div>
+                        <div className="absolute inset-0 pointer-events-none border border-white/50 rounded-full z-10"></div>
+
+                        {/* Draggable/Scalable Image */}
+                        <img 
+                          src={cropImageSrc} 
+                          alt="Crop Preview" 
+                          className="absolute pointer-events-none object-contain origin-center transition-transform duration-75"
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            transform: `translate(${cropOffset.x}px, ${cropOffset.y}px) scale(${cropScale})`,
+                          }}
+                        />
+                      </div>
+                      <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-3">Drag to pan • Use slider below to zoom</p>
+
+                      {/* Zoom Slider */}
+                      <div className="space-y-1.5 mt-5">
+                        <div className="flex justify-between text-xs font-black text-gray-500 uppercase tracking-wider">
+                          <span>Zoom</span>
+                          <span>{Math.round(cropScale * 100)}%</span>
+                        </div>
+                        <input 
+                          type="range" 
+                          min="1" 
+                          max="3" 
+                          step="0.02" 
+                          value={cropScale} 
+                          onChange={(e) => setCropScale(parseFloat(e.target.value))} 
+                          className="w-full h-1.5 bg-gray-250 rounded-lg appearance-none cursor-pointer accent-primary" 
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 mt-6">
+                        <Button 
+                          variant="glass" 
+                          className="rounded-2xl py-3 font-extrabold text-xs uppercase" 
+                          onClick={() => setShowCropModal(false)}
+                        >
+                          Cancel
+                        </Button>
+                        <Button 
+                          variant="primary" 
+                          className="rounded-2xl py-3 font-extrabold text-xs uppercase" 
+                          onClick={handleCropSave}
+                        >
+                          Save Photo
+                        </Button>
+                      </div>
                     </motion.div>
-                  </>
+                  </div>
                 )}
               </AnimatePresence>
             </div>
