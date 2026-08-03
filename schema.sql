@@ -80,3 +80,41 @@ CREATE TABLE prescriptions (
     status VARCHAR(50) DEFAULT 'pending_verification',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+-- ── STORAGE BUCKETS INITIALIZATION (Supabase Storage setup) ───────────────────
+
+-- 1. Create storage bucket for prescriptions
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('prescriptions', 'prescriptions', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Drop policies if they already exist to prevent errors
+DROP POLICY IF EXISTS "Prescription Public Access Policy" ON storage.objects;
+DROP POLICY IF EXISTS "Prescription Insert Policy" ON storage.objects;
+
+-- Enable public select access for prescription images
+CREATE POLICY "Prescription Public Access Policy" ON storage.objects
+    FOR SELECT USING (bucket_id = 'prescriptions');
+
+-- Enable upload access for authenticated and anonymous uploads
+CREATE POLICY "Prescription Insert Policy" ON storage.objects
+    FOR INSERT WITH CHECK (bucket_id = 'prescriptions');
+
+
+-- 2. Create storage bucket for profile avatars
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('avatars', 'avatars', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Drop policies if they already exist to prevent errors
+DROP POLICY IF EXISTS "Avatar Public Access Policy" ON storage.objects;
+DROP POLICY IF EXISTS "Avatar Insert Policy" ON storage.objects;
+
+-- Enable public select access for avatars
+CREATE POLICY "Avatar Public Access Policy" ON storage.objects
+    FOR SELECT USING (bucket_id = 'avatars');
+
+-- Enable upload access for avatar uploads
+CREATE POLICY "Avatar Insert Policy" ON storage.objects
+    FOR INSERT WITH CHECK (bucket_id = 'avatars');
+
