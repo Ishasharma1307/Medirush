@@ -201,15 +201,6 @@ export const Medicines = () => {
             <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#E53935]"></span>
           </button>
 
-          {/* Cart Badge Header */}
-          <Link to="/cart" className="w-10 h-10 rounded-xl bg-[#1565C0]/10 border border-[#1565C0]/20 flex items-center justify-center relative shadow-sm hover:bg-[#1565C0]/20 active:scale-95 transition-all">
-            <ShoppingBag size={18} className="text-[#1565C0]" />
-            {cartCount > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 bg-[#E53935] text-white text-[9px] font-black px-1.5 py-0.5 rounded-full shadow-sm">
-                {cartCount}
-              </span>
-            )}
-          </Link>
         </div>
       </div>
 
