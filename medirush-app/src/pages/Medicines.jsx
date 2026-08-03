@@ -1,193 +1,643 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { mockMedicines } from '../mockData/mockMedicines';
+import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  ArrowLeft, Search, Pill, ArrowRight 
+  Search, Camera, Mic, MapPin, Bell, ShoppingBag, 
+  ChevronRight, Plus, Minus, Star, Clock, ArrowLeft, 
+  Pill, Check, CheckCircle, TrendingUp, Sparkles, X, ShoppingCart
 } from 'lucide-react';
-import { Input } from '../components/forms/Input';
+import { Button } from '../components/Button';
 import { Skeleton } from '../components/ui/Skeleton';
 import { cn } from '../utils/cn';
 
-const USE_MOCK_DATA = true;
+// Categories matching Blinkit scroll behavior
+const CATEGORIES = [
+  'All',
+  'First Aid',
+  'Pain Relief',
+  'Cold & Cough',
+  'Vitamins',
+  'Digestive Health',
+  'Antibiotics',
+  'Skin Care',
+  'Personal Care'
+];
 
 export const Medicines = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { cartItems, addToCart, updateQuantity, removeItem, cartCount, cartSubtotal } = useCart();
+
   const [medicines, setMedicines] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [address, setAddress] = useState('Flat 402, Block B, Green Glen Layout, Bangalore');
+  const [showVoiceSimulation, setShowVoiceSimulation] = useState(false);
+  const [voiceText, setVoiceText] = useState('Listening for symptoms or medicines...');
 
+  // Load and enrich mock data
   useEffect(() => {
-    fetchMedicines();
+    const fetchAndEnrichMedicines = async () => {
+      try {
+        setLoading(true);
+        // Simulate networking delay for skeleton screens
+        await new Promise(resolve => setTimeout(resolve, 600));
+
+        // Attempt to fetch from Supabase, fallback to enriched mock data
+        let baseMeds = [];
+        try {
+          const { data, error } = await supabase
+            .from('medicines')
+            .select('*');
+          if (data && data.length > 0) {
+            baseMeds = data;
+          } else {
+            baseMeds = mockMedicines;
+          }
+        } catch (dbErr) {
+          baseMeds = mockMedicines;
+        }
+
+        // Enrich medicine objects with realistic retail styling attributes
+        const enriched = baseMeds.map(med => {
+          const seed = med.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+          const brands = ['Cipla', 'Abbott', 'Dettol', 'Himalaya', 'Sun Pharma', 'Dr. Reddy\'s', 'GSK', 'Apollo Life'];
+          const brand = brands[seed % brands.length];
+          
+          const strengths = ['10 Tablets', '150ml Liquid', '50g Gel', 'Pack of 1', '100g Spray', '15 Capsules'];
+          const strength = strengths[seed % strengths.length];
+          
+          const discountPercent = (seed % 4) * 5 + 10; // 10%, 15%, 20%, 25%
+          const originalPrice = parseFloat((med.price * (1 + discountPercent / 100)).toFixed(2));
+          const rating = (4.1 + (seed % 9) * 0.1).toFixed(1);
+          const deliveryTime = `${(seed % 3) * 5 + 10} mins`;
+          
+          return {
+            ...med,
+            brand,
+            strength,
+            discountPercent,
+            originalPrice,
+            rating,
+            deliveryTime
+          };
+        });
+
+        setMedicines(enriched);
+      } catch (err) {
+        console.error('Error fetching medicines:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAndEnrichMedicines();
   }, []);
 
-  const fetchMedicines = async () => {
-    try {
-      setLoading(true);
-      if (USE_MOCK_DATA) {
-        await new Promise(resolve => setTimeout(resolve, 800));
-        setMedicines(mockMedicines);
-      } else {
-        const { data, error } = await supabase
-          .from('medicines')
-          .select('*')
-          .order('created_at', { ascending: false });
-        
-        if (error) throw error;
-        if (data) setMedicines(data);
+  // Fetch real user metadata address if exists
+  useEffect(() => {
+    const fetchUserAddress = async () => {
+      if (user) {
+        try {
+          const { data } = await supabase
+            .from('users')
+            .select('address')
+            .eq('id', user.id)
+            .maybeSingle();
+          if (data && data.address) {
+            setAddress(data.address);
+          }
+        } catch (e) {
+          // Keep default
+        }
       }
-    } catch (error) {
-      console.error('Error fetching medicines:', error);
-    } finally {
-      setLoading(false);
+    };
+    fetchUserAddress();
+  }, [user]);
+
+  // Handle Voice Search Simulation
+  const handleVoiceSearchClick = () => {
+    setShowVoiceSimulation(true);
+    setVoiceText('Listening for symptoms or medicines...');
+    setTimeout(() => {
+      setVoiceText('Recognized: "Paracetamol 500mg"');
+      setTimeout(() => {
+        setSearchQuery('Paracetamol');
+        setShowVoiceSimulation(false);
+      }, 1200);
+    }, 1500);
+  };
+
+  // Filter medicines by Category & Search query
+  const getFilteredMedicines = () => {
+    return medicines.filter(med => {
+      const matchesCategory = selectedCategory === 'All' || med.category === selectedCategory;
+      const matchesSearch = med.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            med.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            med.brand?.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesCategory && matchesSearch;
+    });
+  };
+
+  // Add/Update quantities safely linked to Context
+  const handleQuantityIncrement = (med) => {
+    const cartItem = cartItems.find(item => item.id === med.id);
+    if (cartItem) {
+      updateQuantity(med.id, cartItem.quantity + 1);
+    } else {
+      addToCart({ ...med, quantity: 1 });
     }
   };
 
-  const filteredMedicines = medicines.filter(med => 
-    med.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    med.category?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+  const handleQuantityDecrement = (med) => {
+    const cartItem = cartItems.find(item => item.id === med.id);
+    if (cartItem) {
+      if (cartItem.quantity === 1) {
+        removeItem(med.id);
+      } else {
+        updateQuantity(med.id, cartItem.quantity - 1);
+      }
+    }
   };
 
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: { y: 0, opacity: 1 }
-  };
+  const filteredMeds = getFilteredMedicines();
+
+  // Curated subsets based on id-modulo or ratings for rows
+  const recentlyOrderedMeds = medicines.slice(0, 5);
+  const recommendedMeds = medicines.slice(6, 12);
+  const popularNearbyMeds = medicines.slice(13, 19);
 
   return (
-    <motion.div 
-      initial="hidden" 
-      animate="visible" 
-      variants={containerVariants}
-      className="min-h-screen bg-background pb-20 font-sans overflow-x-hidden"
-    >
-      {/* Header */}
-      <motion.div variants={itemVariants} className="bg-gradient-to-br from-primary via-primary-dark to-blue-900 pt-24 pb-16 px-4 sm:px-6 lg:px-8 shadow-floating relative overflow-hidden rounded-b-[3rem]">
-        <div className="absolute top-[10%] right-[-10%] w-96 h-96 rounded-full bg-white/10 blur-3xl mix-blend-overlay animate-pulseSoft"></div>
-        <div className="absolute bottom-[-20%] left-[5%] w-64 h-64 rounded-full bg-primary-light/20 blur-2xl"></div>
-        
-        <div className="max-w-6xl mx-auto relative z-10 text-center">
-          <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-4 tracking-tight drop-shadow-md">Pharmacy Store</h1>
-          <p className="text-blue-100 text-lg md:text-xl font-medium max-w-2xl mx-auto drop-shadow-sm">
-            Order authentic medicines delivered to your door in minutes.
-          </p>
+    <div className="min-h-screen bg-[#F5F9FF] pb-32 font-sans relative overflow-x-hidden">
+      
+      {/* 1. Header Area */}
+      <div className="max-w-7xl mx-auto px-4 pt-4 pb-2 flex items-center justify-between gap-4">
+        {/* Delivery Address */}
+        <div className="flex items-center gap-2.5 max-w-[70%]">
+          <div className="w-10 h-10 rounded-full bg-[#1565C0]/10 flex items-center justify-center flex-shrink-0">
+            <MapPin className="text-[#1565C0]" size={20} />
+          </div>
+          <div className="overflow-hidden">
+            <p className="text-[10px] text-gray-400 font-extrabold uppercase tracking-widest">Deliver To</p>
+            <div className="flex items-center gap-1 cursor-pointer">
+              <span className="text-sm font-extrabold text-gray-900 truncate">
+                {address}
+              </span>
+              <ChevronRight size={14} className="text-gray-400" />
+            </div>
+          </div>
         </div>
-      </motion.div>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 relative z-20">
-        
-        {/* Back and Search */}
-        <motion.div variants={itemVariants} className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-          <button 
-            onClick={() => navigate('/home')} 
-            className="inline-flex items-center text-gray-700 hover:text-primary font-bold transition-colors group self-start md:self-auto bg-white/60 backdrop-blur-md px-4 py-2.5 rounded-xl shadow-sm border border-white/40"
-          >
-            <ArrowLeft size={18} className="mr-2 group-hover:-translate-x-1 transition-transform" />
-            <span>Dashboard</span>
+        {/* Action Badges */}
+        <div className="flex items-center gap-3">
+          {/* Notification Button */}
+          <button className="w-10 h-10 rounded-xl bg-white border border-blue-50/80 flex items-center justify-center relative shadow-sm hover:bg-gray-50 active:scale-95 transition-all">
+            <Bell size={18} className="text-gray-600" />
+            <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#E53935]"></span>
           </button>
-          
-          <div className="relative w-full md:w-96 shadow-glass rounded-xl bg-white/70 backdrop-blur-md border border-white/50 group">
-            <input 
-              type="text" 
-              placeholder="Search medicines or categories..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-5 py-3.5 pl-12 bg-transparent border-none rounded-xl focus:ring-2 focus:ring-primary/30 outline-none transition-all font-bold text-gray-900 placeholder:text-gray-400 placeholder:font-medium"
-            />
-            <Search className="absolute left-4 top-3.5 text-gray-400 group-focus-within:text-primary transition-colors" size={22} />
-          </div>
-        </motion.div>
 
-        {/* Loading State */}
-        {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3, 4, 5, 6].map(i => (
-              <div key={i} className="glass-card h-[340px] p-4 flex flex-col gap-4">
-                <Skeleton className="w-full h-40 rounded-2xl" />
-                <Skeleton className="w-16 h-4" />
-                <Skeleton className="w-3/4 h-6" />
-                <Skeleton className="w-full h-12 mt-auto" />
-              </div>
-            ))}
+          {/* Cart Badge Header */}
+          <Link to="/cart" className="w-10 h-10 rounded-xl bg-[#1565C0]/10 border border-[#1565C0]/20 flex items-center justify-center relative shadow-sm hover:bg-[#1565C0]/20 active:scale-95 transition-all">
+            <ShoppingBag size={18} className="text-[#1565C0]" />
+            {cartCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 bg-[#E53935] text-white text-[9px] font-black px-1.5 py-0.5 rounded-full shadow-sm">
+                {cartCount}
+              </span>
+            )}
+          </Link>
+        </div>
+      </div>
+
+      {/* 2. Sticky Search Bar (Blinkit Style) */}
+      <div className="sticky top-[73px] md:top-[88px] z-30 bg-[#F5F9FF]/90 backdrop-blur-md py-3 px-4 border-b border-blue-50/50">
+        <div className="max-w-xl mx-auto flex items-center bg-white border border-blue-100 shadow-sm px-4 py-3 rounded-2xl w-full focus-within:ring-2 focus-within:ring-[#1565C0]/20 transition-all">
+          <Search className="text-gray-400 mr-3" size={20} />
+          <input 
+            type="text" 
+            placeholder="Search medicines or health products..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-transparent border-none outline-none font-bold text-gray-900 placeholder:text-gray-400 placeholder:font-medium text-sm"
+          />
+          <div className="flex items-center gap-2.5 border-l border-gray-150 pl-3 ml-2">
+            <button 
+              onClick={() => navigate('/prescription-upload')}
+              className="text-[#1565C0] hover:scale-110 active:scale-90 transition-transform p-1 cursor-pointer"
+              title="Upload Prescription"
+            >
+              <Camera size={19} />
+            </button>
+            <button 
+              onClick={handleVoiceSearchClick}
+              className="text-[#1565C0] hover:scale-110 active:scale-90 transition-transform p-1 cursor-pointer"
+              title="Voice Search"
+            >
+              <Mic size={19} />
+            </button>
           </div>
-        ) : (
-          /* Grid */
-          <motion.div variants={containerVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <AnimatePresence>
-              {filteredMedicines.length === 0 ? (
-                <motion.div 
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  className="col-span-full glass-card p-12 text-center flex flex-col items-center"
+        </div>
+      </div>
+
+      {/* Main Container */}
+      <div className="max-w-7xl mx-auto px-4 mt-4 space-y-8">
+
+        {/* 3. Symptom Checker Banner */}
+        <div className="bg-gradient-to-br from-[#1565C0] via-blue-700 to-indigo-850 text-white rounded-3xl p-6 relative overflow-hidden shadow-lg border border-blue-500/20 group hover:shadow-xl transition-all">
+          {/* Background circles */}
+          <div className="absolute top-[-30%] right-[-10%] w-72 h-72 rounded-full bg-white/10 blur-3xl mix-blend-overlay"></div>
+          <div className="absolute bottom-[-20%] left-[10%] w-48 h-48 rounded-full bg-[#2E7D32]/20 blur-2xl"></div>
+
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
+            <div className="space-y-3 text-center md:text-left max-w-lg">
+              <div className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-md px-3.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border border-white/20">
+                <Sparkles size={12} className="text-yellow-300" /> AI Diagnostic Assistant
+              </div>
+              <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight">Don't know the medicine?</h2>
+              <p className="text-blue-100 text-sm font-medium leading-relaxed">
+                Describe your health symptoms in simple words and our AI engine will recommend home remedies, health guidelines, or suggest direct pharmacist consultations.
+              </p>
+              <div className="pt-2">
+                <Button 
+                  onClick={() => navigate('/symptom-checker')}
+                  className="bg-white text-[#1565C0] font-black rounded-xl text-xs uppercase tracking-wider py-3 px-5 shadow-md border border-white hover:bg-blue-50 hover:scale-105 active:scale-95 transition-all"
                 >
-                  <div className="bg-white/50 backdrop-blur-md p-6 rounded-full mb-4 shadow-inner border border-white/60">
-                    <Pill className="h-12 w-12 text-gray-400" />
-                  </div>
-                  <p className="font-bold text-gray-800 text-xl">No medicines found</p>
-                  <p className="text-gray-500 mt-2 font-medium">Try adjusting your search query.</p>
-                </motion.div>
-              ) : (
-                filteredMedicines.map((med) => (
-                  <motion.div variants={itemVariants} key={med.id}>
-                    <Link to={`/medicines/${med.id}`} className="glass-card-hover overflow-hidden flex flex-col h-[340px] group border-white/60 relative">
-                      {/* Image container */}
-                      <div className="h-40 bg-white/40 backdrop-blur-sm flex items-center justify-center overflow-hidden relative shadow-inner">
-                        {med.images && med.images.length > 0 ? (
-                          <img 
-                            src={med.images[0]} 
-                            alt={med.name} 
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                            onError={(e) => {
-                              e.target.onerror = null;
-                              e.target.src = 'https://placehold.co/400x400/f3f4f6/9ca3af?text=No+Image';
-                            }}
-                          />
-                        ) : (
-                          <Pill size={48} className="text-gray-300" />
-                        )}
-                        {/* Badge */}
-                        <div className="absolute top-3 left-3">
-                          <span className={cn(
-                            "inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md shadow-sm border",
-                            med.is_available ? "bg-white/90 text-secondary border-white" : "bg-danger/10 backdrop-blur-md text-danger border-danger/20"
-                          )}>
-                            {med.is_available ? 'In Stock' : 'Out of Stock'}
-                          </span>
-                        </div>
+                  Check Symptoms
+                </Button>
+              </div>
+            </div>
+
+            {/* Glowing AI Brain SVG Graphic */}
+            <div className="relative w-36 h-36 flex-shrink-0 flex items-center justify-center bg-white/5 border border-white/10 rounded-full backdrop-blur-sm animate-pulseSoft">
+              <svg viewBox="0 0 100 100" className="w-24 h-24 text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]">
+                <path fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" d="M50 20C40 20 32 26 32 36C32 40 34 44 38 48C40 50 42 54 42 58V62H58V58C58 54 60 50 62 48C66 44 68 40 68 36C68 26 60 20 50 20Z" />
+                <path fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="2 3" d="M38 36H62 M42 42H58 M46 48H54 M50 20V62" />
+                <circle cx="50" cy="74" r="5" fill="currentColor" />
+                <circle cx="50" cy="85" r="3" fill="currentColor" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        {/* 4. Medicine Categories Chips */}
+        <div>
+          <div className="flex items-center justify-between mb-3.5">
+            <h2 className="text-lg font-black text-gray-900 uppercase tracking-wider">Browse Categories</h2>
+          </div>
+          <div className="flex overflow-x-auto gap-2.5 pb-2 no-scrollbar scroll-smooth">
+            {CATEGORIES.map((cat) => {
+              const active = selectedCategory === cat;
+              return (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={cn(
+                    "px-4 py-2.5 rounded-full text-xs font-black uppercase tracking-wider border transition-all duration-200 whitespace-nowrap cursor-pointer active:scale-95",
+                    active 
+                      ? "bg-[#1565C0] text-white border-[#1565C0] shadow-sm shadow-blue-500/20" 
+                      : "bg-white text-gray-600 border-gray-150 hover:bg-gray-50"
+                  )}
+                >
+                  {cat}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 5. Main Filtered Products Grid */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-black text-gray-900 uppercase tracking-wider">
+              {selectedCategory === 'All' ? 'Featured Medicines' : `${selectedCategory} Store`}
+            </h2>
+            <span className="text-xs font-bold text-gray-400">
+              {filteredMeds.length} Products
+            </span>
+          </div>
+
+          {loading ? (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className="bg-white border border-gray-100 rounded-2xl p-4 flex flex-col gap-3">
+                  <Skeleton className="w-full h-32 rounded-xl" />
+                  <Skeleton className="w-16 h-3" />
+                  <Skeleton className="w-3/4 h-5" />
+                  <Skeleton className="w-full h-8 mt-auto" />
+                </div>
+              ))}
+            </div>
+          ) : filteredMeds.length === 0 ? (
+            <div className="bg-white/80 border border-white/60 p-12 rounded-[2rem] text-center flex flex-col items-center justify-center max-w-md mx-auto shadow-sm">
+              <Pill className="h-12 w-12 text-gray-300 mb-4 animate-bounce" />
+              <p className="font-extrabold text-gray-800 text-lg">No products found</p>
+              <p className="text-gray-500 text-sm mt-1 font-medium">Try clearing your filters or adjustment of search keywords.</p>
+              <button 
+                onClick={() => { setSearchQuery(''); setSelectedCategory('All'); }}
+                className="mt-5 text-[#1565C0] font-black text-xs uppercase tracking-wider hover:underline"
+              >
+                Clear Filters
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {filteredMeds.map((med) => {
+                const cartItem = cartItems.find(item => item.id === med.id);
+                const quantityInCart = cartItem ? cartItem.quantity : 0;
+
+                return (
+                  <div 
+                    key={med.id} 
+                    className="bg-white border border-blue-50/70 rounded-2xl p-3 flex flex-col relative transition-all duration-300 hover:shadow-lg hover:-translate-y-1 group"
+                  >
+                    {/* Discount Badge */}
+                    {med.discountPercent && (
+                      <div className="absolute top-2.5 left-0 bg-[#E53935] text-white text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-r-md shadow-sm z-10">
+                        {med.discountPercent}% OFF
                       </div>
+                    )}
+
+                    {/* Delivery Time Badge */}
+                    <div className="absolute top-2.5 right-2.5 flex items-center gap-1 bg-white/90 backdrop-blur-sm border border-gray-100 rounded-md px-1.5 py-0.5 shadow-sm text-[9px] font-bold text-gray-500">
+                      <Clock size={10} className="text-[#2E7D32]" />
+                      <span>{med.deliveryTime || '10 mins'}</span>
+                    </div>
+
+                    {/* Image Box */}
+                    <div className="w-full h-32 bg-gray-50 rounded-xl flex items-center justify-center overflow-hidden mb-3 relative group-hover:bg-gray-100/50 transition-colors">
+                      {med.images && med.images.length > 0 ? (
+                        <img 
+                          src={med.images[0]} 
+                          alt={med.name} 
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          loading="lazy"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = 'https://placehold.co/400x400/3b82f6/ffffff?text=Medicine';
+                          }}
+                        />
+                      ) : (
+                        <Pill size={32} className="text-gray-300" />
+                      )}
                       
-                      {/* Details */}
-                      <div className="p-5 flex flex-col flex-grow bg-white/20 backdrop-blur-sm">
-                        <span className="text-xs font-bold text-primary mb-1.5 uppercase tracking-wide">{med.category || 'Medicine'}</span>
-                        <h3 className="font-extrabold text-gray-900 text-lg mb-1 line-clamp-1">{med.name}</h3>
-                        <p className="text-gray-600 text-sm font-medium line-clamp-2 mb-4 flex-grow opacity-90">
-                          {med.description}
-                        </p>
-                        
-                        <div className="flex items-center justify-between mt-auto pt-3 border-t border-white/30">
-                          <div className="flex items-baseline text-primary drop-shadow-sm">
-                            <span className="text-sm font-bold mr-0.5">$</span>
-                            <span className="text-2xl font-extrabold tracking-tight">{med.price}</span>
-                          </div>
-                          <div className="w-10 h-10 rounded-xl bg-white/60 backdrop-blur-md text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors shadow-sm border border-white/50">
-                            <ArrowRight size={20} className="group-hover:translate-x-0.5 transition-transform" />
-                          </div>
+                      {/* Rx Badge */}
+                      {med.requires_prescription && (
+                        <div className="absolute bottom-1 right-1 bg-blue-50 text-[#1565C0] border border-blue-100 text-[8px] font-black px-1.5 py-0.5 rounded-md">
+                          Rx Required
                         </div>
+                      )}
+                    </div>
+
+                    {/* Brand */}
+                    <span className="text-[10px] text-gray-400 font-extrabold uppercase tracking-wider mb-0.5">
+                      {med.brand || 'MediRush'}
+                    </span>
+
+                    {/* Title */}
+                    <h3 className="text-sm font-extrabold text-gray-900 line-clamp-1 mb-1">
+                      {med.name}
+                    </h3>
+
+                    {/* Strength */}
+                    <span className="text-[11px] text-gray-500 font-bold mb-2">
+                      {med.strength || '10 Tablets'}
+                    </span>
+
+                    {/* Rating */}
+                    <div className="flex items-center gap-0.5 bg-gray-50 border border-gray-100 px-1.5 py-0.5 rounded-md text-[9px] font-black text-gray-600 w-fit mb-3">
+                      <Star size={10} className="fill-amber-400 text-amber-400" />
+                      <span>{med.rating || '4.5'}</span>
+                    </div>
+
+                    {/* Pricing & Add Trigger */}
+                    <div className="flex items-center justify-between mt-auto pt-2 border-t border-gray-50">
+                      <div>
+                        <span className="text-sm font-black text-gray-950">${med.price}</span>
+                        {med.originalPrice && (
+                          <span className="text-[10px] font-bold text-gray-400 line-through ml-1.5">${med.originalPrice}</span>
+                        )}
                       </div>
-                    </Link>
-                  </motion.div>
-                ))
-              )}
-            </AnimatePresence>
+
+                      {/* Add Button Incrementors (Blinkit style) */}
+                      <div className="w-20 h-9 relative flex items-center justify-center">
+                        {quantityInCart === 0 ? (
+                          <button
+                            onClick={() => handleQuantityIncrement(med)}
+                            className="bg-white text-[#2E7D32] border border-[#2E7D32]/30 shadow-sm rounded-lg hover:bg-green-50/50 transition-all font-black text-xs w-full h-full flex items-center justify-center active:scale-95 cursor-pointer uppercase"
+                          >
+                            ADD
+                            <Plus size={11} className="ml-1 text-[#2E7D32]" />
+                          </button>
+                        ) : (
+                          <div className="bg-[#2E7D32] text-white rounded-lg shadow-sm w-full h-full flex items-center justify-between px-2 font-black text-xs select-none">
+                            <button 
+                              onClick={() => handleQuantityDecrement(med)} 
+                              className="hover:scale-110 active:scale-90 font-bold p-1 cursor-pointer"
+                            >
+                              <Minus size={12} />
+                            </button>
+                            <span className="font-extrabold text-sm">{quantityInCart}</span>
+                            <button 
+                              onClick={() => handleQuantityIncrement(med)} 
+                              className="hover:scale-110 active:scale-90 font-bold p-1 cursor-pointer"
+                            >
+                              <Plus size={12} />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* 6. Recently Ordered medicines */}
+        {recentlyOrderedMeds.length > 0 && (
+          <div>
+            <div className="flex items-center gap-2 mb-3.5">
+              <TrendingUp className="text-[#1565C0]" size={20} />
+              <h2 className="text-lg font-black text-gray-900 uppercase tracking-wider">Recently Ordered</h2>
+            </div>
+            <div className="flex overflow-x-auto gap-4 pb-2 no-scrollbar scroll-smooth">
+              {recentlyOrderedMeds.map((med) => (
+                <div 
+                  key={`recent-${med.id}`}
+                  className="bg-white border border-blue-50/50 rounded-2xl p-3 flex-shrink-0 w-36 flex flex-col relative"
+                >
+                  <div className="w-full h-24 bg-gray-50 rounded-xl flex items-center justify-center overflow-hidden mb-2">
+                    <img 
+                      src={med.images[0]} 
+                      alt={med.name} 
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                  </div>
+                  <h3 className="text-xs font-extrabold text-gray-900 truncate mb-1">{med.name}</h3>
+                  <span className="text-[10px] text-gray-400 font-bold mb-2">{med.brand}</span>
+                  <div className="flex items-center justify-between mt-auto">
+                    <span className="text-xs font-black text-gray-950">${med.price}</span>
+                    <button 
+                      onClick={() => handleQuantityIncrement(med)}
+                      className="bg-white border border-[#2E7D32]/30 text-[#2E7D32] hover:bg-green-50 p-1 px-2 rounded-md text-[9px] font-black uppercase tracking-wider cursor-pointer active:scale-95"
+                    >
+                      Reorder
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 7. Recommended For You */}
+        {recommendedMeds.length > 0 && (
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <Sparkles className="text-[#2E7D32]" size={20} />
+              <h2 className="text-lg font-black text-gray-900 uppercase tracking-wider">Recommended For You</h2>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              {recommendedMeds.map((med) => {
+                const cartItem = cartItems.find(item => item.id === med.id);
+                const quantityInCart = cartItem ? cartItem.quantity : 0;
+                return (
+                  <div 
+                    key={`rec-${med.id}`}
+                    className="bg-white border border-blue-50/50 rounded-2xl p-3 flex flex-col relative"
+                  >
+                    <div className="w-full h-24 bg-gray-50 rounded-xl flex items-center justify-center overflow-hidden mb-2">
+                      <img 
+                        src={med.images[0]} 
+                        alt={med.name} 
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                    </div>
+                    <h3 className="text-xs font-extrabold text-gray-900 line-clamp-1 mb-1">{med.name}</h3>
+                    <span className="text-[10px] text-gray-400 font-bold mb-2">{med.strength}</span>
+                    <div className="flex items-center justify-between mt-auto">
+                      <span className="text-xs font-black text-gray-950">${med.price}</span>
+                      <button 
+                        onClick={() => handleQuantityIncrement(med)}
+                        className="bg-white border border-[#1565C0]/20 text-[#1565C0] hover:bg-blue-50/50 p-1 px-2 rounded-md text-[9px] font-black uppercase tracking-wider cursor-pointer active:scale-95"
+                      >
+                        + Add
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* 8. Popular Nearby */}
+        {popularNearbyMeds.length > 0 && (
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <MapPin className="text-[#E53935]" size={20} />
+              <h2 className="text-lg font-black text-gray-900 uppercase tracking-wider">Popular Nearby</h2>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              {popularNearbyMeds.map((med) => {
+                return (
+                  <div 
+                    key={`pop-${med.id}`}
+                    className="bg-white border border-blue-50/50 rounded-2xl p-3 flex flex-col relative"
+                  >
+                    <div className="absolute top-1 right-1 bg-amber-50 text-amber-700 text-[8px] font-black px-1 rounded shadow-sm">
+                      TRENDING
+                    </div>
+                    <div className="w-full h-24 bg-gray-50 rounded-xl flex items-center justify-center overflow-hidden mb-2">
+                      <img 
+                        src={med.images[0]} 
+                        alt={med.name} 
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                    </div>
+                    <h3 className="text-xs font-extrabold text-gray-900 line-clamp-1 mb-1">{med.name}</h3>
+                    <span className="text-[10px] text-gray-400 font-bold mb-2">{med.brand}</span>
+                    <div className="flex items-center justify-between mt-auto">
+                      <span className="text-xs font-black text-gray-950">${med.price}</span>
+                      <button 
+                        onClick={() => handleQuantityIncrement(med)}
+                        className="bg-white border border-[#1565C0]/20 text-[#1565C0] hover:bg-blue-50/50 p-1 px-2 rounded-md text-[9px] font-black uppercase tracking-wider cursor-pointer active:scale-95"
+                      >
+                        + Add
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+      </div>
+
+      {/* 9. Floating Cart drawer (Blinkit Style) */}
+      <AnimatePresence>
+        {cartCount > 0 && (
+          <motion.div 
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 220 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-lg z-50 bg-[#2E7D32] text-white p-3.5 rounded-2xl shadow-xl flex items-center justify-between border border-green-500/20"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shadow-inner">
+                <ShoppingCart size={20} className="text-white" />
+              </div>
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-widest text-green-150">{cartCount} Item{cartCount > 1 ? 's' : ''} Added</p>
+                <p className="text-base font-black">${cartSubtotal.toFixed(2)}</p>
+              </div>
+            </div>
+
+            <button 
+              onClick={() => navigate('/cart')}
+              className="bg-white text-[#2E7D32] hover:bg-green-50 px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider shadow-md flex items-center gap-1 cursor-pointer active:scale-95 transition-all"
+            >
+              View Cart
+              <ChevronRight size={14} />
+            </button>
           </motion.div>
         )}
-      </div>
-    </motion.div>
+      </AnimatePresence>
+
+      {/* Voice Simulation Popup Modal */}
+      <AnimatePresence>
+        {showVoiceSimulation && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-3xl p-6 shadow-2xl border border-gray-100 max-w-xs w-full text-center space-y-4"
+            >
+              <div className="flex justify-between items-center pb-2 border-b border-gray-150">
+                <h3 className="text-xs font-black text-gray-500 uppercase tracking-widest">Voice Assistant</h3>
+                <button onClick={() => setShowVoiceSimulation(false)} className="text-gray-400 hover:text-gray-650 p-1 cursor-pointer"><X size={16} /></button>
+              </div>
+              <div className="w-16 h-16 rounded-full bg-blue-500/10 text-blue-600 flex items-center justify-center mx-auto animate-pulse">
+                <Mic size={28} />
+              </div>
+              <p className="text-sm font-extrabold text-gray-800">{voiceText}</p>
+              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Try saying "Paracetamol" or "Cough syrup"</p>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+    </div>
   );
 };
