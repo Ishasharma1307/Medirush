@@ -225,31 +225,33 @@ export const Medicines = () => {
         </div>
       </div>
 
-      {/* 2. Sticky Search Bar (Blinkit Style) */}
-      <div className="sticky top-[73px] md:top-[88px] z-30 bg-[#F5F9FF]/90 backdrop-blur-md py-3 px-4 border-b border-blue-50/50">
-        <div className="max-w-xl mx-auto flex items-center bg-white border border-blue-100 shadow-sm px-4 py-3 rounded-2xl w-full focus-within:ring-2 focus-within:ring-[#1565C0]/20 transition-all">
-          <Search className="text-gray-400 mr-3" size={20} />
+      {/* 2. Sticky Search Bar (Wide & Prominent) */}
+      <div className="sticky top-[73px] md:top-[88px] z-30 bg-[#F5F9FF]/95 backdrop-blur-md py-3 px-4 border-b border-blue-50/60 shadow-sm">
+        <div className="max-w-7xl mx-auto flex items-center bg-white border border-blue-150 shadow-md px-4 py-3 rounded-2xl w-full focus-within:ring-2 focus-within:ring-[#1565C0]/20 transition-all">
+          <Search className="text-[#1565C0] mr-3 flex-shrink-0" size={22} />
           <input 
             type="text" 
-            placeholder="Search medicines or health products..."
+            placeholder="Search medicines, salts, or health products..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-transparent border-none outline-none font-bold text-gray-900 placeholder:text-gray-400 placeholder:font-medium text-sm"
+            className="w-full bg-transparent border-none outline-none font-extrabold text-gray-900 placeholder:text-gray-400 placeholder:font-medium text-sm md:text-base"
           />
-          <div className="flex items-center gap-2.5 border-l border-gray-150 pl-3 ml-2">
+          <div className="flex items-center gap-2 border-l border-gray-150 pl-3 ml-2 flex-shrink-0">
             <button 
               onClick={() => setShowCameraModal(true)}
-              className="text-[#1565C0] hover:scale-110 active:scale-90 transition-transform p-1 cursor-pointer"
-              title="Camera Visual Search (Upload medicine photo)"
+              className="flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100 text-[#1565C0] px-3 py-1.5 rounded-xl font-black text-xs transition-all active:scale-95 cursor-pointer border border-blue-200"
+              title="Camera Visual Search"
             >
-              <Camera size={19} />
+              <Camera size={16} />
+              <span className="hidden sm:inline">Photo Search</span>
             </button>
             <button 
               onClick={handleVoiceSearchClick}
-              className="text-[#1565C0] hover:scale-110 active:scale-90 transition-transform p-1 cursor-pointer"
+              className="flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 text-[#2E7D32] px-3 py-1.5 rounded-xl font-black text-xs transition-all active:scale-95 cursor-pointer border border-emerald-200"
               title="Voice Search"
             >
-              <Mic size={19} />
+              <Mic size={16} />
+              <span className="hidden sm:inline">Voice</span>
             </button>
           </div>
         </div>
@@ -258,51 +260,45 @@ export const Medicines = () => {
       {/* Main Container */}
       <div className="max-w-7xl mx-auto px-4 mt-4 space-y-8">
 
-        {/* 3. Dedicated Action Banners (Prescription Upload & AI Symptom Checker) */}
+        {/* 3. Sleek Balanced Action Banners */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           
           {/* Card A: Prescription Uploader Banner */}
-          <div className="bg-gradient-to-br from-[#1565C0] via-blue-800 to-indigo-900 text-white rounded-3xl p-6 relative overflow-hidden shadow-lg border border-blue-500/20 group hover:shadow-xl transition-all flex flex-col justify-between">
-            <div className="absolute top-[-30%] right-[-10%] w-60 h-60 rounded-full bg-white/10 blur-2xl pointer-events-none"></div>
-            <div className="relative z-10 space-y-3">
-              <div className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border border-white/20">
-                <FileText size={12} className="text-blue-200" /> Direct Pharmacy Order
+          <div className="bg-gradient-to-r from-[#1565C0] to-blue-800 text-white rounded-2xl p-4 sm:p-5 relative overflow-hidden shadow-md border border-blue-500/20 flex items-center justify-between gap-4">
+            <div className="space-y-1.5 max-w-[70%] relative z-10">
+              <div className="inline-flex items-center gap-1 bg-white/20 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider">
+                <FileText size={10} className="text-blue-100" /> Have Doctor's Slip?
               </div>
-              <h2 className="text-xl md:text-2xl font-extrabold tracking-tight">Upload Doctor's Prescription</h2>
-              <p className="text-blue-100 text-xs font-medium leading-relaxed">
-                Upload your doctor's slip. Verified nearby pharmacies will check stock and offer fast doorstep delivery.
+              <h2 className="text-base sm:text-lg font-extrabold tracking-tight">Upload Prescription</h2>
+              <p className="text-blue-100 text-xs font-medium line-clamp-2">
+                Upload slip for instant pharmacy stock quote & doorstep delivery.
               </p>
             </div>
-            <div className="pt-4 relative z-10">
-              <Button 
-                onClick={() => navigate('/prescription-upload')}
-                className="bg-white text-[#1565C0] font-black rounded-xl text-xs uppercase tracking-wider py-3 px-4 shadow-md border border-white hover:bg-blue-50 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
-              >
-                Upload Prescription <ArrowRight size={14} />
-              </Button>
-            </div>
+            <Button 
+              onClick={() => navigate('/prescription-upload')}
+              className="bg-white text-[#1565C0] font-black rounded-xl text-xs uppercase tracking-wider py-2.5 px-3.5 shadow-sm border border-white hover:bg-blue-50 active:scale-95 transition-all flex items-center gap-1.5 whitespace-nowrap flex-shrink-0"
+            >
+              Upload <ArrowRight size={13} />
+            </Button>
           </div>
 
           {/* Card B: AI Symptom Checker Banner */}
-          <div className="bg-gradient-to-br from-[#2E7D32] via-emerald-800 to-teal-900 text-white rounded-3xl p-6 relative overflow-hidden shadow-lg border border-emerald-500/20 group hover:shadow-xl transition-all flex flex-col justify-between">
-            <div className="absolute bottom-[-30%] right-[-10%] w-60 h-60 rounded-full bg-white/10 blur-2xl pointer-events-none"></div>
-            <div className="relative z-10 space-y-3">
-              <div className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border border-white/20">
-                <Sparkles size={12} className="text-yellow-300" /> AI Diagnostic Triage
+          <div className="bg-gradient-to-r from-[#2E7D32] to-emerald-800 text-white rounded-2xl p-4 sm:p-5 relative overflow-hidden shadow-md border border-emerald-500/20 flex items-center justify-between gap-4">
+            <div className="space-y-1.5 max-w-[70%] relative z-10">
+              <div className="inline-flex items-center gap-1 bg-white/20 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider">
+                <Sparkles size={10} className="text-yellow-300" /> Don't Know Medicine Name?
               </div>
-              <h2 className="text-xl md:text-2xl font-extrabold tracking-tight">Not Sure Which Medicine?</h2>
-              <p className="text-emerald-100 text-xs font-medium leading-relaxed">
-                Describe your symptoms for instant AI health assessment, safe remedies, or emergency hospital guidance.
+              <h2 className="text-base sm:text-lg font-extrabold tracking-tight">AI Symptom Assistant</h2>
+              <p className="text-emerald-100 text-xs font-medium line-clamp-2">
+                Describe symptoms to get suggested medicines with pharmacist review.
               </p>
             </div>
-            <div className="pt-4 relative z-10">
-              <Button 
-                onClick={() => navigate('/symptom-checker')}
-                className="bg-white text-[#2E7D32] font-black rounded-xl text-xs uppercase tracking-wider py-3 px-4 shadow-md border border-white hover:bg-emerald-50 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
-              >
-                Check Symptoms <ArrowRight size={14} />
-              </Button>
-            </div>
+            <Button 
+              onClick={() => navigate('/symptom-checker')}
+              className="bg-white text-[#2E7D32] font-black rounded-xl text-xs uppercase tracking-wider py-2.5 px-3.5 shadow-sm border border-white hover:bg-emerald-50 active:scale-95 transition-all flex items-center gap-1.5 whitespace-nowrap flex-shrink-0"
+            >
+              Check <ArrowRight size={13} />
+            </Button>
           </div>
 
         </div>

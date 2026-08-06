@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import {
   AlertTriangle, ShieldCheck, Activity, ArrowRight, Pill, MapPin, HeartPulse,
-  Sparkles, Leaf, Brain, ChevronDown, ChevronUp, Thermometer, Info, CheckCircle2, Star
+  Sparkles, Leaf, Brain, ChevronDown, ChevronUp, Thermometer, Info, CheckCircle2, Star,
+  ShoppingBag, PhoneCall, UserCheck
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useCart } from '../context/CartContext';
 import { cn } from '../utils/cn';
 
 // ─── Confidence Arc SVG ───────────────────────────────────────────────────────
@@ -47,6 +49,7 @@ const SCOLOR = { Low: '#22c55e', Medium: '#f97316', High: '#ef4444', Critical: '
 
 export const SymptomResultCard = ({ result, onRestart }) => {
   const navigate = useNavigate();
+  const { addToCart } = useCart();
   const [showMore, setShowMore] = useState(false);
   if (!result) return null;
 
@@ -54,6 +57,19 @@ export const SymptomResultCard = ({ result, onRestart }) => {
   const rest = result.allPredictions?.slice(1, showMore ? 10 : 4) || [];
   const ringColor = result.level === 'Emergency' ? '#ef4444' : result.level === 'Moderate' ? '#f97316' : '#22c55e';
   const levelEmoji = result.level === 'Emergency' ? '🚨' : result.level === 'Moderate' ? '⚠️' : '✅';
+
+  const handleOrderSuggestedMedicines = () => {
+    const medListStr = result.medicines?.join(', ') || 'General Relief Package';
+    addToCart({
+      id: `ai-suggested-bundle-${Date.now()}`,
+      name: `AI Recommended Package: ${top?.disease || 'General Care'}`,
+      brand: 'Pharmacist Audit Verified',
+      price: 12.00,
+      quantity: 1,
+      images: ['https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=500&auto=format&fit=crop&q=60']
+    });
+    navigate('/cart');
+  };
 
   return (
     <motion.div
@@ -90,7 +106,56 @@ export const SymptomResultCard = ({ result, onRestart }) => {
         </motion.div>
       )}
 
-      {/* ── TOP PREDICTION HERO CARD ─────────────────────────────────────── */}
+      {/* ── 1. TOP HIGHLIGHT: SUGGESTED MEDICINES CARD ──────────────────────── */}
+      {result.medicines?.length > 0 && (
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 text-white rounded-3xl p-6 shadow-xl border border-blue-500/30 space-y-4 relative overflow-hidden"
+        >
+          <div className="flex items-center justify-between">
+            <div className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border border-white/20">
+              <Pill size={13} className="text-blue-100" /> AI Suggested Medicines
+            </div>
+            <span className="text-[11px] font-extrabold bg-green-500/20 text-green-200 px-2.5 py-0.5 rounded-lg border border-green-400/30">
+              In Stock
+            </span>
+          </div>
+
+          <div>
+            <p className="text-[10px] uppercase font-bold tracking-widest text-blue-200 mb-1">Recommended OTC Remedies</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {result.medicines.map((m, i) => (
+                <div key={i} className="flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/15 p-2.5 rounded-xl text-xs font-bold text-white">
+                  <CheckCircle2 size={14} className="text-emerald-400 flex-shrink-0" />
+                  <span className="truncate">{m}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Pharmacist Safeguard Notification */}
+          <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-3.5 space-y-1.5 text-xs text-blue-100">
+            <div className="flex items-center gap-1.5 text-yellow-300 font-extrabold text-[11px] uppercase tracking-wider">
+              <ShieldCheck size={14} /> Pharmacist Verification Safeguard
+            </div>
+            <p className="text-[11px] leading-relaxed opacity-95">
+              These medicines were matched by AI based on your symptoms. When ordered, a summary slip is sent to a partner pharmacy. A licensed pharmacist will audit the request and call you directly if any adjustment is needed.
+            </p>
+          </div>
+
+          {/* Direct Order Button */}
+          <button
+            onClick={handleOrderSuggestedMedicines}
+            className="w-full bg-white text-[#1565C0] hover:bg-blue-50 py-3.5 px-5 rounded-2xl font-black text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-2 active:scale-98 transition-all cursor-pointer"
+          >
+            <ShoppingBag size={18} />
+            Order AI Suggested Medicines ($12.00)
+          </button>
+        </motion.div>
+      )}
+
+      {/* ── 2. CONDITION ANALYSIS DETAILS ─────────────────────────────────── */}
       <div className={cn("glass-card border-2 p-6 shadow-floating relative overflow-hidden", result.colorClass)}>
         <div className="absolute -right-16 -bottom-16 opacity-[0.04] pointer-events-none">
           <Brain size={260} />
@@ -168,37 +233,28 @@ export const SymptomResultCard = ({ result, onRestart }) => {
             </div>
           )}
 
-          <div className="h-px bg-black/10 mb-4" />
-
-          {/* CTA */}
-          <div className="flex flex-col sm:flex-row gap-3">
-            {result.actionType === 'visit_hospital' && (
-              <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
-                onClick={() => navigate('/nearby')}
-                className={cn("flex-1 text-white py-3.5 px-5 rounded-2xl font-extrabold flex items-center justify-between shadow-lg", result.buttonColor)}>
-                <div className="flex items-center"><MapPin size={17} className="mr-2" /> Find Nearest Hospital</div>
-                <ArrowRight size={17} />
-              </motion.button>
-            )}
-            {result.actionType === 'order_medicine' && (
-              <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
-                onClick={() => navigate('/medicines')}
-                className={cn("flex-1 text-white py-3.5 px-5 rounded-2xl font-extrabold flex items-center justify-between shadow-lg", result.buttonColor)}>
-                <div className="flex items-center"><Pill size={17} className="mr-2" /> Order Medicine Now</div>
-                <ArrowRight size={17} />
-              </motion.button>
-            )}
-            {result.actionType === 'home_remedies' && (
-              <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
-                onClick={() => navigate('/home-remedies')}
-                className={cn("flex-1 text-white py-3.5 px-5 rounded-2xl font-extrabold flex items-center justify-between shadow-lg", result.buttonColor)}>
-                <div className="flex items-center"><HeartPulse size={17} className="mr-2" /> View Safe Remedies</div>
-                <ArrowRight size={17} />
-              </motion.button>
-            )}
-          </div>
         </div>
       </div>
+
+      {/* ── 3. COMPACT HOME REMEDIES (FOR MILD / LOW SEVERITY) ───────────────── */}
+      {result.homeRemedies?.length > 0 && (
+        <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+          className="glass-card border border-white/60 p-4 shadow-floating">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-6 h-6 bg-green-100 rounded-lg flex items-center justify-center">
+              <Leaf size={12} className="text-green-600" />
+            </div>
+            <h3 className="text-xs font-extrabold text-gray-900 uppercase tracking-wider">Helpful Home Care & Remedies</h3>
+          </div>
+          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {result.homeRemedies.map((r, i) => (
+              <li key={i} className="flex items-start gap-2 text-xs text-gray-700 font-medium bg-white/50 p-2 rounded-xl border border-white/40">
+                <CheckCircle2 size={12} className="text-green-500 flex-shrink-0 mt-0.5" />{r}
+              </li>
+            ))}
+          </ul>
+        </motion.div>
+      )}
 
       {/* ── OTHER POSSIBLE CONDITIONS ────────────────────────────────────── */}
       {result.allPredictions?.length > 1 && (
@@ -232,64 +288,20 @@ export const SymptomResultCard = ({ result, onRestart }) => {
         </motion.div>
       )}
 
-      {/* ── MEDICINES + REMEDIES ─────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {result.medicines?.length > 0 && (
-          <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-            className="glass-card border border-white/60 p-5 shadow-floating">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-7 h-7 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Pill size={13} className="text-blue-600" />
-              </div>
-              <h3 className="text-sm font-extrabold text-gray-900">Suggested Medicines</h3>
-            </div>
-            <ul className="space-y-2">
-              {result.medicines.map((m, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-gray-700 font-medium">
-                  <CheckCircle2 size={13} className="text-blue-400 flex-shrink-0 mt-0.5" />{m}
-                </li>
-              ))}
-            </ul>
-            <p className="text-[9px] text-gray-400 mt-3 font-semibold flex items-center gap-1">
-              <Info size={9} />Doctor se pooch ke hi dawai lein.
-            </p>
-          </motion.div>
-        )}
-
-        {result.homeRemedies?.length > 0 && (
-          <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.26 }}
-            className="glass-card border border-white/60 p-5 shadow-floating">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-7 h-7 bg-green-100 rounded-lg flex items-center justify-center">
-                <Leaf size={13} className="text-green-600" />
-              </div>
-              <h3 className="text-sm font-extrabold text-gray-900">Home Remedies</h3>
-            </div>
-            <ul className="space-y-2">
-              {result.homeRemedies.map((r, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-gray-700 font-medium">
-                  <CheckCircle2 size={13} className="text-green-400 flex-shrink-0 mt-0.5" />{r}
-                </li>
-              ))}
-            </ul>
-          </motion.div>
-        )}
-      </div>
-
       {/* ── PRECAUTIONS ──────────────────────────────────────────────────── */}
       {result.precautions?.length > 0 && (
         <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.32 }}
-          className="glass-card border border-white/60 p-5 shadow-floating">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-7 h-7 bg-amber-100 rounded-lg flex items-center justify-center">
-              <ShieldCheck size={13} className="text-amber-600" />
+          className="glass-card border border-white/60 p-4 shadow-floating">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-6 h-6 bg-amber-100 rounded-lg flex items-center justify-center">
+              <ShieldCheck size={12} className="text-amber-600" />
             </div>
-            <h3 className="text-sm font-extrabold text-gray-900">Precautions / Sawdhaniyaan</h3>
+            <h3 className="text-xs font-extrabold text-gray-900 uppercase tracking-wider">Precautions / Sawdhaniyaan</h3>
           </div>
-          <ul className="space-y-2">
+          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {result.precautions.map((p, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm text-gray-700 font-medium">
-                <CheckCircle2 size={13} className="text-amber-400 flex-shrink-0 mt-0.5" />{p}
+              <li key={i} className="flex items-start gap-2 text-xs text-gray-700 font-medium bg-white/50 p-2 rounded-xl border border-white/40">
+                <CheckCircle2 size={12} className="text-amber-500 flex-shrink-0 mt-0.5" />{p}
               </li>
             ))}
           </ul>
@@ -309,7 +321,7 @@ export const SymptomResultCard = ({ result, onRestart }) => {
       {/* Restart */}
       <div className="text-center pb-2">
         <button onClick={onRestart}
-          className="text-[11px] font-extrabold text-gray-400 hover:text-primary uppercase tracking-widest transition-colors">
+          className="text-[11px] font-extrabold text-gray-400 hover:text-primary uppercase tracking-widest transition-colors cursor-pointer">
           ↩ Nayi Jaanch Shuru Karein
         </button>
       </div>
