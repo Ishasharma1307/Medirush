@@ -63,6 +63,33 @@ export const SymptomResultCard = ({ result, onRestart }) => {
       className="w-full max-w-2xl mx-auto space-y-4 pb-8"
     >
 
+      {/* ── SEVERE SYMPTOM URGENT WARNING BANNER ───────────────────────────── */}
+      {(result.level === 'Emergency' || top?.severity === 'High' || top?.severity === 'Critical') && (
+        <motion.div 
+          initial={{ scale: 0.96, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="bg-gradient-to-r from-red-600 via-red-700 to-rose-800 text-white rounded-2xl p-5 shadow-lg border border-red-500 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative overflow-hidden"
+        >
+          <div className="flex items-start gap-3 relative z-10">
+            <div className="p-2.5 bg-white/20 rounded-xl backdrop-blur-md flex-shrink-0 border border-white/20 shadow-inner">
+              <AlertTriangle size={24} className="text-white animate-pulse" />
+            </div>
+            <div>
+              <h3 className="text-base font-extrabold tracking-tight">HIGH RISK SYMPTOMS DETECTED</h3>
+              <p className="text-xs text-red-100 font-medium leading-relaxed mt-0.5">
+                Self-medication is unsafe for severe symptoms. Please visit a hospital or consult a qualified doctor immediately.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => navigate('/nearby')}
+            className="w-full sm:w-auto bg-white text-red-700 hover:bg-red-50 px-4 py-3 rounded-xl font-extrabold text-xs uppercase tracking-wider shadow-md flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer active:scale-95 transition-all relative z-10 flex-shrink-0"
+          >
+            <MapPin size={15} /> Find Nearest Hospital
+          </button>
+        </motion.div>
+      )}
+
       {/* ── TOP PREDICTION HERO CARD ─────────────────────────────────────── */}
       <div className={cn("glass-card border-2 p-6 shadow-floating relative overflow-hidden", result.colorClass)}>
         <div className="absolute -right-16 -bottom-16 opacity-[0.04] pointer-events-none">

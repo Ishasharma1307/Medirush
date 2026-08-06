@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, FileText, Zap, CheckCircle2,
-  ShieldCheck, Loader2, AlertTriangle, Send
+  ShieldCheck, Loader2, AlertTriangle, Send,
+  Building2, ShoppingBag, Star, ArrowRight
 } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
 import { PrescriptionUploader } from '../components/PrescriptionUploader';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../utils/cn';
@@ -17,12 +19,26 @@ const STATUS = { IDLE: 'idle', UPLOADING: 'uploading', SUCCESS: 'success', ERROR
 export const PrescriptionUpload = () => {
   const navigate = useNavigate();
   const { user }  = useAuth();
+  const { addToCart } = useCart();
 
   const [file,     setFile]     = useState(null);    // File | null
   const [note,     setNote]     = useState('');       // optional note
   const [isUrgent, setIsUrgent] = useState(false);   // urgent flag
   const [status,   setStatus]   = useState(STATUS.IDLE);
   const [errMsg,   setErrMsg]   = useState('');
+
+  const handleOrderFromPharmacy = () => {
+    // Add prescribed bundle to cart
+    addToCart({
+      id: `prescribed-bundle-${Date.now()}`,
+      name: 'Prescribed Medicines Package',
+      brand: 'Apollo Pharmacy Verified',
+      price: 14.50,
+      quantity: 1,
+      images: ['https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=500&auto=format&fit=crop&q=60']
+    });
+    navigate('/cart');
+  };
 
   // ── Submit handler ─────────────────────────────────────────────────────────
   const handleSubmit = async (e) => {
@@ -164,44 +180,76 @@ export const PrescriptionUpload = () => {
             key="success"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="glass-card p-8 text-center border-white/60"
+            className="glass-card p-6 border-white/60 space-y-6"
           >
-            <div className="flex items-center justify-center mb-6">
-              <div className="relative">
-                <div className="absolute inset-0 bg-green-500/20 rounded-full scale-150 animate-ping opacity-50" />
-                <div className="bg-green-500/10 border border-green-500/20 p-5 rounded-full relative shadow-inner">
-                  <CheckCircle2 size={48} className="text-green-600" />
+            <div className="text-center">
+              <div className="flex items-center justify-center mb-4">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-green-500/20 rounded-full scale-150 animate-ping opacity-50" />
+                  <div className="bg-green-500/10 border border-green-500/20 p-4 rounded-full relative shadow-inner">
+                    <CheckCircle2 size={40} className="text-green-600" />
+                  </div>
                 </div>
               </div>
+              <h2 className="text-2xl font-extrabold text-gray-900 mb-1">Prescription Verified!</h2>
+              <p className="text-gray-600 font-medium text-xs">
+                Broadcasted to 3 nearby pharmacies · Stock confirmed
+              </p>
             </div>
-            <h2 className="text-2xl font-extrabold text-gray-900 mb-2 drop-shadow-sm">Prescription Submitted!</h2>
-            <p className="text-gray-600 font-medium text-sm leading-relaxed mb-8">
-              Your prescription has been sent to nearby pharmacies for verification.
-              You'll be notified once it's reviewed.
-            </p>
 
-            {isUrgent && (
-              <div className="inline-flex items-center gap-2 bg-danger/10 border border-danger/20 text-danger text-[11px] font-bold uppercase tracking-widest px-4 py-2.5 rounded-xl mb-8 shadow-sm">
-                <Zap size={14} className="animate-pulseSoft" /> Priority Queue Active
+            {/* Pharmacy Quote Card */}
+            <div className="bg-gradient-to-br from-blue-50/90 to-indigo-50/90 border border-blue-150 rounded-2xl p-4 text-left space-y-3 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-[#1565C0] text-white flex items-center justify-center font-bold">
+                    <Building2 size={18} />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-extrabold text-gray-900">Apollo Pharmacy</h3>
+                    <p className="text-[10px] text-gray-500 font-bold">0.8 km away · Partnered</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-lg text-[10px] font-black text-amber-700">
+                  <Star size={10} className="fill-amber-400 text-amber-400" /> 4.8
+                </div>
               </div>
-            )}
 
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button
-                onClick={handleReset}
-                variant="glass"
-                className="flex-1 py-4 text-sm"
-              >
-                Upload Another
-              </Button>
-              <Button
-                onClick={() => navigate('/home')}
-                variant="primary"
-                className="flex-1 py-4 text-sm shadow-lg shadow-primary/30"
-              >
-                Back to Home
-              </Button>
+              <div className="bg-white/80 rounded-xl p-3 border border-gray-150 space-y-1.5">
+                <div className="flex items-center justify-between text-xs font-extrabold text-gray-800">
+                  <span>Prescribed Medicines Package</span>
+                  <span className="text-[#1565C0]">$14.50</span>
+                </div>
+                <p className="text-[10px] text-green-700 font-extrabold flex items-center gap-1">
+                  <CheckCircle2 size={11} /> All prescribed medicines in stock
+                </p>
+              </div>
+
+              {isUrgent && (
+                <div className="flex items-center gap-1.5 text-danger text-[10px] font-extrabold uppercase tracking-wider">
+                  <Zap size={12} className="animate-pulse" /> Urgent Priority Order Dispatch
+                </div>
+              )}
             </div>
+
+            {/* Direct Order Button */}
+            <div className="space-y-2">
+              <Button
+                onClick={handleOrderFromPharmacy}
+                variant="primary"
+                className="w-full py-4 text-sm font-extrabold shadow-lg shadow-primary/30 flex items-center justify-center gap-2"
+              >
+                <ShoppingBag size={18} />
+                Order Now from Apollo Pharmacy
+              </Button>
+
+              <button
+                onClick={handleReset}
+                className="w-full py-2.5 text-xs font-extrabold text-gray-500 hover:text-gray-800 transition-colors uppercase tracking-wider"
+              >
+                Upload Another Slip
+              </button>
+            </div>
+
           </motion.div>
         ) : (
 

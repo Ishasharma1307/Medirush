@@ -8,7 +8,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Search, Camera, Mic, MapPin, Bell, ShoppingBag, 
   ChevronRight, Plus, Minus, Star, Clock, ArrowLeft, 
-  Pill, Check, CheckCircle, TrendingUp, Sparkles, X, ShoppingCart
+  Pill, Check, CheckCircle, TrendingUp, Sparkles, X, ShoppingCart,
+  FileText, UploadCloud, ArrowRight
 } from 'lucide-react';
 import { Button } from '../components/Button';
 import { Skeleton } from '../components/ui/Skeleton';
@@ -39,6 +40,11 @@ export const Medicines = () => {
   const [address, setAddress] = useState('Flat 402, Block B, Green Glen Layout, Bangalore');
   const [showVoiceSimulation, setShowVoiceSimulation] = useState(false);
   const [voiceText, setVoiceText] = useState('Listening for symptoms or medicines...');
+  
+  // Camera Visual Search state
+  const [showCameraModal, setShowCameraModal] = useState(false);
+  const [isScanningImage, setIsScanningImage] = useState(false);
+  const [scanResultText, setScanResultText] = useState('');
 
   // Load and enrich mock data
   useEffect(() => {
@@ -133,6 +139,22 @@ export const Medicines = () => {
     }, 1500);
   };
 
+  // Handle Camera Image Visual Search Simulation
+  const handleImageUpload = (file) => {
+    if (!file) return;
+    setIsScanningImage(true);
+    setScanResultText('Scanning medicine strip image & extracting text...');
+    setTimeout(() => {
+      setScanResultText('AI OCR Recognized: "Cetirizine 10mg"');
+      setTimeout(() => {
+        setSearchQuery('Cetirizine');
+        setIsScanningImage(false);
+        setShowCameraModal(false);
+        setScanResultText('');
+      }, 1200);
+    }, 1500);
+  };
+
   // Filter medicines by Category & Search query
   const getFilteredMedicines = () => {
     return medicines.filter(med => {
@@ -200,7 +222,6 @@ export const Medicines = () => {
             <Bell size={18} className="text-gray-600" />
             <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#E53935]"></span>
           </button>
-
         </div>
       </div>
 
@@ -217,9 +238,9 @@ export const Medicines = () => {
           />
           <div className="flex items-center gap-2.5 border-l border-gray-150 pl-3 ml-2">
             <button 
-              onClick={() => navigate('/prescription-upload')}
+              onClick={() => setShowCameraModal(true)}
               className="text-[#1565C0] hover:scale-110 active:scale-90 transition-transform p-1 cursor-pointer"
-              title="Upload Prescription"
+              title="Camera Visual Search (Upload medicine photo)"
             >
               <Camera size={19} />
             </button>
@@ -237,41 +258,53 @@ export const Medicines = () => {
       {/* Main Container */}
       <div className="max-w-7xl mx-auto px-4 mt-4 space-y-8">
 
-        {/* 3. Symptom Checker Banner */}
-        <div className="bg-gradient-to-br from-[#1565C0] via-blue-700 to-indigo-850 text-white rounded-3xl p-6 relative overflow-hidden shadow-lg border border-blue-500/20 group hover:shadow-xl transition-all">
-          {/* Background circles */}
-          <div className="absolute top-[-30%] right-[-10%] w-72 h-72 rounded-full bg-white/10 blur-3xl mix-blend-overlay"></div>
-          <div className="absolute bottom-[-20%] left-[10%] w-48 h-48 rounded-full bg-[#2E7D32]/20 blur-2xl"></div>
-
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
-            <div className="space-y-3 text-center md:text-left max-w-lg">
-              <div className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-md px-3.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border border-white/20">
-                <Sparkles size={12} className="text-yellow-300" /> AI Diagnostic Assistant
+        {/* 3. Dedicated Action Banners (Prescription Upload & AI Symptom Checker) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          
+          {/* Card A: Prescription Uploader Banner */}
+          <div className="bg-gradient-to-br from-[#1565C0] via-blue-800 to-indigo-900 text-white rounded-3xl p-6 relative overflow-hidden shadow-lg border border-blue-500/20 group hover:shadow-xl transition-all flex flex-col justify-between">
+            <div className="absolute top-[-30%] right-[-10%] w-60 h-60 rounded-full bg-white/10 blur-2xl pointer-events-none"></div>
+            <div className="relative z-10 space-y-3">
+              <div className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border border-white/20">
+                <FileText size={12} className="text-blue-200" /> Direct Pharmacy Order
               </div>
-              <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight">Don't know the medicine?</h2>
-              <p className="text-blue-100 text-sm font-medium leading-relaxed">
-                Describe your health symptoms in simple words and our AI engine will recommend home remedies, health guidelines, or suggest direct pharmacist consultations.
+              <h2 className="text-xl md:text-2xl font-extrabold tracking-tight">Upload Doctor's Prescription</h2>
+              <p className="text-blue-100 text-xs font-medium leading-relaxed">
+                Upload your doctor's slip. Verified nearby pharmacies will check stock and offer fast doorstep delivery.
               </p>
-              <div className="pt-2">
-                <Button 
-                  onClick={() => navigate('/symptom-checker')}
-                  className="bg-white text-[#1565C0] font-black rounded-xl text-xs uppercase tracking-wider py-3 px-5 shadow-md border border-white hover:bg-blue-50 hover:scale-105 active:scale-95 transition-all"
-                >
-                  Check Symptoms
-                </Button>
-              </div>
             </div>
-
-            {/* Glowing AI Brain SVG Graphic */}
-            <div className="relative w-36 h-36 flex-shrink-0 flex items-center justify-center bg-white/5 border border-white/10 rounded-full backdrop-blur-sm animate-pulseSoft">
-              <svg viewBox="0 0 100 100" className="w-24 h-24 text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]">
-                <path fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" d="M50 20C40 20 32 26 32 36C32 40 34 44 38 48C40 50 42 54 42 58V62H58V58C58 54 60 50 62 48C66 44 68 40 68 36C68 26 60 20 50 20Z" />
-                <path fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="2 3" d="M38 36H62 M42 42H58 M46 48H54 M50 20V62" />
-                <circle cx="50" cy="74" r="5" fill="currentColor" />
-                <circle cx="50" cy="85" r="3" fill="currentColor" />
-              </svg>
+            <div className="pt-4 relative z-10">
+              <Button 
+                onClick={() => navigate('/prescription-upload')}
+                className="bg-white text-[#1565C0] font-black rounded-xl text-xs uppercase tracking-wider py-3 px-4 shadow-md border border-white hover:bg-blue-50 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+              >
+                Upload Prescription <ArrowRight size={14} />
+              </Button>
             </div>
           </div>
+
+          {/* Card B: AI Symptom Checker Banner */}
+          <div className="bg-gradient-to-br from-[#2E7D32] via-emerald-800 to-teal-900 text-white rounded-3xl p-6 relative overflow-hidden shadow-lg border border-emerald-500/20 group hover:shadow-xl transition-all flex flex-col justify-between">
+            <div className="absolute bottom-[-30%] right-[-10%] w-60 h-60 rounded-full bg-white/10 blur-2xl pointer-events-none"></div>
+            <div className="relative z-10 space-y-3">
+              <div className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border border-white/20">
+                <Sparkles size={12} className="text-yellow-300" /> AI Diagnostic Triage
+              </div>
+              <h2 className="text-xl md:text-2xl font-extrabold tracking-tight">Not Sure Which Medicine?</h2>
+              <p className="text-emerald-100 text-xs font-medium leading-relaxed">
+                Describe your symptoms for instant AI health assessment, safe remedies, or emergency hospital guidance.
+              </p>
+            </div>
+            <div className="pt-4 relative z-10">
+              <Button 
+                onClick={() => navigate('/symptom-checker')}
+                className="bg-white text-[#2E7D32] font-black rounded-xl text-xs uppercase tracking-wider py-3 px-4 shadow-md border border-white hover:bg-emerald-50 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+              >
+                Check Symptoms <ArrowRight size={14} />
+              </Button>
+            </div>
+          </div>
+
         </div>
 
         {/* 4. Medicine Categories Chips */}
@@ -624,6 +657,85 @@ export const Medicines = () => {
               </div>
               <p className="text-sm font-extrabold text-gray-800">{voiceText}</p>
               <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Try saying "Paracetamol" or "Cough syrup"</p>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Camera Visual Medicine Search Popup Modal */}
+      <AnimatePresence>
+        {showCameraModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-3xl p-6 shadow-2xl border border-gray-100 max-w-sm w-full space-y-4"
+            >
+              <div className="flex justify-between items-center pb-2 border-b border-gray-150">
+                <div className="flex items-center gap-2">
+                  <Camera size={18} className="text-[#1565C0]" />
+                  <h3 className="text-xs font-black text-gray-800 uppercase tracking-widest">Visual Medicine Search</h3>
+                </div>
+                <button onClick={() => setShowCameraModal(false)} className="text-gray-400 hover:text-gray-650 p-1 cursor-pointer"><X size={16} /></button>
+              </div>
+
+              {!isScanningImage ? (
+                <div className="space-y-4 text-center">
+                  <label htmlFor="medicine-photo-upload" className="block cursor-pointer">
+                    <div className="border-2 border-dashed border-blue-200 rounded-2xl p-6 bg-blue-50/50 hover:bg-blue-50 transition-colors flex flex-col items-center justify-center gap-2">
+                      <div className="w-12 h-12 rounded-full bg-[#1565C0]/10 text-[#1565C0] flex items-center justify-center">
+                        <UploadCloud size={24} />
+                      </div>
+                      <p className="text-xs font-black text-gray-800">Snap or Upload Medicine Box/Strip</p>
+                      <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">JPG, PNG · Auto Medicine Recognition</p>
+                    </div>
+                    <input 
+                      id="medicine-photo-upload"
+                      type="file" 
+                      accept="image/*" 
+                      className="hidden" 
+                      onChange={(e) => handleImageUpload(e.target.files?.[0])}
+                    />
+                  </label>
+
+                  <div className="pt-2">
+                    <p className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider mb-2">Or Try Quick Sample Image:</p>
+                    <div className="flex justify-center gap-2">
+                      {['Cetirizine 10mg', 'Paracetamol 500mg', 'Amoxicillin'].map((medName) => (
+                        <button
+                          key={medName}
+                          onClick={() => {
+                            setIsScanningImage(true);
+                            setScanResultText(`Scanning sample image for ${medName}...`);
+                            setTimeout(() => {
+                              setScanResultText(`Recognized: "${medName}"`);
+                              setTimeout(() => {
+                                setSearchQuery(medName);
+                                setIsScanningImage(false);
+                                setShowCameraModal(false);
+                                setScanResultText('');
+                              }, 1000);
+                            }, 1200);
+                          }}
+                          className="text-[10px] font-black bg-gray-100 hover:bg-blue-50 text-gray-700 hover:text-[#1565C0] px-2.5 py-1.5 rounded-lg border border-gray-200 transition-all cursor-pointer"
+                        >
+                          {medName}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="py-6 text-center space-y-3">
+                  <div className="w-16 h-16 rounded-full bg-blue-500/10 text-blue-600 flex items-center justify-center mx-auto animate-spin">
+                    <Camera size={28} />
+                  </div>
+                  <p className="text-sm font-extrabold text-gray-800">{scanResultText}</p>
+                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Matching text with catalog...</p>
+                </div>
+              )}
+
             </motion.div>
           </div>
         )}
