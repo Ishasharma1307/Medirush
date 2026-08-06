@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { SymptomChatbot } from '../components/SymptomChatbot';
 import { SymptomResultCard } from '../components/SymptomResultCard';
 import { analyzeSymptoms } from '../utils/symptomRules';
@@ -8,6 +8,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 export const SymptomChecker = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const isMedicineFlow = searchParams.get('source') === 'medicines' || location.state?.source === 'medicines';
+
   const [analysisResult, setAnalysisResult] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
@@ -108,7 +112,7 @@ export const SymptomChecker = () => {
               animate={{ opacity: 1, y: 0 }}
               className="py-4 h-full overflow-y-auto scrollbar-hide"
             >
-              <SymptomResultCard result={analysisResult} onRestart={handleRestart} />
+              <SymptomResultCard result={analysisResult} onRestart={handleRestart} isMedicineFlow={isMedicineFlow} />
             </motion.div>
           )}
         </AnimatePresence>

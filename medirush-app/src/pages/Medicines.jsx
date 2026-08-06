@@ -294,7 +294,7 @@ export const Medicines = () => {
               </p>
             </div>
             <Button 
-              onClick={() => navigate('/symptom-checker')}
+              onClick={() => navigate('/symptom-checker?source=medicines')}
               className="bg-white text-[#2E7D32] font-black rounded-xl text-xs uppercase tracking-wider py-2.5 px-3.5 shadow-sm border border-white hover:bg-emerald-50 active:scale-95 transition-all flex items-center gap-1.5 whitespace-nowrap flex-shrink-0"
             >
               Check <ArrowRight size={13} />
