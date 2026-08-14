@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
@@ -10,22 +10,22 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../utils/cn';
 import { 
   ArrowLeft, Star, Clock, ShieldCheck, MapPin, AlertTriangle, 
-  Minus, Plus, ShieldAlert, ShoppingBag, Store, FileText, ImageOff, ShoppingCart, CheckCircle
+  Minus, Plus, ShieldAlert, ShoppingBag, Store, FileText, ImageOff, 
+  ShoppingCart, CheckCircle, Share2, Heart, Info, Pill, Truck, Check, Sparkles, ChevronRight
 } from 'lucide-react';
 
-// 1. IMPORT MOCK DATA
+// Import Mock Data
 import { mockMedicines } from '../mockData/mockMedicines';
 import { mockPharmacies } from '../mockData/mockPharmacies';
 import { mockUsers } from '../mockData/mockUsers';
 
-// 2. TOGGLE FLAG: Set to false when your backend is ready
 const USE_MOCK_DATA = true;
 
 export const MedicineDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { addToCart } = useCart();
+  const { cartItems, addToCart, updateQuantity } = useCart();
   
   const [medicine, setMedicine] = useState(null);
   const [pharmacy, setPharmacy] = useState(null);
@@ -36,65 +36,84 @@ export const MedicineDetail = () => {
   const [quantity, setQuantity] = useState(1);
   const [prescriptionFiles, setPrescriptionFiles] = useState([]);
   const [addedToCart, setAddedToCart] = useState(false);
-  
-  // Fallback image state
+  const [isWishlisted, setIsWishlisted] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview'); // overview, dosage, sideEffects, manufacturer
+  const [copiedLink, setCopiedLink] = useState(false);
   const [imageError, setImageError] = useState(false);
   
   useEffect(() => {
     fetchData();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [id, user]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
       
-      if (USE_MOCK_DATA) {
-        // --- FAKE DATA LOGIC ---
-        await new Promise(resolve => setTimeout(resolve, 800));
-        
-        const medData = mockMedicines.find(m => m.id === id);
-        const userData = mockUsers.find(u => u.id === (user?.id || 'user-123')); 
-        
-        if (medData) {
-          setMedicine(medData);
-          const pharmData = mockPharmacies.find(p => p.id === medData.pharmacy_id);
-          setPharmacy(pharmData);
-          if (medData.images && medData.images.length > 0) {
-            setMainImage(medData.images[0]);
-          }
-        }
-        setUserProfile(userData);
-      } else {
-        // --- REAL SUPABASE DATA LOGIC ---
-        if (!user) return; 
-
-        const [medResponse, userResponse] = await Promise.all([
-          supabase.from('medicines').select('*').eq('id', id).single(),
-          supabase.from('users').select('*').eq('id', user.id).single()
-        ]);
-
-        if (medResponse.error) throw medResponse.error;
-        
-        const medData = medResponse.data;
-        setMedicine(medData);
-        setUserProfile(userResponse.data);
-        
-        if (medData.images && medData.images.length > 0) {
-          setMainImage(medData.images[0]);
-        }
-
-        if (medData.pharmacy_id) {
-          const { data: pharmData, error: pharmError } = await supabase
-            .from('pharmacies')
-            .select('*')
-            .eq('id', medData.pharmacy_id)
-            .single();
-            
-          if (!pharmError && pharmData) {
-            setPharmacy(pharmData);
-          }
+      // 1. Attempt to find medicine from mockMedicines array
+      let medData = mockMedicines.find(m => m.id === id || m.id === `med-${id}`);
+      
+      // 2. Fallback: Lookup by index or search string or first item if id is numeric/custom
+      if (!medData && mockMedicines.length > 0) {
+        const parsedIdx = parseInt(id, 10);
+        if (!isNaN(parsedIdx) && mockMedicines[parsedIdx - 1]) {
+          medData = mockMedicines[parsedIdx - 1];
+        } else {
+          medData = mockMedicines.find(m => m.name.toLowerCase().includes((id || '').toLowerCase())) || mockMedicines[0];
         }
       }
+
+      // 3. Fallback: Real Supabase lookup if configured
+      if (!medData && !USE_MOCK_DATA) {
+        try {
+          const { data } = await supabase.from('medicines').select('*').eq('id', id).single();
+          if (data) medData = data;
+        } catch (e) {
+          console.warn("Supabase medicine detail fetch error:", e);
+        }
+      }
+
+      // Enrich Medicine Object with Realistic Retail & Medical Specs
+      if (medData) {
+        const enrichedMed = {
+          ...medData,
+          brand: medData.brand || 'Cipla Healthcare',
+          strength: medData.strength || '10 Tablets Strip',
+          genericName: medData.genericName || 'Paracetamol IP 500mg',
+          rating: medData.rating || 4.7,
+          reviewCount: medData.reviewCount || 142,
+          deliveryTime: medData.deliveryTime || '10 mins',
+          discountPercent: medData.discountPercent || 25,
+          originalPrice: medData.originalPrice || parseFloat((medData.price * 1.33).toFixed(2)),
+          manufacturer: medData.manufacturer || 'Cipla Pharmaceuticals Ltd.',
+          expiryDate: medData.expiryDate || '12/2027',
+          batchNumber: medData.batchNumber || 'CP-98231',
+          uses: medData.uses || ['Fever & High Temperature', 'Body Pain & Headaches', 'Mild Inflammation', 'Post-Vaccination Pain'],
+          dosageInstructions: medData.dosageInstructions || 'Take 1 tablet after meals with water every 6 to 8 hours as needed. Do not exceed 4 tablets in 24 hours unless advised by a doctor.',
+          sideEffects: medData.sideEffects || ['Mild Nausea or Upset Stomach', 'Drowsiness (rare)', 'Allergic Reaction / Skin Rash (seek immediate care if occurs)'],
+          precautions: medData.precautions || [
+            'Alcohol interaction: Avoid consuming alcohol while taking paracetamol.',
+            'Liver Care: Consult doctor if you have pre-existing liver conditions.',
+            'Pregnancy & Lactation: Generally safe under medical supervision.'
+          ],
+          images: medData.images && medData.images.length > 0 ? medData.images : [
+            'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=600&auto=format&fit=crop&q=80',
+            'https://images.unsplash.com/photo-1577401239170-897942555fb3?w=600&auto=format&fit=crop&q=80',
+            'https://images.unsplash.com/photo-1471864190281-a93a3070b6de?w=600&auto=format&fit=crop&q=80'
+          ]
+        };
+
+        setMedicine(enrichedMed);
+        setMainImage(enrichedMed.images[0]);
+
+        // Find associated Pharmacy
+        const pharmData = mockPharmacies.find(p => p.id === enrichedMed.pharmacy_id) || mockPharmacies[0];
+        setPharmacy(pharmData);
+      }
+
+      const userData = mockUsers.find(u => u.id === (user?.id || 'user-123')); 
+      setUserProfile(userData);
+
     } catch (error) {
       console.error('Error fetching details:', error);
     } finally {
@@ -110,79 +129,76 @@ export const MedicineDetail = () => {
   };
 
   const handleAddToCart = () => {
-    if (!canOrder) return;
+    if (!medicine || !canOrder) return;
     setAddedToCart(true);
     
     addToCart({
       id: medicine.id,
       name: medicine.name,
       price: medicine.price,
-      image: mainImage || '',
+      image: mainImage || medicine.images?.[0] || '',
       pharmacy_id: pharmacy?.id || '',
-      pharmacy_name: pharmacy?.pharmacy_name || 'Pharmacy',
+      pharmacy_name: pharmacy?.pharmacy_name || 'Verified Pharmacy',
       quantity: quantity
     });
     
-    setTimeout(() => setAddedToCart(false), 2000); // Reset after 2s
+    setTimeout(() => setAddedToCart(false), 2000);
   };
 
   const handleOrderNow = () => {
-    if (!canOrder) return;
+    if (!medicine || !canOrder) return;
     
     addToCart({
       id: medicine.id,
       name: medicine.name,
       price: medicine.price,
-      image: mainImage || '',
+      image: mainImage || medicine.images?.[0] || '',
       pharmacy_id: pharmacy?.id || '',
-      pharmacy_name: pharmacy?.pharmacy_name || 'Pharmacy',
+      pharmacy_name: pharmacy?.pharmacy_name || 'Verified Pharmacy',
       quantity: quantity
     });
     
     navigate('/checkout');
   };
 
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: medicine?.name,
+        text: `Buy ${medicine?.name} on MediRush with 10-minute delivery!`,
+        url: window.location.href,
+      }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2000);
+    }
+  };
+
   const isPharmacyOwner = userProfile?.role === 'pharmacy';
-  const isAvailable = medicine?.is_available;
-  const isPharmacyOpen = pharmacy?.is_open;
+  const isAvailable = medicine?.is_available !== false;
+  const isPharmacyOpen = pharmacy?.is_open !== false;
   const canOrder = isAvailable && isPharmacyOpen && !isPharmacyOwner;
   const totalPrice = (medicine?.price * quantity).toFixed(2);
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
-  };
+  // Substitute/Similar medicines
+  const substituteMedicines = mockMedicines
+    .filter(m => m.id !== id)
+    .slice(0, 4);
 
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: { y: 0, opacity: 1 }
-  };
-
-  // --- LOADING SKELETON UI ---
+  // Loading Skeleton
   if (loading) {
     return (
-      <div className="min-h-screen bg-background pb-20 font-sans pt-24 overflow-x-hidden">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Skeleton className="w-40 h-10 rounded-xl mb-8" />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-            {/* Left Skeleton */}
-            <div className="space-y-8">
-              <div className="glass-card h-96 p-6">
-                <Skeleton className="w-full h-full rounded-2xl" />
-              </div>
-              <div className="glass-card h-32 p-6">
-                <Skeleton className="w-full h-full rounded-xl" />
-              </div>
-            </div>
-            {/* Right Skeleton */}
-            <div className="space-y-6">
-              <div className="glass-card h-96 p-8 space-y-4">
-                <Skeleton className="w-1/4 h-8 rounded-lg" />
-                <Skeleton className="w-3/4 h-12 rounded-xl" />
-                <Skeleton className="w-full h-[1px] my-6" />
-                <Skeleton className="w-1/2 h-16 rounded-xl" />
-                <Skeleton className="w-full h-16 rounded-xl mt-auto" />
-              </div>
+      <div className="min-h-screen bg-[#F5F9FF] pb-20 font-sans pt-24">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <Skeleton className="w-48 h-8 rounded-xl mb-6" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <Skeleton className="w-full h-96 rounded-3xl" />
+            <div className="space-y-4">
+              <Skeleton className="w-3/4 h-10 rounded-xl" />
+              <Skeleton className="w-1/2 h-6 rounded-lg" />
+              <Skeleton className="w-full h-32 rounded-2xl" />
+              <Skeleton className="w-full h-14 rounded-2xl" />
             </div>
           </div>
         </div>
@@ -190,316 +206,523 @@ export const MedicineDetail = () => {
     );
   }
 
-  // --- EMPTY STATE ---
   if (!medicine) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-background pb-20 pt-20 overflow-x-hidden">
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="glass-card p-12 flex flex-col items-center max-w-md text-center relative overflow-hidden"
-        >
-          <div className="absolute top-[-50%] right-[-50%] w-full h-full bg-orange-500/10 rounded-full blur-3xl"></div>
-          
-          <div className="bg-white/50 backdrop-blur-md p-6 rounded-full mb-6 shadow-inner border border-white/60">
-            <AlertTriangle size={64} className="text-orange-400" />
-          </div>
-          <h2 className="text-3xl font-extrabold text-gray-900 mb-2 drop-shadow-sm">Medicine Not Found</h2>
-          <p className="text-gray-600 font-medium mb-8">We couldn't find the medicine you're looking for. It may have been removed or the link is invalid.</p>
-          <Button onClick={() => navigate('/medicines')} size="lg" className="w-full shadow-md">Browse Medicines</Button>
-        </motion.div>
+      <div className="min-h-screen bg-[#F5F9FF] flex flex-col items-center justify-center p-4">
+        <div className="bg-white rounded-3xl p-8 max-w-md text-center shadow-xl border border-blue-50 space-y-4">
+          <AlertTriangle size={48} className="text-amber-500 mx-auto" />
+          <h2 className="text-2xl font-black text-gray-900">Medicine Not Found</h2>
+          <p className="text-sm text-gray-500 font-medium">The requested medicine catalog item does not exist or may have been updated.</p>
+          <Button onClick={() => navigate('/medicines')} className="bg-[#1565C0] text-white font-black w-full rounded-xl py-3">
+            Browse All Medicines
+          </Button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20 font-sans pt-24 overflow-x-hidden relative">
+    <div className="min-h-screen bg-[#F5F9FF] pb-32 pt-20 md:pt-24 font-sans relative overflow-x-hidden">
       
-      {/* Decorative Background */}
-      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl -z-10 pointer-events-none"></div>
-      <div className="absolute top-[20%] left-[-10%] w-[400px] h-[400px] bg-secondary/5 rounded-full blur-3xl -z-10 pointer-events-none"></div>
-
-      <motion.div 
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8"
-      >
-        
-        <motion.button 
-          variants={itemVariants}
-          onClick={() => navigate(-1)} 
-          className="inline-flex items-center text-gray-700 hover:text-primary font-bold mb-8 transition-colors group bg-white/60 backdrop-blur-md px-4 py-2.5 rounded-xl shadow-sm border border-white/40"
-        >
-          <ArrowLeft size={18} className="mr-2 group-hover:-translate-x-1 transition-transform" />
-          <span>Back to Medicines</span>
-        </motion.button>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+      {/* Top Breadcrumb & Actions Bar */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 mb-6">
+        <div className="flex flex-wrap items-center justify-between gap-4 py-2">
           
-          {/* LEFT COLUMN: Gallery & Pharmacy */}
-          <motion.div variants={itemVariants} className="space-y-8">
+          {/* Back Button */}
+          <button 
+            onClick={() => navigate('/medicines')} 
+            className="inline-flex items-center text-gray-700 hover:text-[#1565C0] font-black text-xs uppercase tracking-wider transition-all bg-white hover:bg-blue-50 px-3.5 py-2 rounded-xl shadow-sm border border-blue-100 cursor-pointer active:scale-95"
+          >
+            <ArrowLeft size={16} className="mr-1.5" />
+            <span>Back to Medicines</span>
+          </button>
+
+          {/* Breadcrumb Links */}
+          <div className="hidden sm:flex items-center gap-2 text-xs font-bold text-gray-400">
+            <Link to="/home" className="hover:text-[#1565C0]">Home</Link>
+            <ChevronRight size={12} />
+            <Link to="/medicines" className="hover:text-[#1565C0]">Medicines</Link>
+            <ChevronRight size={12} />
+            <span className="text-gray-800 font-extrabold truncate max-w-[150px]">{medicine.name}</span>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsWishlisted(!isWishlisted)}
+              className={cn(
+                "p-2.5 rounded-xl border transition-all cursor-pointer shadow-sm active:scale-95",
+                isWishlisted ? "bg-red-50 border-red-200 text-red-500" : "bg-white border-gray-200 text-gray-500 hover:text-gray-800"
+              )}
+              title="Save to Wishlist"
+            >
+              <Heart size={18} className={isWishlisted ? "fill-current" : ""} />
+            </button>
+            <button
+              onClick={handleShare}
+              className="p-2.5 bg-white border border-gray-200 text-gray-500 hover:text-gray-800 rounded-xl transition-all cursor-pointer shadow-sm active:scale-95 relative"
+              title="Share Medicine"
+            >
+              <Share2 size={18} />
+              {copiedLink && (
+                <span className="absolute -bottom-8 right-0 bg-black text-white text-[9px] font-black px-2 py-0.5 rounded shadow-lg whitespace-nowrap">
+                  Link Copied!
+                </span>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Product Container */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-8">
+        
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          
+          {/* LEFT 5 COLS: Gallery & Pharmacy Seller Info */}
+          <div className="lg:col-span-5 space-y-6">
             
-            <div className="glass-card p-6 border-white/60">
-              <div className="aspect-square bg-white/40 backdrop-blur-sm rounded-2xl mb-4 overflow-hidden relative flex items-center justify-center shadow-inner">
+            {/* Main Product Card Gallery */}
+            <div className="bg-white rounded-3xl p-5 shadow-lg border border-blue-50/80 space-y-4">
+              
+              {/* Main Image Box */}
+              <div className="aspect-square bg-gray-50 rounded-2xl overflow-hidden relative flex items-center justify-center border border-gray-100 group">
+                
+                {/* Discount Badge */}
+                {medicine.discountPercent && (
+                  <div className="absolute top-3 left-0 bg-[#E53935] text-white text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-r-lg shadow-md z-10">
+                    {medicine.discountPercent}% OFF
+                  </div>
+                )}
+
+                {/* Rx Badge */}
+                {medicine.requires_prescription && (
+                  <div className="absolute top-3 right-3 bg-purple-100 text-purple-700 border border-purple-200 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg z-10 flex items-center gap-1 shadow-sm">
+                    <FileText size={12} /> Rx Required
+                  </div>
+                )}
+
                 {mainImage && !imageError ? (
-                  <motion.img 
-                    key={mainImage}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.3 }}
+                  <img 
                     src={mainImage} 
                     alt={medicine.name} 
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     onError={() => setImageError(true)} 
                   />
                 ) : (
-                  <div className="flex flex-col items-center justify-center text-gray-400">
-                    <ImageOff size={64} className="mb-2 opacity-50" />
-                    <span className="font-medium text-sm">Image unavailable</span>
+                  <div className="flex flex-col items-center justify-center text-gray-300">
+                    <Pill size={64} className="mb-2" />
+                    <span className="text-xs font-bold">Image Preview</span>
                   </div>
                 )}
-                
-                {/* Floating Badge */}
-                <div className="absolute top-4 left-4 z-10">
-                  <span className={cn(
-                    "inline-flex items-center text-[11px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-lg shadow-sm border backdrop-blur-md",
-                    isAvailable ? "bg-white/90 text-secondary border-white" : "bg-danger/10 text-danger border-danger/20"
-                  )}>
-                    {isAvailable ? 'In Stock' : 'Out of Stock'}
-                  </span>
-                </div>
               </div>
-              
+
+              {/* Thumbnails Strip */}
               {medicine.images && medicine.images.length > 1 && (
-                <div className="flex space-x-3 overflow-x-auto pb-2 scrollbar-hide">
-                  {medicine.images.map((img, idx) => (
-                    <button 
+                <div className="flex gap-3 overflow-x-auto pb-1">
+                  {medicine.images.map((imgUrl, idx) => (
+                    <button
                       key={idx}
                       onClick={() => {
-                        setMainImage(img);
-                        setImageError(false); 
+                        setMainImage(imgUrl);
+                        setImageError(false);
                       }}
                       className={cn(
-                        "w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 border-2 transition-all shadow-sm",
-                        mainImage === img ? "border-primary scale-105" : "border-white/50 opacity-70 hover:opacity-100"
+                        "w-16 h-16 rounded-xl overflow-hidden border-2 flex-shrink-0 transition-all cursor-pointer",
+                        mainImage === imgUrl ? "border-[#1565C0] shadow-md scale-105" : "border-gray-200 opacity-60 hover:opacity-100"
                       )}
                     >
-                      <img src={img} alt="thumbnail" className="w-full h-full object-cover" onError={(e) => {e.target.style.display='none'}} />
+                      <img src={imgUrl} alt="Thumbnail" className="w-full h-full object-cover" />
                     </button>
                   ))}
                 </div>
               )}
+
+              {/* Trust Badges */}
+              <div className="grid grid-cols-3 gap-2 pt-3 border-t border-gray-100 text-center">
+                <div className="p-2 bg-blue-50/50 rounded-xl">
+                  <ShieldCheck size={18} className="text-[#1565C0] mx-auto mb-1" />
+                  <p className="text-[9px] font-black uppercase tracking-wider text-gray-700">100% Genuine</p>
+                </div>
+                <div className="p-2 bg-emerald-50/50 rounded-xl">
+                  <Truck size={18} className="text-[#2E7D32] mx-auto mb-1" />
+                  <p className="text-[9px] font-black uppercase tracking-wider text-gray-700">10 Min Delivery</p>
+                </div>
+                <div className="p-2 bg-amber-50/50 rounded-xl">
+                  <CheckCircle size={18} className="text-amber-600 mx-auto mb-1" />
+                  <p className="text-[9px] font-black uppercase tracking-wider text-gray-700">Verified Pharmacy</p>
+                </div>
+              </div>
+
             </div>
 
+            {/* Partner Pharmacy Seller Card */}
             {pharmacy && (
-              <div className="glass-card p-6 border-white/60 group">
-                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
-                  <Store size={20} className="mr-2 text-primary" /> Sold By
-                </h3>
-                <div className="flex items-center">
-                  <div className="w-16 h-16 bg-white/60 backdrop-blur-sm text-primary rounded-2xl flex items-center justify-center mr-4 shadow-inner border border-white/50 group-hover:bg-primary/10 transition-colors">
-                    <Store size={28} />
+              <div className="bg-white rounded-3xl p-5 shadow-lg border border-blue-50/80 space-y-3">
+                <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                  <div className="flex items-center gap-2">
+                    <Store size={18} className="text-[#1565C0]" />
+                    <h3 className="text-xs font-black text-gray-800 uppercase tracking-wider">Fulfilled By Partner Pharmacy</h3>
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-extrabold text-gray-900 text-lg">{pharmacy.pharmacy_name}</h4>
-                      <span className={cn(
-                        "text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider border",
-                        pharmacy.is_open ? "bg-green-500/10 text-green-600 border-green-500/20" : "bg-red-500/10 text-red-600 border-red-500/20"
-                      )}>
-                        {pharmacy.is_open ? 'Open Now' : 'Closed'}
-                      </span>
-                    </div>
-                    <div className="flex items-center mt-1 space-x-3 text-sm font-medium text-gray-600">
-                      <span className="flex items-center text-yellow-500 drop-shadow-sm">
-                        <Star size={16} className="mr-1 fill-current" /> {pharmacy.rating || '4.8'}
-                      </span>
-                      {pharmacy.is_verified && (
-                        <span className="flex items-center text-secondary">
-                          <ShieldCheck size={16} className="mr-1" /> Verified Partner
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-sm text-gray-500 mt-2 flex items-center">
-                      <MapPin size={14} className="mr-1 text-primary/70" /> 1.2 km away
+                  <span className={cn(
+                    "text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider border",
+                    pharmacy.is_open ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-red-50 text-red-700 border-red-200"
+                  )}>
+                    {pharmacy.is_open ? 'Open Now' : 'Closed'}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-base font-extrabold text-gray-900">{pharmacy.pharmacy_name}</h4>
+                    <p className="text-xs text-gray-500 font-medium flex items-center gap-1 mt-0.5">
+                      <MapPin size={12} className="text-[#E53935]" /> 1.2 km away · Green Glen Layout
                     </p>
+                  </div>
+                  <div className="flex items-center gap-1 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-xl text-xs font-black text-amber-700">
+                    <Star size={14} className="fill-amber-400 text-amber-400" />
+                    <span>{pharmacy.rating || '4.8'}</span>
                   </div>
                 </div>
               </div>
             )}
-            
-            <div className="glass-card bg-orange-50/80 border-orange-200/60 p-6 relative overflow-hidden">
-               <AlertTriangle size={80} className="absolute -right-4 -bottom-4 text-orange-600 opacity-5 rotate-12" />
-               <div className="flex items-start relative z-10">
-                 <div className="bg-white/80 p-3 rounded-xl shadow-sm border border-orange-100 mr-4 flex-shrink-0">
-                   <AlertTriangle className="text-orange-500" size={24} />
-                 </div>
-                 <div>
-                   <h3 className="font-extrabold text-orange-900 text-lg mb-1 tracking-tight">Emergency Notice</h3>
-                   <p className="text-sm text-orange-800 leading-relaxed font-medium opacity-90">
-                     For serious symptoms, visit the nearest hospital or call emergency services immediately.
-                   </p>
-                 </div>
-               </div>
-            </div>
 
-          </motion.div>
+          </div>
 
-          {/* RIGHT COLUMN: Details & Action */}
-          <motion.div variants={itemVariants} className="space-y-6">
+          {/* RIGHT 7 COLS: Details, Pricing, Cart & Medical Specs */}
+          <div className="lg:col-span-7 space-y-6">
             
-            <div className="glass-card p-8 border-white/60">
+            <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-lg border border-blue-50/80 space-y-6">
               
-              <div className="flex flex-wrap gap-2 mb-4">
-                <span className="bg-primary/10 text-primary border border-primary/20 text-xs font-bold px-3 py-1 rounded-lg uppercase tracking-wider shadow-sm">
-                  {medicine.category || 'Medicine'}
-                </span>
-                {medicine.requires_prescription && (
-                  <span className="bg-purple-500/10 text-purple-600 border border-purple-500/20 text-xs font-bold px-3 py-1 rounded-lg flex items-center uppercase tracking-wider shadow-sm">
-                    <FileText size={12} className="mr-1" /> Rx Required
+              {/* Brand & Category Header */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black uppercase tracking-widest text-[#1565C0] bg-blue-50 px-3 py-1 rounded-lg border border-blue-100">
+                    {medicine.brand}
                   </span>
-                )}
-              </div>
-              
-              <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-2 drop-shadow-sm">{medicine.name}</h1>
-              
-              <div className="flex items-center space-x-2 mb-6">
-                <span className={cn(
-                  "w-3 h-3 rounded-full shadow-sm",
-                  isAvailable ? "bg-secondary shadow-secondary/50 animate-pulseSoft" : "bg-danger shadow-danger/50"
-                )}></span>
-                <span className={cn(
-                  "font-bold",
-                  isAvailable ? "text-secondary" : "text-danger"
-                )}>
-                  {isAvailable ? 'In Stock Ready to Dispatch' : 'Currently Out of Stock'}
-                </span>
-              </div>
+                  <span className="text-xs font-extrabold text-gray-500 flex items-center gap-1">
+                    <Clock size={14} className="text-[#2E7D32]" /> Delivery in {medicine.deliveryTime}
+                  </span>
+                </div>
 
-              <div className="h-px bg-gray-200/50 w-full my-6"></div>
+                <h1 className="text-2xl sm:text-3xl font-black text-gray-950 tracking-tight leading-snug">
+                  {medicine.name}
+                </h1>
 
-              <div className="flex justify-between items-end mb-6">
-                <div>
-                  <p className="text-gray-500 font-bold mb-1 uppercase tracking-widest text-[10px]">Total Price</p>
-                  <div className="flex items-baseline text-primary drop-shadow-sm">
-                    <span className="text-2xl font-bold mr-1">$</span>
-                    <span className="text-5xl font-extrabold tracking-tight">{totalPrice}</span>
+                <p className="text-xs font-extrabold text-gray-400 uppercase tracking-wider">
+                  Active Salt: <span className="text-gray-700">{medicine.genericName}</span> · {medicine.strength}
+                </p>
+
+                {/* Rating & Reviews Bar */}
+                <div className="flex items-center gap-2 pt-1">
+                  <div className="flex items-center gap-1 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-black px-2.5 py-1 rounded-lg">
+                    <Star size={13} className="fill-emerald-600 text-emerald-600" />
+                    <span>{medicine.rating}</span>
                   </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-bold text-gray-700 flex items-center justify-end">
-                    <Clock size={16} className="mr-1 text-primary" /> Delivery in ~10 mins
-                  </p>
-                  <p className="text-[11px] text-gray-500 font-medium mt-1 uppercase tracking-wider">+$2.99 Delivery Charge</p>
+                  <span className="text-xs font-extrabold text-gray-500">
+                    ({medicine.reviewCount} Ratings & Verified Reviews)
+                  </span>
                 </div>
               </div>
 
-              <div className="mb-8">
-                <label className="block text-xs font-bold text-gray-500 mb-3 uppercase tracking-widest">Quantity</label>
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center bg-white/60 backdrop-blur-md rounded-xl border border-white/50 p-1 shadow-sm">
-                    <button 
+              <div className="h-px bg-gray-150 w-full" />
+
+              {/* Pricing & Stock Status */}
+              <div className="flex flex-wrap items-baseline justify-between gap-4 bg-blue-50/40 p-4 rounded-2xl border border-blue-100">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Total Price</p>
+                  <div className="flex items-baseline gap-2 mt-0.5">
+                    <span className="text-3xl font-black text-gray-950">${totalPrice}</span>
+                    {medicine.originalPrice && (
+                      <span className="text-sm font-bold text-gray-400 line-through">${(medicine.originalPrice * quantity).toFixed(2)}</span>
+                    )}
+                    {medicine.discountPercent && (
+                      <span className="text-xs font-black text-[#E53935] bg-red-100 px-2 py-0.5 rounded-md">
+                        Save {medicine.discountPercent}%
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-gray-400 font-bold mt-1">Inclusive of all government pharmaceutical taxes</p>
+                </div>
+
+                <div className="text-right">
+                  <span className={cn(
+                    "text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full border inline-block",
+                    isAvailable ? "bg-emerald-100 text-emerald-800 border-emerald-300" : "bg-red-100 text-red-800 border-red-300"
+                  )}>
+                    {isAvailable ? '✓ In Stock Ready' : 'Out of Stock'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Quantity Selector */}
+              <div className="space-y-2">
+                <label className="text-xs font-black uppercase tracking-widest text-gray-500 block">
+                  Select Order Quantity
+                </label>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center bg-gray-100 border border-gray-200 rounded-2xl p-1 shadow-inner">
+                    <button
                       onClick={() => handleQuantityChange(-1)}
                       disabled={quantity <= 1}
-                      className="w-10 h-10 rounded-lg flex items-center justify-center text-gray-600 hover:bg-white hover:shadow-sm disabled:opacity-30 transition-all active:scale-95"
+                      className="w-10 h-10 rounded-xl bg-white text-gray-700 shadow-sm flex items-center justify-center font-bold disabled:opacity-40 hover:bg-gray-50 transition-all cursor-pointer active:scale-95"
                     >
-                      <Minus size={20} />
+                      <Minus size={16} />
                     </button>
-                    <span className="w-12 text-center font-extrabold text-xl text-gray-900">{quantity}</span>
-                    <button 
+                    <span className="w-12 text-center font-black text-lg text-gray-900">{quantity}</span>
+                    <button
                       onClick={() => handleQuantityChange(1)}
                       disabled={quantity >= 10}
-                      className="w-10 h-10 rounded-lg flex items-center justify-center text-gray-600 hover:bg-white hover:shadow-sm disabled:opacity-30 transition-all active:scale-95"
+                      className="w-10 h-10 rounded-xl bg-white text-gray-700 shadow-sm flex items-center justify-center font-bold disabled:opacity-40 hover:bg-gray-50 transition-all cursor-pointer active:scale-95"
                     >
-                      <Plus size={20} />
+                      <Plus size={16} />
                     </button>
                   </div>
-                  <span className="text-xs text-gray-500 font-medium">Max 10 per order</span>
+                  <span className="text-xs font-bold text-gray-400">
+                    Max 10 units allowed per customer
+                  </span>
                 </div>
               </div>
 
+              {/* Rx File Uploader if prescription required */}
               <AnimatePresence>
                 {medicine.requires_prescription && (
                   <motion.div 
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
-                    className="mb-8 p-5 bg-purple-500/10 backdrop-blur-sm rounded-2xl border border-purple-500/20"
+                    className="p-4 bg-purple-50 rounded-2xl border border-purple-200 space-y-3"
                   >
-                    <div className="flex items-center mb-4 text-purple-700">
-                      <ShieldAlert size={20} className="mr-2" />
-                      <h4 className="font-bold">Prescription Required</h4>
+                    <div className="flex items-center gap-2 text-purple-800">
+                      <ShieldAlert size={18} />
+                      <h4 className="text-xs font-black uppercase tracking-wider">Doctor Prescription Required</h4>
                     </div>
                     <FileUpload 
                       maxFiles={1} 
                       onChange={(files) => setPrescriptionFiles(files)}
-                      className="bg-white/60 border-white/50"
+                      className="bg-white border-purple-200"
                     />
                   </motion.div>
                 )}
               </AnimatePresence>
 
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Button 
-                  variant={addedToCart ? "glass" : "outline"}
-                  size="lg" 
-                  className={cn(
-                    "flex-1 py-5 text-lg rounded-2xl flex items-center justify-center transition-all",
-                    addedToCart ? "border-green-500 text-green-600 bg-green-50/50 hover:bg-green-50/80" : "bg-white/60 backdrop-blur-md"
-                  )}
-                  disabled={!canOrder || (medicine.requires_prescription && prescriptionFiles.length === 0)}
+              {/* Main Action Buttons: Add to Cart & Buy/Order Now */}
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                <button
                   onClick={handleAddToCart}
+                  disabled={!canOrder || (medicine.requires_prescription && prescriptionFiles.length === 0)}
+                  className={cn(
+                    "flex-1 py-4 px-6 rounded-2xl font-black text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md active:scale-95 border",
+                    addedToCart 
+                      ? "bg-emerald-50 text-emerald-700 border-emerald-300" 
+                      : "bg-white hover:bg-blue-50 text-[#1565C0] border-blue-200"
+                  )}
                 >
                   {addedToCart ? (
-                    <><CheckCircle size={20} className="mr-2" /> Added</>
+                    <><Check size={18} className="text-emerald-600" /> Added to Cart</>
                   ) : (
-                    <><ShoppingCart size={20} className="mr-2" /> Add to Cart</>
+                    <><ShoppingCart size={18} /> Add to Cart</>
                   )}
-                </Button>
-                
-                <Button 
-                  variant="primary" 
-                  size="lg" 
+                </button>
+
+                <button
                   onClick={handleOrderNow}
-                  className="flex-1 py-5 text-lg rounded-2xl shadow-lg shadow-primary/30"
                   disabled={!canOrder || (medicine.requires_prescription && prescriptionFiles.length === 0)}
+                  className="flex-1 bg-[#1565C0] hover:bg-blue-800 text-white py-4 px-6 rounded-2xl font-black text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-blue-500/25 active:scale-95"
                 >
-                  {isPharmacyOwner ? 'Pharmacies cannot order' 
+                  <ShoppingBag size={18} />
+                  {isPharmacyOwner ? 'Pharmacy Owner' 
                    : !isPharmacyOpen ? 'Pharmacy Closed'
                    : !isAvailable ? 'Out of Stock' 
                    : medicine.requires_prescription && prescriptionFiles.length === 0 ? 'Upload Rx to Order'
-                   : `Order Now - $${totalPrice}`}
-                </Button>
+                   : `Order Now · $${totalPrice}`}
+                </button>
               </div>
+
             </div>
 
-            <div className="glass-card p-8 border-white/60">
-              <h3 className="text-xl font-bold text-gray-900 mb-6 border-b border-gray-200/50 pb-4">Product Details</h3>
+            {/* Medical Info Tabs Section */}
+            <div className="bg-white rounded-3xl p-6 shadow-lg border border-blue-50/80 space-y-4">
               
-              <div className="space-y-6">
-                <div>
-                  <h4 className="font-bold text-gray-800 mb-2">Description</h4>
-                  <p className="text-gray-600 font-medium leading-relaxed opacity-90">
-                    {medicine.description || 'No description provided by the pharmacy.'}
-                  </p>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="bg-white/40 backdrop-blur-sm p-4 rounded-2xl border border-white/50 shadow-inner">
-                    <h4 className="font-bold text-gray-800 mb-1 text-[10px] uppercase tracking-widest text-primary">Usage</h4>
-                    <p className="text-gray-700 font-medium text-sm">Take as directed by your healthcare provider.</p>
-                  </div>
-                  <div className="bg-white/40 backdrop-blur-sm p-4 rounded-2xl border border-white/50 shadow-inner">
-                    <h4 className="font-bold text-gray-800 mb-1 text-[10px] uppercase tracking-widest text-primary">Storage</h4>
-                    <p className="text-gray-700 font-medium text-sm">Store in a cool, dry place away from sunlight.</p>
-                  </div>
-                </div>
+              {/* Tab Selector */}
+              <div className="flex border-b border-gray-150 gap-2 overflow-x-auto no-scrollbar">
+                {[
+                  { id: 'overview', label: '📖 Overview & Uses' },
+                  { id: 'dosage', label: '💡 Dosage & Usage' },
+                  { id: 'sideEffects', label: '⚠️ Side Effects' },
+                  { id: 'manufacturer', label: '🏢 Expiry & Mfg' }
+                ].map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={cn(
+                      "py-2.5 px-4 font-black text-xs uppercase tracking-wider cursor-pointer transition-all border-b-2 whitespace-nowrap",
+                      activeTab === tab.id 
+                        ? "border-[#1565C0] text-[#1565C0]" 
+                        : "border-transparent text-gray-400 hover:text-gray-700"
+                    )}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
               </div>
+
+              {/* Tab Content */}
+              <div className="pt-2">
+                {activeTab === 'overview' && (
+                  <div className="space-y-4 text-sm text-gray-700 font-medium">
+                    <p className="leading-relaxed">
+                      {medicine.description || `${medicine.name} is prescribed for effective relief from fever, general body aches, headache, and mild pain symptoms under certified pharmacy auditing.`}
+                    </p>
+
+                    <div>
+                      <h4 className="font-extrabold text-gray-900 text-xs uppercase tracking-wider mb-2">Key Indications & Uses:</h4>
+                      <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {medicine.uses.map((useItem, i) => (
+                          <li key={i} className="flex items-center gap-2 bg-blue-50/60 p-2 rounded-xl text-xs font-extrabold text-blue-900 border border-blue-100">
+                            <Check size={14} className="text-[#1565C0] flex-shrink-0" />
+                            <span>{useItem}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'dosage' && (
+                  <div className="space-y-3 text-sm text-gray-700 font-medium">
+                    <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-2xl space-y-2">
+                      <h4 className="font-black text-emerald-950 text-xs uppercase tracking-wider flex items-center gap-1.5">
+                        <Info size={14} className="text-emerald-700" /> Recommended Directions for Use
+                      </h4>
+                      <p className="text-xs text-emerald-900 leading-relaxed font-bold">
+                        {medicine.dosageInstructions}
+                      </p>
+                    </div>
+
+                    <div className="bg-gray-50 p-3 rounded-xl border border-gray-200 text-xs text-gray-600">
+                      <strong>Storage Note:</strong> Store in a cool, dry place below 30°C away from direct sunlight and humidity. Keep out of reach of children.
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'sideEffects' && (
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="font-black text-gray-900 text-xs uppercase tracking-wider mb-2">Possible Side Effects:</h4>
+                      <ul className="space-y-1.5">
+                        {medicine.sideEffects.map((effect, i) => (
+                          <li key={i} className="text-xs font-bold text-gray-600 flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                            <span>{effect}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div className="bg-amber-50 border border-amber-200 p-3.5 rounded-2xl space-y-1.5">
+                      <h4 className="font-black text-amber-950 text-xs uppercase tracking-wider flex items-center gap-1.5">
+                        <AlertTriangle size={14} className="text-amber-600" /> Safety Warnings & Precautions
+                      </h4>
+                      <ul className="space-y-1 text-xs text-amber-900 font-bold">
+                        {medicine.precautions.map((p, i) => (
+                          <li key={i}>• {p}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'manufacturer' && (
+                  <div className="grid grid-cols-2 gap-4 text-xs font-bold text-gray-700">
+                    <div className="bg-gray-50 p-3 rounded-xl border border-gray-200 space-y-1">
+                      <span className="text-[9px] uppercase tracking-widest text-gray-400 block font-black">Manufacturer</span>
+                      <p className="text-gray-900">{medicine.manufacturer}</p>
+                    </div>
+                    <div className="bg-gray-50 p-3 rounded-xl border border-gray-200 space-y-1">
+                      <span className="text-[9px] uppercase tracking-widest text-gray-400 block font-black">Expiry Date</span>
+                      <p className="text-emerald-700 font-black">{medicine.expiryDate}</p>
+                    </div>
+                    <div className="bg-gray-50 p-3 rounded-xl border border-gray-200 space-y-1">
+                      <span className="text-[9px] uppercase tracking-widest text-gray-400 block font-black">Batch Number</span>
+                      <p className="text-gray-900">{medicine.batchNumber}</p>
+                    </div>
+                    <div className="bg-gray-50 p-3 rounded-xl border border-gray-200 space-y-1">
+                      <span className="text-[9px] uppercase tracking-widest text-gray-400 block font-black">FSSAI / Drug License</span>
+                      <p className="text-gray-900">DL-2026/DL-9821</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
             </div>
 
-          </motion.div>
+          </div>
+
         </div>
-      </motion.div>
+
+        {/* Substitute / Similar Medicines Carousel */}
+        {substituteMedicines.length > 0 && (
+          <div className="pt-4">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Sparkles size={20} className="text-[#1565C0]" />
+                <h3 className="text-lg font-black text-gray-900 uppercase tracking-wider">Similar & Substitute Medicines</h3>
+              </div>
+              <Link to="/medicines" className="text-xs font-black text-[#1565C0] hover:underline">
+                View All
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {substituteMedicines.map(subMed => (
+                <div
+                  key={subMed.id}
+                  onClick={() => navigate(`/medicines/${subMed.id}`)}
+                  className="bg-white border border-blue-50/70 rounded-2xl p-3 flex flex-col relative transition-all duration-300 hover:shadow-lg hover:-translate-y-1 cursor-pointer group"
+                >
+                  <div className="w-full h-28 bg-gray-50 rounded-xl flex items-center justify-center overflow-hidden mb-2">
+                    <img src={subMed.images?.[0]} alt={subMed.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                  </div>
+                  <h4 className="text-xs font-extrabold text-gray-900 line-clamp-1 group-hover:text-[#1565C0]">{subMed.name}</h4>
+                  <span className="text-[10px] text-gray-400 font-bold mb-2">{subMed.category}</span>
+                  <div className="flex items-center justify-between mt-auto">
+                    <span className="text-xs font-black text-gray-950">${subMed.price}</span>
+                    <span className="text-[9px] font-black bg-blue-50 text-[#1565C0] px-2 py-1 rounded-md border border-blue-100">
+                      View Details
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+      </div>
+
+      {/* Floating Sticky Bottom Bar for Mobile Screen Quick Checkout */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 p-3 shadow-2xl flex items-center justify-between gap-3">
+        <div>
+          <span className="text-[9px] font-black uppercase text-gray-400 block">Total ({quantity} item)</span>
+          <span className="text-lg font-black text-gray-950">${totalPrice}</span>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={handleAddToCart}
+            disabled={!canOrder}
+            className="bg-blue-50 hover:bg-blue-100 text-[#1565C0] font-black text-xs px-4 py-2.5 rounded-xl border border-blue-200 cursor-pointer"
+          >
+            Add
+          </button>
+          <button
+            onClick={handleOrderNow}
+            disabled={!canOrder}
+            className="bg-[#1565C0] hover:bg-blue-800 text-white font-black text-xs px-5 py-2.5 rounded-xl cursor-pointer shadow-md"
+          >
+            Order Now
+          </button>
+        </div>
+      </div>
+
     </div>
   );
 };

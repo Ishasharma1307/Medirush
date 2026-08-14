@@ -535,7 +535,8 @@ export const Medicines = () => {
                 return (
                   <div 
                     key={med.id} 
-                    className="bg-white border border-blue-50/70 rounded-2xl p-3 flex flex-col relative transition-all duration-300 hover:shadow-lg hover:-translate-y-1 group"
+                    onClick={() => navigate(`/medicines/${med.id}`)}
+                    className="bg-white border border-blue-50/70 rounded-2xl p-3 flex flex-col relative transition-all duration-300 hover:shadow-lg hover:-translate-y-1 group cursor-pointer"
                   >
                     {/* Discount Badge */}
                     {med.discountPercent && (
@@ -581,7 +582,7 @@ export const Medicines = () => {
                     </span>
 
                     {/* Title */}
-                    <h3 className="text-sm font-extrabold text-gray-900 line-clamp-1 mb-1">
+                    <h3 className="text-sm font-extrabold text-gray-900 line-clamp-1 mb-1 group-hover:text-[#1565C0] transition-colors">
                       {med.name}
                     </h3>
 
@@ -606,7 +607,7 @@ export const Medicines = () => {
                       </div>
 
                       {/* Add Button Incrementors (Blinkit style) */}
-                      <div className="w-20 h-9 relative flex items-center justify-center">
+                      <div className="w-20 h-9 relative flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
                         {quantityInCart === 0 ? (
                           <button
                             onClick={() => handleQuantityIncrement(med)}
@@ -652,7 +653,8 @@ export const Medicines = () => {
               {recentlyOrderedMeds.map((med) => (
                 <div 
                   key={`recent-${med.id}`}
-                  className="bg-white border border-blue-50/50 rounded-2xl p-3 flex-shrink-0 w-36 flex flex-col relative"
+                  onClick={() => navigate(`/medicines/${med.id}`)}
+                  className="bg-white border border-blue-50/50 rounded-2xl p-3 flex-shrink-0 w-36 flex flex-col relative cursor-pointer hover:shadow-md transition-all"
                 >
                   <div className="w-full h-24 bg-gray-50 rounded-xl flex items-center justify-center overflow-hidden mb-2">
                     <img 
@@ -664,7 +666,7 @@ export const Medicines = () => {
                   </div>
                   <h3 className="text-xs font-extrabold text-gray-900 truncate mb-1">{med.name}</h3>
                   <span className="text-[10px] text-gray-400 font-bold mb-2">{med.brand}</span>
-                  <div className="flex items-center justify-between mt-auto">
+                  <div className="flex items-center justify-between mt-auto" onClick={(e) => e.stopPropagation()}>
                     <span className="text-xs font-black text-gray-950">${med.price}</span>
                     <button 
                       onClick={() => handleQuantityIncrement(med)}
@@ -693,7 +695,8 @@ export const Medicines = () => {
                 return (
                   <div 
                     key={`rec-${med.id}`}
-                    className="bg-white border border-blue-50/50 rounded-2xl p-3 flex flex-col relative"
+                    onClick={() => navigate(`/medicines/${med.id}`)}
+                    className="bg-white border border-blue-50/50 rounded-2xl p-3 flex flex-col relative cursor-pointer hover:shadow-md transition-all"
                   >
                     <div className="w-full h-24 bg-gray-50 rounded-xl flex items-center justify-center overflow-hidden mb-2">
                       <img 
@@ -705,7 +708,7 @@ export const Medicines = () => {
                     </div>
                     <h3 className="text-xs font-extrabold text-gray-900 line-clamp-1 mb-1">{med.name}</h3>
                     <span className="text-[10px] text-gray-400 font-bold mb-2">{med.strength}</span>
-                    <div className="flex items-center justify-between mt-auto">
+                    <div className="flex items-center justify-between mt-auto" onClick={(e) => e.stopPropagation()}>
                       <span className="text-xs font-black text-gray-950">${med.price}</span>
                       <button 
                         onClick={() => handleQuantityIncrement(med)}
@@ -733,7 +736,8 @@ export const Medicines = () => {
                 return (
                   <div 
                     key={`pop-${med.id}`}
-                    className="bg-white border border-blue-50/50 rounded-2xl p-3 flex flex-col relative"
+                    onClick={() => navigate(`/medicines/${med.id}`)}
+                    className="bg-white border border-blue-50/50 rounded-2xl p-3 flex flex-col relative cursor-pointer hover:shadow-md transition-all"
                   >
                     <div className="absolute top-1 right-1 bg-amber-50 text-amber-700 text-[8px] font-black px-1 rounded shadow-sm">
                       TRENDING
@@ -748,7 +752,7 @@ export const Medicines = () => {
                     </div>
                     <h3 className="text-xs font-extrabold text-gray-900 line-clamp-1 mb-1">{med.name}</h3>
                     <span className="text-[10px] text-gray-400 font-bold mb-2">{med.brand}</span>
-                    <div className="flex items-center justify-between mt-auto">
+                    <div className="flex items-center justify-between mt-auto" onClick={(e) => e.stopPropagation()}>
                       <span className="text-xs font-black text-gray-950">${med.price}</span>
                       <button 
                         onClick={() => handleQuantityIncrement(med)}
