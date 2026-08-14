@@ -47,12 +47,38 @@ const Bar = ({ value, color }) => (
 
 const SCOLOR = { Low: '#22c55e', Medium: '#f97316', High: '#ef4444', Critical: '#991b1b' };
 
+const formatSeverity = (sev, isHi) => {
+  if (!isHi) return `${sev} Severity`;
+  if (sev === 'Low') return 'हल्की गंभीरता';
+  if (sev === 'Medium') return 'मध्यम गंभीरता';
+  if (sev === 'High') return 'उच्च गंभीरता';
+  if (sev === 'Critical') return 'गंभीर स्थिति';
+  return `${sev} गंभीरता`;
+};
+
+const formatLevel = (lvl, isHi) => {
+  if (!isHi) return `${lvl} Condition`;
+  if (lvl === 'Emergency') return 'आपातकालीन स्थिति';
+  if (lvl === 'Moderate') return 'मध्यम स्थिति';
+  return 'सामान्य स्थिति';
+};
+
+const formatSeverityOnly = (sev, isHi) => {
+  if (!isHi) return sev;
+  if (sev === 'Low') return 'हल्की';
+  if (sev === 'Medium') return 'मध्यम';
+  if (sev === 'High') return 'उच्च';
+  if (sev === 'Critical') return 'गंभीर';
+  return sev;
+};
+
 export const SymptomResultCard = ({ result, onRestart, isMedicineFlow = false }) => {
   const navigate = useNavigate();
   const { addToCart } = useCart();
   const [showMore, setShowMore] = useState(false);
   if (!result) return null;
 
+  const isHi = result.lang === 'hi';
   const top = result.allPredictions?.[0];
   const rest = result.allPredictions?.slice(1, showMore ? 10 : 4) || [];
   const ringColor = result.level === 'Emergency' ? '#ef4444' : result.level === 'Moderate' ? '#f97316' : '#22c55e';
@@ -61,8 +87,8 @@ export const SymptomResultCard = ({ result, onRestart, isMedicineFlow = false })
   const handleOrderSuggestedMedicines = () => {
     addToCart({
       id: `ai-suggested-bundle-${Date.now()}`,
-      name: `AI Recommended Package: ${top?.disease || 'General Care'}`,
-      brand: 'Pharmacist Audit Verified',
+      name: isHi ? `AI संस्तुत दवा पैक: ${top?.disease || 'स्वास्थ्य देखभाल'}` : `AI Recommended Package: ${top?.disease || 'General Care'}`,
+      brand: isHi ? 'MediRush AI सत्यापित' : 'MediRush AI Verified',
       price: 12.00,
       quantity: 1,
       images: ['https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=500&auto=format&fit=crop&q=60']
@@ -75,7 +101,7 @@ export const SymptomResultCard = ({ result, onRestart, isMedicineFlow = false })
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: 'spring', stiffness: 260, damping: 24 }}
-      className="w-full max-w-2xl mx-auto space-y-4 pb-8"
+      className="w-full max-w-3xl mx-auto space-y-6 pb-12"
     >
 
       {/* ── SEVERE SYMPTOM URGENT WARNING BANNER ───────────────────────────── */}
@@ -83,134 +109,132 @@ export const SymptomResultCard = ({ result, onRestart, isMedicineFlow = false })
         <motion.div 
           initial={{ scale: 0.96, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="bg-gradient-to-r from-red-600 via-red-700 to-rose-800 text-white rounded-2xl p-5 shadow-lg border border-red-500 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative overflow-hidden"
+          className="bg-gradient-to-r from-red-600 via-red-700 to-rose-800 text-white rounded-3xl p-6 shadow-xl border border-red-500 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 relative overflow-hidden"
         >
-          <div className="flex items-start gap-3 relative z-10">
-            <div className="p-2.5 bg-white/20 rounded-xl backdrop-blur-md flex-shrink-0 border border-white/20 shadow-inner">
-              <AlertTriangle size={24} className="text-white animate-pulse" />
+          <div className="flex items-start gap-4 relative z-10">
+            <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-md flex-shrink-0 border border-white/20 shadow-inner">
+              <AlertTriangle size={28} className="text-white animate-pulse" />
             </div>
             <div>
-              <h3 className="text-base font-extrabold tracking-tight">HIGH RISK SYMPTOMS DETECTED</h3>
-              <p className="text-xs text-red-100 font-medium leading-relaxed mt-0.5">
-                Self-medication is unsafe for severe symptoms. Please visit a hospital or consult a qualified doctor immediately.
+              <h3 className="text-lg font-extrabold tracking-tight">
+                {isHi ? 'गंभीर स्वास्थ्य लक्षण पाए गए' : 'HIGH RISK SYMPTOMS DETECTED'}
+              </h3>
+              <p className="text-xs text-red-100 font-medium leading-relaxed mt-1">
+                {isHi
+                  ? 'गंभीर लक्षणों के लिए स्व-उपचार असुरक्षित है। कृपया तुरंत अस्पताल जाएं या विशेषज्ञ डॉक्टर से परामर्श लें।'
+                  : 'Self-medication is unsafe for severe symptoms. Please visit a hospital or consult a qualified doctor immediately.'}
               </p>
             </div>
           </div>
           <button
             onClick={() => navigate('/nearby')}
-            className="w-full sm:w-auto bg-white text-red-700 hover:bg-red-50 px-4 py-3 rounded-xl font-extrabold text-xs uppercase tracking-wider shadow-md flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer active:scale-95 transition-all relative z-10 flex-shrink-0"
+            className="w-full sm:w-auto bg-white text-red-700 hover:bg-red-50 px-5 py-3.5 rounded-2xl font-black text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer active:scale-95 transition-all relative z-10 flex-shrink-0"
           >
-            <MapPin size={15} /> Find Nearest Hospital
+            <MapPin size={16} /> {isHi ? 'निकटतम अस्पताल खोजें' : 'Find Nearest Hospital'}
           </button>
         </motion.div>
       )}
 
-      {/* ── MEDICINE ORDER FLOW (Top Highlighted Medicines & Pharmacist Safeguard) ──────── */}
+      {/* ── MEDICINE ORDER FLOW ────────────────────────────────────────────── */}
       {isMedicineFlow ? (
         <>
           {result.medicines?.length > 0 && (
             <motion.div 
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 text-white rounded-3xl p-6 shadow-xl border border-blue-500/30 space-y-4 relative overflow-hidden"
+              className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 text-white rounded-3xl p-7 shadow-2xl border border-blue-500/30 space-y-5 relative overflow-hidden"
             >
               <div className="flex items-center justify-between">
-                <div className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border border-white/20">
-                  <Pill size={13} className="text-blue-100" /> AI Suggested Medicines
+                <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider border border-white/20">
+                  <Pill size={15} className="text-blue-100" /> {isHi ? 'AI संस्तुत दवाइयां' : 'AI Suggested Medicines'}
                 </div>
-                <span className="text-[11px] font-extrabold bg-green-500/20 text-green-200 px-2.5 py-0.5 rounded-lg border border-green-400/30">
-                  In Stock
+                <span className="text-xs font-extrabold bg-emerald-500/20 text-emerald-200 px-3 py-1 rounded-xl border border-emerald-400/30">
+                  {isHi ? 'स्टॉक में उपलब्ध' : 'In Stock'}
                 </span>
               </div>
 
               <div>
-                <p className="text-[10px] uppercase font-bold tracking-widest text-blue-200 mb-1">Recommended OTC Remedies</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <p className="text-xs uppercase font-bold tracking-widest text-blue-200 mb-2">
+                  {isHi ? 'सुझाई गई OTC दवाइयां' : 'Recommended OTC Remedies'}
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {result.medicines.map((m, i) => (
-                    <div key={i} className="flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/15 p-2.5 rounded-xl text-xs font-bold text-white">
-                      <CheckCircle2 size={14} className="text-emerald-400 flex-shrink-0" />
+                    <div key={i} className="flex items-center gap-2.5 bg-white/10 backdrop-blur-sm border border-white/15 p-3.5 rounded-2xl text-sm font-bold text-white shadow-sm">
+                      <CheckCircle2 size={16} className="text-emerald-400 flex-shrink-0" />
                       <span className="truncate">{m}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Pharmacist Safeguard Notification */}
-              <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-3.5 space-y-1.5 text-xs text-blue-100">
-                <div className="flex items-center gap-1.5 text-yellow-300 font-extrabold text-[11px] uppercase tracking-wider">
-                  <ShieldCheck size={14} /> Pharmacist Verification Safeguard
-                </div>
-                <p className="text-[11px] leading-relaxed opacity-95">
-                  These medicines were matched by AI based on your symptoms. When ordered, a summary slip is sent to a partner pharmacy. A licensed pharmacist will audit the request and call you directly if any adjustment is needed.
-                </p>
-              </div>
-
               {/* Direct Order Button */}
               <button
                 onClick={handleOrderSuggestedMedicines}
-                className="w-full bg-white text-[#1565C0] hover:bg-blue-50 py-3.5 px-5 rounded-2xl font-black text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-2 active:scale-98 transition-all cursor-pointer"
+                className="w-full bg-white text-[#1565C0] hover:bg-blue-50 py-4 px-6 rounded-2xl font-black text-sm uppercase tracking-wider shadow-xl flex items-center justify-center gap-2.5 active:scale-98 transition-all cursor-pointer mt-2"
               >
-                <ShoppingBag size={18} />
-                Order AI Suggested Medicines ($12.00)
+                <ShoppingBag size={20} />
+                {isHi ? 'अभी ऑर्डर करें' : 'Order Now'}
               </button>
             </motion.div>
           )}
 
           {/* Condition Analysis Details */}
-          <div className={cn("glass-card border-2 p-6 shadow-floating relative overflow-hidden", result.colorClass)}>
+          <div className={cn("glass-card border-2 p-7 rounded-3xl shadow-floating relative overflow-hidden", result.colorClass)}>
             <div className="absolute -right-16 -bottom-16 opacity-[0.04] pointer-events-none">
               <Brain size={260} />
             </div>
 
-            <div className="relative z-10">
-              <div className="flex items-center flex-wrap gap-2 mb-5">
-                <span className={cn("text-[10px] font-extrabold uppercase tracking-widest px-3 py-1 rounded-lg bg-white/70 border border-white/50 shadow-sm", result.iconColor)}>
-                  {levelEmoji} {result.level} Condition
+            <div className="relative z-10 space-y-4">
+              <div className="flex items-center flex-wrap gap-2.5 mb-2">
+                <span className={cn("text-xs font-extrabold uppercase tracking-widest px-3.5 py-1.5 rounded-xl bg-white/80 border border-white/60 shadow-sm", result.iconColor)}>
+                  {levelEmoji} {formatLevel(result.level, isHi)}
                 </span>
                 {result.mlPowered && (
-                  <span className="text-[10px] font-extrabold uppercase tracking-widest px-3 py-1 rounded-lg bg-purple-100 text-purple-700 border border-purple-200 flex items-center gap-1">
-                    <Sparkles size={9} /> AI Powered
+                  <span className="text-xs font-extrabold uppercase tracking-widest px-3.5 py-1.5 rounded-xl bg-purple-100 text-purple-700 border border-purple-200 flex items-center gap-1.5">
+                    <Sparkles size={11} /> {isHi ? 'AI पावर्ड' : 'AI Powered'}
                   </span>
                 )}
               </div>
 
               {top && (
-                <div className="flex items-center gap-5 mb-5">
+                <div className="flex items-center gap-6 py-2">
                   <div className="relative flex-shrink-0">
                     <ConfidenceRing value={top.probability} color={ringColor} />
                     <div className="absolute inset-0 flex items-center justify-center flex-col">
-                      <span className="text-[15px] font-extrabold text-gray-900 leading-none">{top.probability}%</span>
-                      <span className="text-[8px] text-gray-500 font-bold uppercase tracking-wide">match</span>
+                      <span className="text-lg font-black text-gray-900 leading-none">{top.probability}%</span>
+                      <span className="text-[9px] text-gray-500 font-bold uppercase tracking-wide">{isHi ? 'मैच' : 'match'}</span>
                     </div>
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-0.5">Most Likely Condition</p>
-                    <h2 className={cn("text-2xl font-extrabold leading-tight", result.textColor)}>{top.disease}</h2>
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">
+                      {isHi ? 'मुख्य संभावित स्थिति' : 'Most Likely Condition'}
+                    </p>
+                    <h2 className={cn("text-3xl font-extrabold leading-tight", result.textColor)}>{top.disease}</h2>
                     <span className={cn(
-                      "inline-block mt-1.5 text-[9px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded-full border",
+                      "inline-block mt-2 text-xs font-extrabold uppercase tracking-widest px-3 py-1 rounded-full border",
                       top.severity === 'Low' ? 'bg-green-100 text-green-700 border-green-200' :
                       top.severity === 'Medium' ? 'bg-orange-100 text-orange-700 border-orange-200' :
                       'bg-red-100 text-red-700 border-red-200'
                     )}>
-                      {top.severity} Severity
+                      {formatSeverity(top.severity, isHi)}
                     </span>
                   </div>
                 </div>
               )}
 
               {result.description && top && (
-                <p className={cn("text-sm font-medium opacity-80 mb-5 leading-relaxed", result.textColor)}>{result.description}</p>
+                <p className={cn("text-base font-medium opacity-90 leading-relaxed", result.textColor)}>{result.description}</p>
               )}
 
               {result.detectedSymptoms?.length > 0 && (
-                <div>
-                  <p className="text-[9px] font-extrabold uppercase tracking-widest text-gray-500 mb-2 flex items-center gap-1.5">
-                    <Thermometer size={10} /> Symptoms Identified
+                <div className="pt-2">
+                  <p className="text-xs font-extrabold uppercase tracking-widest text-gray-500 mb-2 flex items-center gap-1.5">
+                    <Thermometer size={12} /> {isHi ? 'पहचाने गए लक्षण' : 'Symptoms Identified'}
                   </p>
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex flex-wrap gap-2">
                     {result.detectedSymptoms.map((s, i) => (
-                      <span key={i} className="text-xs font-semibold bg-white/70 border border-white/50 rounded-lg px-2.5 py-1 text-gray-700 shadow-sm capitalize">
+                      <span key={i} className="text-xs font-bold bg-white/80 border border-white/60 rounded-xl px-3 py-1.5 text-gray-700 shadow-sm capitalize">
                         {s.replace(/_/g, ' ')}
                       </span>
                     ))}
@@ -220,20 +244,22 @@ export const SymptomResultCard = ({ result, onRestart, isMedicineFlow = false })
             </div>
           </div>
 
-          {/* Compact Home Remedies for Mild/Low Severity */}
+          {/* Compact Home Remedies */}
           {result.homeRemedies?.length > 0 && (
             <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-              className="glass-card border border-white/60 p-4 shadow-floating">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-6 h-6 bg-green-100 rounded-lg flex items-center justify-center">
-                  <Leaf size={12} className="text-green-600" />
+              className="glass-card border border-white/60 p-6 rounded-3xl shadow-floating space-y-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 bg-green-100 rounded-xl flex items-center justify-center">
+                  <Leaf size={15} className="text-green-600" />
                 </div>
-                <h3 className="text-xs font-extrabold text-gray-900 uppercase tracking-wider">Helpful Home Care & Remedies</h3>
+                <h3 className="text-sm font-extrabold text-gray-900 uppercase tracking-wider">
+                  {isHi ? 'उपयोगी घरेलू उपाय व देखभाल' : 'Helpful Home Care & Remedies'}
+                </h3>
               </div>
-              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {result.homeRemedies.map((r, i) => (
-                  <li key={i} className="flex items-start gap-2 text-xs text-gray-700 font-medium bg-white/50 p-2 rounded-xl border border-white/40">
-                    <CheckCircle2 size={12} className="text-green-500 flex-shrink-0 mt-0.5" />{r}
+                  <li key={i} className="flex items-start gap-2.5 text-xs sm:text-sm text-gray-700 font-medium bg-white/60 p-3 rounded-2xl border border-white/50 shadow-sm">
+                    <CheckCircle2 size={15} className="text-green-500 flex-shrink-0 mt-0.5" />{r}
                   </li>
                 ))}
               </ul>
@@ -244,71 +270,73 @@ export const SymptomResultCard = ({ result, onRestart, isMedicineFlow = false })
         /* ── NORMAL MAIN PAGE FLOW (Standard Health Assessment View) ─────────────────── */
         <>
           {/* Top Hero Prediction Card */}
-          <div className={cn("glass-card border-2 p-6 shadow-floating relative overflow-hidden", result.colorClass)}>
+          <div className={cn("glass-card border-2 p-7 rounded-3xl shadow-floating relative overflow-hidden", result.colorClass)}>
             <div className="absolute -right-16 -bottom-16 opacity-[0.04] pointer-events-none">
               <Brain size={260} />
             </div>
 
-            <div className="relative z-10">
-              <div className="flex items-center flex-wrap gap-2 mb-5">
-                <span className={cn("text-[10px] font-extrabold uppercase tracking-widest px-3 py-1 rounded-lg bg-white/70 border border-white/50 shadow-sm", result.iconColor)}>
-                  {levelEmoji} {result.level} Condition
+            <div className="relative z-10 space-y-4">
+              <div className="flex items-center flex-wrap gap-2.5 mb-2">
+                <span className={cn("text-xs font-extrabold uppercase tracking-widest px-3.5 py-1.5 rounded-xl bg-white/80 border border-white/60 shadow-sm", result.iconColor)}>
+                  {levelEmoji} {formatLevel(result.level, isHi)}
                 </span>
                 {result.mlPowered && (
-                  <span className="text-[10px] font-extrabold uppercase tracking-widest px-3 py-1 rounded-lg bg-purple-100 text-purple-700 border border-purple-200 flex items-center gap-1">
-                    <Sparkles size={9} /> AI Powered
+                  <span className="text-xs font-extrabold uppercase tracking-widest px-3.5 py-1.5 rounded-xl bg-purple-100 text-purple-700 border border-purple-200 flex items-center gap-1.5">
+                    <Sparkles size={11} /> {isHi ? 'AI पावर्ड' : 'AI Powered'}
                   </span>
                 )}
               </div>
 
               {top ? (
-                <div className="flex items-center gap-5 mb-5">
+                <div className="flex items-center gap-6 py-2">
                   <div className="relative flex-shrink-0">
                     <ConfidenceRing value={top.probability} color={ringColor} />
                     <div className="absolute inset-0 flex items-center justify-center flex-col">
-                      <span className="text-[15px] font-extrabold text-gray-900 leading-none">{top.probability}%</span>
-                      <span className="text-[8px] text-gray-500 font-bold uppercase tracking-wide">match</span>
+                      <span className="text-lg font-black text-gray-900 leading-none">{top.probability}%</span>
+                      <span className="text-[9px] text-gray-500 font-bold uppercase tracking-wide">{isHi ? 'मैच' : 'match'}</span>
                     </div>
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-0.5">Most Likely Condition</p>
-                    <h2 className={cn("text-2xl font-extrabold leading-tight", result.textColor)}>{top.disease}</h2>
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">
+                      {isHi ? 'मुख्य संभावित स्थिति' : 'Most Likely Condition'}
+                    </p>
+                    <h2 className={cn("text-3xl font-extrabold leading-tight", result.textColor)}>{top.disease}</h2>
                     <span className={cn(
-                      "inline-block mt-1.5 text-[9px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded-full border",
+                      "inline-block mt-2 text-xs font-extrabold uppercase tracking-widest px-3 py-1 rounded-full border",
                       top.severity === 'Low' ? 'bg-green-100 text-green-700 border-green-200' :
                       top.severity === 'Medium' ? 'bg-orange-100 text-orange-700 border-orange-200' :
                       'bg-red-100 text-red-700 border-red-200'
                     )}>
-                      {top.severity} Severity
+                      {formatSeverity(top.severity, isHi)}
                     </span>
                   </div>
                 </div>
               ) : (
-                <div className="flex items-start mb-5 gap-4">
-                  <div className={cn("p-3 bg-white/80 rounded-2xl shadow-sm flex-shrink-0 border border-white/50", result.iconColor)}>
-                    {result.level === 'Emergency' ? <AlertTriangle size={30} className="animate-pulse" /> :
-                     result.level === 'Moderate' ? <Activity size={30} /> : <ShieldCheck size={30} />}
+                <div className="flex items-start gap-4">
+                  <div className={cn("p-3.5 bg-white/80 rounded-2xl shadow-sm flex-shrink-0 border border-white/50", result.iconColor)}>
+                    {result.level === 'Emergency' ? <AlertTriangle size={32} className="animate-pulse" /> :
+                     result.level === 'Moderate' ? <Activity size={32} /> : <ShieldCheck size={32} />}
                   </div>
                   <div>
-                    <h2 className={cn("text-xl font-extrabold", result.textColor)}>{result.title}</h2>
-                    <p className={cn("text-sm mt-1 opacity-80 leading-relaxed", result.textColor)}>{result.description}</p>
+                    <h2 className={cn("text-2xl font-extrabold", result.textColor)}>{result.title}</h2>
+                    <p className={cn("text-base mt-1 opacity-80 leading-relaxed font-medium", result.textColor)}>{result.description}</p>
                   </div>
                 </div>
               )}
 
               {result.description && top && (
-                <p className={cn("text-sm font-medium opacity-80 mb-5 leading-relaxed", result.textColor)}>{result.description}</p>
+                <p className={cn("text-base font-medium opacity-90 leading-relaxed", result.textColor)}>{result.description}</p>
               )}
 
               {result.detectedSymptoms?.length > 0 && (
-                <div className="mb-5">
-                  <p className="text-[9px] font-extrabold uppercase tracking-widest text-gray-500 mb-2 flex items-center gap-1.5">
-                    <Thermometer size={10} /> Symptoms Identified
+                <div className="pt-2">
+                  <p className="text-xs font-extrabold uppercase tracking-widest text-gray-500 mb-2 flex items-center gap-1.5">
+                    <Thermometer size={12} /> {isHi ? 'पहचाने गए लक्षण' : 'Symptoms Identified'}
                   </p>
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex flex-wrap gap-2">
                     {result.detectedSymptoms.map((s, i) => (
-                      <span key={i} className="text-xs font-semibold bg-white/70 border border-white/50 rounded-lg px-2.5 py-1 text-gray-700 shadow-sm capitalize">
+                      <span key={i} className="text-xs font-bold bg-white/80 border border-white/60 rounded-xl px-3 py-1.5 text-gray-700 shadow-sm capitalize">
                         {s.replace(/_/g, ' ')}
                       </span>
                     ))}
@@ -316,32 +344,32 @@ export const SymptomResultCard = ({ result, onRestart, isMedicineFlow = false })
                 </div>
               )}
 
-              <div className="h-px bg-black/10 mb-4" />
+              <div className="h-px bg-black/10 my-4" />
 
-              {/* Standard Primary CTA */}
-              <div className="flex flex-col sm:flex-row gap-3">
+              {/* Standard Primary Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-3 pt-1">
                 {result.actionType === 'visit_hospital' && (
                   <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
                     onClick={() => navigate('/nearby')}
-                    className={cn("flex-1 text-white py-3.5 px-5 rounded-2xl font-extrabold flex items-center justify-between shadow-lg", result.buttonColor)}>
-                    <div className="flex items-center"><MapPin size={17} className="mr-2" /> Find Nearest Hospital</div>
-                    <ArrowRight size={17} />
+                    className={cn("flex-1 text-white py-4 px-6 rounded-2xl font-black text-sm flex items-center justify-between shadow-xl cursor-pointer", result.buttonColor)}>
+                    <div className="flex items-center"><MapPin size={19} className="mr-2" /> {isHi ? 'निकटतम अस्पताल खोजें' : 'Find Nearest Hospital'}</div>
+                    <ArrowRight size={19} />
                   </motion.button>
                 )}
                 {result.actionType === 'order_medicine' && (
                   <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
                     onClick={() => navigate('/medicines')}
-                    className={cn("flex-1 text-white py-3.5 px-5 rounded-2xl font-extrabold flex items-center justify-between shadow-lg", result.buttonColor)}>
-                    <div className="flex items-center"><Pill size={17} className="mr-2" /> Order Medicine Now</div>
-                    <ArrowRight size={17} />
+                    className={cn("flex-1 text-white py-4 px-6 rounded-2xl font-black text-sm flex items-center justify-between shadow-xl cursor-pointer", result.buttonColor)}>
+                    <div className="flex items-center"><Pill size={19} className="mr-2" /> {isHi ? 'दवाइयां ऑर्डर करें' : 'Order Medicine Now'}</div>
+                    <ArrowRight size={19} />
                   </motion.button>
                 )}
                 {result.actionType === 'home_remedies' && (
                   <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
                     onClick={() => navigate('/home-remedies')}
-                    className={cn("flex-1 text-white py-3.5 px-5 rounded-2xl font-extrabold flex items-center justify-between shadow-lg", result.buttonColor)}>
-                    <div className="flex items-center"><HeartPulse size={17} className="mr-2" /> View Safe Remedies</div>
-                    <ArrowRight size={17} />
+                    className={cn("flex-1 text-white py-4 px-6 rounded-2xl font-black text-sm flex items-center justify-between shadow-xl cursor-pointer", result.buttonColor)}>
+                    <div className="flex items-center"><HeartPulse size={19} className="mr-2" /> {isHi ? 'सुरक्षित घरेलू उपाय देखें' : 'View Safe Remedies'}</div>
+                    <ArrowRight size={19} />
                   </motion.button>
                 )}
               </div>
@@ -349,42 +377,61 @@ export const SymptomResultCard = ({ result, onRestart, isMedicineFlow = false })
           </div>
 
           {/* Medicines + Home Remedies 2-Column Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {result.medicines?.length > 0 && (
               <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-                className="glass-card border border-white/60 p-5 shadow-floating">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-7 h-7 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <Pill size={13} className="text-blue-600" />
+                className="glass-card border border-white/60 p-6 rounded-3xl shadow-floating space-y-4 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 bg-blue-100 rounded-xl flex items-center justify-center">
+                        <Pill size={16} className="text-blue-600" />
+                      </div>
+                      <h3 className="text-base font-extrabold text-gray-900">
+                        {isHi ? 'सुझाई गई दवाइयां' : 'Suggested Medicines'}
+                      </h3>
+                    </div>
                   </div>
-                  <h3 className="text-sm font-extrabold text-gray-900">Suggested Medicines</h3>
+                  <ul className="space-y-2.5 mb-4">
+                    {result.medicines.map((m, i) => (
+                      <li key={i} className="flex items-start gap-2.5 text-sm text-gray-800 font-bold bg-white/50 p-2.5 rounded-xl border border-white/40">
+                        <CheckCircle2 size={16} className="text-blue-500 flex-shrink-0 mt-0.5" />{m}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-                <ul className="space-y-2">
-                  {result.medicines.map((m, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-gray-700 font-medium">
-                      <CheckCircle2 size={13} className="text-blue-400 flex-shrink-0 mt-0.5" />{m}
-                    </li>
-                  ))}
-                </ul>
-                <p className="text-[9px] text-gray-400 mt-3 font-semibold flex items-center gap-1">
-                  <Info size={9} />Doctor se pooch ke hi dawai lein.
-                </p>
+
+                {/* DIRECT ORDER SUGGESTED MEDICINES BUTTON */}
+                <div className="space-y-2 pt-2 border-t border-gray-100/60">
+                  <button
+                    onClick={handleOrderSuggestedMedicines}
+                    className="w-full bg-primary hover:bg-primary-dark text-white py-2.5 px-4 rounded-xl font-extrabold text-xs uppercase tracking-wider shadow-md flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-98"
+                  >
+                    <ShoppingBag size={15} />
+                    {isHi ? 'यह दवाइयां ऑर्डर करें' : 'Order These Medicines'}
+                  </button>
+                  <p className="text-[10px] text-gray-400 font-semibold text-center flex items-center justify-center gap-1">
+                    <Info size={10} /> {isHi ? 'डॉक्टर की सलाह से ही दवाइयां लें।' : 'Consult a physician before medication.'}
+                  </p>
+                </div>
               </motion.div>
             )}
 
             {result.homeRemedies?.length > 0 && (
               <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.26 }}
-                className="glass-card border border-white/60 p-5 shadow-floating">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-7 h-7 bg-green-100 rounded-lg flex items-center justify-center">
-                    <Leaf size={13} className="text-green-600" />
+                className="glass-card border border-white/60 p-6 rounded-3xl shadow-floating space-y-4">
+                <div className="flex items-center gap-2.5 mb-3">
+                  <div className="w-8 h-8 bg-emerald-100 rounded-xl flex items-center justify-center">
+                    <Leaf size={16} className="text-emerald-600" />
                   </div>
-                  <h3 className="text-sm font-extrabold text-gray-900">Home Remedies</h3>
+                  <h3 className="text-base font-extrabold text-gray-900">
+                    {isHi ? 'घरेलू उपाय व देखभाल' : 'Home Care & Remedies'}
+                  </h3>
                 </div>
-                <ul className="space-y-2">
+                <ul className="space-y-2.5">
                   {result.homeRemedies.map((r, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-gray-700 font-medium">
-                      <CheckCircle2 size={13} className="text-green-400 flex-shrink-0 mt-0.5" />{r}
+                    <li key={i} className="flex items-start gap-2.5 text-sm text-gray-800 font-medium bg-white/50 p-2.5 rounded-xl border border-white/40">
+                      <CheckCircle2 size={16} className="text-emerald-500 flex-shrink-0 mt-0.5" />{r}
                     </li>
                   ))}
                 </ul>
@@ -397,21 +444,23 @@ export const SymptomResultCard = ({ result, onRestart, isMedicineFlow = false })
       {/* ── OTHER POSSIBLE CONDITIONS ────────────────────────────────────── */}
       {result.allPredictions?.length > 1 && (
         <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}
-          className="glass-card border border-white/60 p-5 shadow-floating">
-          <div className="flex items-center gap-2 mb-4">
-            <Brain size={15} className="text-primary" />
-            <h3 className="text-sm font-extrabold text-gray-900 uppercase tracking-widest">Other Possible Conditions</h3>
+          className="glass-card border border-white/60 p-6 rounded-3xl shadow-floating space-y-4">
+          <div className="flex items-center gap-2.5">
+            <Brain size={18} className="text-primary" />
+            <h3 className="text-sm font-extrabold text-gray-900 uppercase tracking-widest">
+              {isHi ? 'अन्य संभावित स्थितियां' : 'Other Possible Conditions'}
+            </h3>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-3.5">
             {rest.map((p, i) => (
-              <div key={i} className="space-y-1">
+              <div key={i} className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-bold text-gray-700">{p.disease}</span>
-                  <span className={cn("text-[9px] font-bold uppercase px-2 py-0.5 rounded-full border",
+                  <span className="text-sm font-extrabold text-gray-800">{p.disease}</span>
+                  <span className={cn("text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full border",
                     p.severity === 'Low' ? 'bg-green-50 text-green-600 border-green-200' :
                     p.severity === 'Medium' ? 'bg-orange-50 text-orange-600 border-orange-200' :
                     'bg-red-50 text-red-600 border-red-200'
-                  )}>{p.severity}</span>
+                  )}>{formatSeverityOnly(p.severity, isHi)}</span>
                 </div>
                 <Bar value={p.probability} color={SCOLOR[p.severity] || '#64748b'} />
               </div>
@@ -419,8 +468,8 @@ export const SymptomResultCard = ({ result, onRestart, isMedicineFlow = false })
           </div>
           {result.allPredictions.length > 4 && (
             <button onClick={() => setShowMore(!showMore)}
-              className="mt-3 flex items-center gap-1 text-xs font-bold text-primary hover:opacity-70 transition-opacity">
-              {showMore ? <><ChevronUp size={13} />Less</> : <><ChevronDown size={13} />{result.allPredictions.length - 4} more</>}
+              className="mt-2 flex items-center gap-1.5 text-xs font-extrabold text-primary hover:opacity-70 transition-opacity cursor-pointer">
+              {showMore ? <><ChevronUp size={14} />{isHi ? 'कम दिखाएं' : 'Show Less'}</> : <><ChevronDown size={14} />{result.allPredictions.length - 4} {isHi ? 'और देखें' : 'more'}</>}
             </button>
           )}
         </motion.div>
@@ -429,17 +478,19 @@ export const SymptomResultCard = ({ result, onRestart, isMedicineFlow = false })
       {/* ── PRECAUTIONS ──────────────────────────────────────────────────── */}
       {result.precautions?.length > 0 && (
         <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.32 }}
-          className="glass-card border border-white/60 p-4 shadow-floating">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-6 h-6 bg-amber-100 rounded-lg flex items-center justify-center">
-              <ShieldCheck size={12} className="text-amber-600" />
+          className="glass-card border border-white/60 p-6 rounded-3xl shadow-floating space-y-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 bg-amber-100 rounded-xl flex items-center justify-center">
+              <ShieldCheck size={15} className="text-amber-600" />
             </div>
-            <h3 className="text-xs font-extrabold text-gray-900 uppercase tracking-wider">Precautions / Sawdhaniyaan</h3>
+            <h3 className="text-xs sm:text-sm font-extrabold text-gray-900 uppercase tracking-wider">
+              {isHi ? 'महत्वपूर्ण सावधानियां' : 'Key Safety Precautions'}
+            </h3>
           </div>
-          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {result.precautions.map((p, i) => (
-              <li key={i} className="flex items-start gap-2 text-xs text-gray-700 font-medium bg-white/50 p-2 rounded-xl border border-white/40">
-                <CheckCircle2 size={12} className="text-amber-500 flex-shrink-0 mt-0.5" />{p}
+              <li key={i} className="flex items-start gap-2.5 text-xs sm:text-sm text-gray-700 font-medium bg-white/60 p-3 rounded-2xl border border-white/50">
+                <CheckCircle2 size={15} className="text-amber-500 flex-shrink-0 mt-0.5" />{p}
               </li>
             ))}
           </ul>
@@ -448,19 +499,23 @@ export const SymptomResultCard = ({ result, onRestart, isMedicineFlow = false })
 
       {/* ── DISCLAIMER ───────────────────────────────────────────────────── */}
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
-        className="glass-card border border-white/50 p-4 flex items-start gap-3">
-        <AlertTriangle className="text-gray-400 flex-shrink-0 mt-0.5" size={15} />
-        <p className="text-xs text-gray-500 leading-relaxed font-medium">
-          <span className="font-extrabold text-gray-700 text-[9px] uppercase tracking-widest mr-1">Disclaimer:</span>
-          Yeh AI-based symptom checker sirf jaankari ke liye hai. Kisi bhi dawai lene ya diagnosis ke liye qualified doctor se milein.
+        className="glass-card border border-white/60 p-5 rounded-2xl flex items-start gap-3.5 bg-white/40">
+        <AlertTriangle className="text-gray-400 flex-shrink-0 mt-0.5" size={17} />
+        <p className="text-xs text-gray-600 leading-relaxed font-medium">
+          <span className="font-extrabold text-gray-800 text-[10px] uppercase tracking-widest mr-1">
+            {isHi ? 'अस्वीकरण:' : 'Disclaimer:'}
+          </span>
+          {isHi
+            ? 'यह AI-आधारित लक्षण जांचकर्ता केवल जानकारी के लिए है। किसी भी दवा लेने या निदान के लिए पंजीकृत डॉक्टर से परामर्श लें।'
+            : 'This AI-based symptom checker is for informational purposes only. Consult a registered healthcare professional for medical diagnosis and treatment.'}
         </p>
       </motion.div>
 
       {/* Restart */}
       <div className="text-center pb-2">
         <button onClick={onRestart}
-          className="text-[11px] font-extrabold text-gray-400 hover:text-primary uppercase tracking-widest transition-colors cursor-pointer">
-          ↩ Nayi Jaanch Shuru Karein
+          className="text-xs font-black text-gray-400 hover:text-primary uppercase tracking-widest transition-colors cursor-pointer">
+          {isHi ? '↩ नई जांच शुरू करें' : '↩ Start New Symptom Check'}
         </button>
       </div>
     </motion.div>

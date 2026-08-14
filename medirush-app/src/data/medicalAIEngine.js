@@ -23,19 +23,19 @@ export const LANG = {
     emergency: "🚨 What you're describing sounds like a serious emergency. Please call 112 immediately or go to the nearest hospital right away. Do not wait.",
   },
   hi: {
-    greeting_reply: ["Namaste! 😊 Main MediRush AI hun. Aaj aap kaisa mehsoos kar rahe hain? Apne symptoms bataaiye.", "Hello ji! 👋 Batao — kya takleef ho rahi hai aapko?", "Namaste! Koi bhi bimari ya takleef ho toh mujhse batao."],
-    howAreYou_reply: ["Main theek hun, shukriya! 😊 Aap batao — aap kaisa feel kar rahe hain? Koi symptoms hain?", "Shukriya! Lekin aap yahan hain toh zaroor kuch poochna tha — kya ho raha hai?"],
-    fine_reply: ["Bahut achha! 😊 Koi bhi health se related sawaal ho toh poochh sakte ho.", "Yeh sunke achha laga! Kya koi symptoms ya sehat se judi baat hai jo poochna chahte ho?"],
-    thanks_reply: ["Koi baat nahi! 😊 Kuch aur help chahiye? Koi symptoms ya sehat ki baat?"],
-    symptom_acknowledge: ["Theek hai, samajh gaya. Kuch aur bhi poochhta hun.", "Achha, noted. Ek-do cheezein aur jaanana chahta hun.", "Hmm, theek hai. Thoda aur batao."],
-    done_trigger: ["bas", "yahi ho raha hai", "aur nahi", "hua", "khatam", "theek hai bas", "aur kuch nahi", "itna hi", "done", "finish"],
-    done_reply: "Shukriya! 🔍 Ab main aapke symptoms ka poora analysis kar raha hun...",
-    continue_prompt: "Koi aur symptoms ya baat batana chahte hain? (Agar nahi toh 'bas' bolein)",
-    duration_q: ["Yeh symptoms kitne din se hain? (Jaise — 1 din, 3 din, hafte bhar)", "Kab se yeh ho raha hai?", "Kitne ghante ya din se feel ho raha hai?"],
-    history_q: ["Aapki umar kitni hai? Koi purani bimari — diabetes, BP, ya asthma?", "Koi medical history hai jo mujhe jaanni chahiye?"],
-    meds_q: ["Koi dawai chal rahi hai? Kuch khaya-piya relief ke liye?", "Abhi koi medicine le rahe hain?"],
-    analyzing: "Shukriya! 🔍 Aapki poori jaankari se AI analysis ho rahi hai...",
-    emergency: "🚨 Jo aapne bataya hai woh serious emergency lag raha hai! Abhi turant 112 call karein ya nearest hospital jaayein. Ek pal bhi mat rukein.",
+    greeting_reply: ["नमस्ते! 😊 मैं MediRush AI हूँ। आज आप कैसा महसूस कर रहे हैं? अपने लक्षण बताएं।", "नमस्ते! 👋 मैं आपकी मदद के लिए यहाँ हूँ। आपको क्या लक्षण अनुभव हो रहे हैं?", "नमस्ते! आपको कोई भी स्वास्थ्य संबंधी समस्या हो तो मुझसे साझा करें।"],
+    howAreYou_reply: ["मैं ठीक हूँ, धन्यवाद! 😊 आप बताएं — आप कैसा महसूस कर रहे हैं? कोई लक्षण हैं?", "पूछने के लिए धन्यवाद! मैं हमेशा आपकी सहायता के लिए तैयार हूँ। आप बताएं, क्या लक्षण हैं?"],
+    fine_reply: ["यह सुनकर बहुत अच्छा लगा! 😊 यदि स्वास्थ्य से जुड़ा कोई सवाल हो तो जरूर पूछें।", "बहुत बढ़िया! क्या कोई विशेष लक्षण या स्वास्थ्य चिंता है जिसके बारे में आप पूछना चाहते हैं?"],
+    thanks_reply: ["आपका स्वागत है! 😊 क्या मैं आपकी किसी अन्य स्वास्थ्य समस्या में मदद कर सकता हूँ?"],
+    symptom_acknowledge: ["ठीक है, मैं समझ गया। मुझे कुछ और प्रश्न पूछने दें।", "समझ गया। कुछ और बातें जानना चाहता हूँ।", "ठीक है। स्थिति को बेहतर समझने के लिए कुछ प्रश्न पूछ रहा हूँ।"],
+    done_trigger: ["बस", "यही है", "और नहीं", "हो गया", "खत्म", "ठीक है बस", "और कुछ नहीं", "इतना ही", "done", "finish", "that's all"],
+    done_reply: "धन्यवाद! 🔍 अब मैं आपके सभी लक्षणों का AI विश्लेषण कर रहा हूँ...",
+    continue_prompt: "क्या आप अपने लक्षणों या स्वास्थ्य के बारे में कुछ और बताना चाहते हैं? (यदि हो गया हो, तो 'बस' कहें)",
+    duration_q: ["यह लक्षण कितने दिनों से हैं? (जैसे — 1 दिन, 3 दिन, या एक हफ्ता)", "आपको यह समस्या कब से हो रही है?", "कितने दिनों या घंटों से यह लक्षण महसूस हो रहे हैं?"],
+    history_q: ["आपकी उम्र कितनी है? क्या आपको पहले से कोई बीमारी है जैसे डायबिटीज, बीपी, या दमा?", "क्या कोई पुरानी मेडिकल हिस्ट्री है जो मुझे जाननी चाहिए?"],
+    meds_q: ["क्या अभी कोई दवा ले रहे हैं? राहत के लिए कुछ लिया है?", "क्या आप वर्तमान में कोई नियमित दवाइयां ले रहे हैं?"],
+    analyzing: "धन्यवाद! 🔍 आपके दिए गए विवरण के आधार पर AI विश्लेषण जारी है...",
+    emergency: "🚨 आपके द्वारा बताए गए लक्षण किसी गंभीर आपात स्थिति का संकेत दे रहे हैं। कृपया तुरंत 112 पर कॉल करें या निकटतम अस्पताल जाएं। देर न करें।",
   }
 };
 
@@ -62,54 +62,45 @@ const EMERGENCY_WORDS = ["chest pain", "seene mein dard", "can't breathe", "saan
 const SPECIFIC_QUESTIONS = {
   fever: {
     en: ["How high is your fever? Above 101°F? Do you have chills or sweating along with it?", "Is the fever constant or does it come and go? Any body ache?"],
-    hi: ["Bukhar kitna hai? 101°F se zyada? Saath mein thakaan ya kaanpna ho raha hai?", "Bukhar lagaataar hai ya aata-jaata hai? Saath mein body ache bhi hai?"]
+    hi: ["बुखार कितना तेज है? 101°F से अधिक? क्या साथ में ठंड या पसीना आ रहा है?", "क्या बुखार लगातार बना हुआ है या उतरता-चढ़ता है? क्या शरीर में दर्द भी है?"]
   },
   headache: {
     en: ["Where's the pain — front, back, or sides? Is it throbbing or a constant pressure?", "Does it get worse with light or sound? Any nausea along with it?"],
-    hi: ["Dard kahan hai — aage, peeche ya side mein? Throbbing hai ya dabao waala?", "Roshni ya awaaz se zyada hota hai? Saath mein ulti jaisi feeling?"]
+    hi: ["सिरदर्द कहाँ है — आगे, पीछे या सिर के किनारों पर? क्या कसक या दबाव महसूस होता है?", "क्या तेज़ रोशनी या आवाज से दर्द बढ़ता है? क्या मिचली या उल्टी जैसी अनुभूति है?"]
   },
   cough: {
     en: ["Dry cough or with mucus? If mucus, what color?", "Is it worse at night? Any nasal congestion or sore throat?"],
-    hi: ["Sukhi khansi hai ya bulagam aa raha hai? Rang kya hai bulagam ka?", "Raat ko zyada khansi hoti hai? Naak bhi band hai ya gala kharab?"]
+    hi: ["क्या सूखी खांसी है या बलगम आ रहा है? बलगम का रंग कैसा है?", "क्या रात में खांसी अधिक होती है? क्या नाक बंद या गले में खराश है?"]
   },
   stomach: {
     en: ["Is the pain constant or comes after eating? Any vomiting or loose motion?", "Any burning sensation in chest or throat? How many times?"],
-    hi: ["Dard lagaataar hai ya khaane ke baad hota hai? Ulti ya loose motion hua?", "Seene ya gale mein jalan? Kitni baar ulti aayi?"]
+    hi: ["क्या पेट दर्द लगातार है या भोजन के बाद होता है? क्या उल्टी या दस्त की समस्या है?", "क्या छाती या गले में जलन महसूस होती है?"]
   },
   pain: {
     en: ["On a scale of 1-10, how severe? Is it in one spot or spreading?", "Did it start suddenly? Any injury before this?"],
-    hi: ["1-10 mein kitna dard hai? Ek jagah hai ya fail raha hai?", "Achanak shuru hua ya dhire-dhire? Koi chot lagi thi?"]
+    hi: ["1 से 10 के पैमाने पर दर्द कितना तीव्र है? क्या यह एक जगह पर है या फैल रहा है?", "क्या दर्द अचानक शुरू हुआ? क्या इससे पहले कोई चोट लगी थी?"]
   },
   breathing: {
     en: ["Is it constant or only during activity? Does your chest feel tight?"],
-    hi: ["Lagaataar hai ya sirf kuch karne pe? Chest pe dabao feel ho raha hai?"]
+    hi: ["क्या सांस फूलने की समस्या लगातार है या काम करने पर होती है? क्या सीने में जकड़न महसूस होती है?"]
   },
   skin: {
     en: ["Where is the rash? Is it spreading? Any fever along with it?", "Did you eat something new or use new soap/medicine recently?"],
-    hi: ["Rash kahan hai? Failta ja raha hai? Saath mein bukhar bhi hai?", "Koi naya khana ya soap/dawai use ki haal mein?"]
+    hi: ["त्वचा पर रैश कहाँ हैं? क्या यह फैल रहे हैं? क्या साथ में बुखार भी है?", "क्या हाल ही में कोई नया भोजन, साबुन या दवा ली है?"]
   },
   weakness: {
     en: ["Is it all over or in specific parts? Are you eating and drinking properly?", "Do you feel dizzy when standing up? Any fainting?"],
-    hi: ["Poore body mein hai ya kisi jagah? Khana-paani sahi se ho raha hai?", "Uthte waqt chakkar aata hai? Kabhi behosh hua?"]
+    hi: ["क्या कमजोरी पूरे शरीर में है? क्या खान-पान ठीक से हो रहा है?", "क्या खड़े होने पर चक्कर आते हैं?"]
   },
   urinary: {
     en: ["Burning when urinating? How frequently? Any unusual urine color?"],
-    hi: ["Peshab karte waqt jalan? Kitni baar? Rang alag hai peshab ka?"]
+    hi: ["क्या पेशाब करते समय जलन महसूस होती है? कितनी बार जाना पड़ता है? क्या पेशाब का रंग बदला है?"]
   },
 };
 
 const GENERAL_Q_KEYS = ["duration", "history", "medications"];
 
 const rand = (arr) => arr[Math.floor(Math.random() * arr.length)];
-
-function detectLanguage(text) {
-  const hindiChars = /[\u0900-\u097F]/;
-  const hindiWords = ["hai", "ho", "kya", "mujhe", "mera", "mere", "aur", "nahi", "hua", "raha", "rahi", "toh", "lekin", "aaj", "kal", "din", "bukhar", "dard", "peth", "sir", "khansi", "saans", "thaka", "kamzor", "ulti", "jalan", "susu", "chakkar"];
-  if (hindiChars.test(text)) return "hi";
-  const lower = text.toLowerCase();
-  if (hindiWords.some(w => lower.includes(w))) return "hi";
-  return "en";
-}
 
 function detectCategories(text, lang = "en") {
   const lower = text.toLowerCase();
@@ -130,10 +121,14 @@ function hasSymptoms(text) { return detectCategories(text).length > 0 || text.sp
 export class MedicalConversationEngine {
   constructor(lang = "en") {
     this.lang = lang;
+    this.initialLang = lang;
     this.reset();
   }
 
-  setLang(lang) { this.lang = lang; }
+  setLang(lang) { 
+    this.lang = lang; 
+    this.initialLang = lang;
+  }
 
   reset() {
     this.detectedCats = [];
@@ -148,12 +143,6 @@ export class MedicalConversationEngine {
   process(userText) {
     const lower = userText.toLowerCase().trim();
     const L = LANG[this.lang];
-
-    // Detect language from user's input automatically
-    const detectedLang = detectLanguage(userText);
-    if (detectedLang !== this.lang && this.allAnswers.length === 0) {
-      this.lang = detectedLang;
-    }
 
     // ── Emergency ──────────────────────────────────────────────────────────
     if (isEmergency(lower)) {

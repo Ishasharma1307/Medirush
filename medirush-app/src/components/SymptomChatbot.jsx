@@ -11,12 +11,12 @@ const WELCOME = {
   },
   hi: {
     id: 'welcome', type: 'bot',
-    text: "👋 Namaste! Main MediRush AI hun — aapka advanced medical assistant.\n\nAap mujhse bilkul seedha baat kar sakte hain. Apni takleef bataaiye, ya bas 'Namaste' bol ke shuru karein!"
+    text: "👋 नमस्ते! मैं MediRush AI हूँ — आपका उन्नत चिकित्सा सहायक।\n\nआप मुझसे सीधे बात कर सकते हैं। अपने लक्षण या स्वास्थ्य समस्या बताएं, या शुरू करने के लिए 'नमस्ते' कहें!"
   }
 };
 
 export const SymptomChatbot = ({ onComplete }) => {
-  const [lang, setLang] = useState(null); // null = not selected yet
+  const [lang, setLang] = useState(null); // Always prompt user to choose language first
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -29,9 +29,19 @@ export const SymptomChatbot = ({ onComplete }) => {
   // Initialize engine when language is selected
   const selectLang = (l) => {
     setLang(l);
+    localStorage.setItem('medirush_symptom_lang', l);
     engineRef.current = new MedicalConversationEngine(l);
     setMessages([{ ...WELCOME[l] }]);
   };
+
+  useEffect(() => {
+    if (lang && (!engineRef.current || engineRef.current.lang !== lang)) {
+      engineRef.current = new MedicalConversationEngine(lang);
+      if (messages.length === 0) {
+        setMessages([{ ...WELCOME[lang] }]);
+      }
+    }
+  }, [lang]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -221,7 +231,7 @@ export const SymptomChatbot = ({ onComplete }) => {
               <AlertCircle size={11} className="text-blue-500 flex-shrink-0" />
               <p className="text-[9px] text-blue-700 font-semibold">
                 {lang === 'hi'
-                  ? "Emergency mein 112 call karein. Yeh AI doctor ki jagah nahi hai."
+                  ? "आपातकाल में 112 पर कॉल करें। यह AI योग्य डॉक्टर का विकल्प नहीं है।"
                   : "For emergencies, call 112. This AI is not a substitute for professional medical care."}
               </p>
             </div>
@@ -231,7 +241,7 @@ export const SymptomChatbot = ({ onComplete }) => {
                 onChange={e => setInputValue(e.target.value)}
                 onKeyDown={handleKeyDown}
                 disabled={isTyping}
-                placeholder={lang === 'hi' ? (isTyping ? 'AI soch raha hai...' : 'Kuch bhi likhein...') : (isTyping ? 'AI is thinking...' : 'Type anything...')}
+                placeholder={lang === 'hi' ? (isTyping ? 'AI सोच रहा है...' : 'अपने लक्षण लिखें...') : (isTyping ? 'AI is thinking...' : 'Type anything...')}
                 rows={1}
                 className="flex-1 bg-white/80 border border-gray-200 text-gray-800 rounded-2xl px-4 py-2.5 text-sm shadow-inner focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-transparent resize-none max-h-28 scrollbar-hide disabled:opacity-50"
               />
@@ -247,7 +257,7 @@ export const SymptomChatbot = ({ onComplete }) => {
             </div>
             <p className="text-center text-[9px] text-gray-400 mt-1.5 font-medium">
               {lang === 'hi'
-                ? "Enter = bhejein · Jab ho jaye, 'bas' bolein"
+                ? "Enter = संदेश भेजें · पूरा होने पर 'बस' कहें"
                 : "Enter to send · Say 'that's all' when done"}
             </p>
           </motion.div>
