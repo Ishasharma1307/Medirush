@@ -109,6 +109,12 @@ export const MedicineDetail = () => {
         // Find associated Pharmacy
         const pharmData = mockPharmacies.find(p => p.id === enrichedMed.pharmacy_id) || mockPharmacies[0];
         setPharmacy(pharmData);
+
+        // Sync initial quantity selector with Cart if item already in cart
+        const existingInCart = cartItems.find(i => i.id === enrichedMed.id);
+        if (existingInCart && existingInCart.quantity) {
+          setQuantity(existingInCart.quantity);
+        }
       }
 
       const userData = mockUsers.find(u => u.id === (user?.id || 'user-123')); 
@@ -121,10 +127,26 @@ export const MedicineDetail = () => {
     }
   };
 
+  // Sync quantity if cartItems change externally
+  useEffect(() => {
+    if (medicine && cartItems) {
+      const existingInCart = cartItems.find(i => i.id === medicine.id);
+      if (existingInCart && existingInCart.quantity) {
+        setQuantity(existingInCart.quantity);
+      }
+    }
+  }, [cartItems, medicine?.id]);
+
   const handleQuantityChange = (delta) => {
     const newQuantity = quantity + delta;
     if (newQuantity >= 1 && newQuantity <= 10) {
       setQuantity(newQuantity);
+      
+      // If item is already in cart, update cart quantity live!
+      const existingInCart = cartItems.find(i => i.id === medicine?.id);
+      if (existingInCart) {
+        updateQuantity(medicine.id, newQuantity);
+      }
     }
   };
 
@@ -132,15 +154,20 @@ export const MedicineDetail = () => {
     if (!medicine || !canOrder) return;
     setAddedToCart(true);
     
-    addToCart({
-      id: medicine.id,
-      name: medicine.name,
-      price: medicine.price,
-      image: mainImage || medicine.images?.[0] || '',
-      pharmacy_id: pharmacy?.id || '',
-      pharmacy_name: pharmacy?.pharmacy_name || 'Verified Pharmacy',
-      quantity: quantity
-    });
+    const existingInCart = cartItems.find(i => i.id === medicine.id);
+    if (existingInCart) {
+      updateQuantity(medicine.id, quantity);
+    } else {
+      addToCart({
+        id: medicine.id,
+        name: medicine.name,
+        price: medicine.price,
+        image: mainImage || medicine.images?.[0] || '',
+        pharmacy_id: pharmacy?.id || '',
+        pharmacy_name: pharmacy?.pharmacy_name || 'Verified Pharmacy',
+        quantity: quantity
+      });
+    }
     
     setTimeout(() => setAddedToCart(false), 2000);
   };
@@ -148,15 +175,20 @@ export const MedicineDetail = () => {
   const handleOrderNow = () => {
     if (!medicine || !canOrder) return;
     
-    addToCart({
-      id: medicine.id,
-      name: medicine.name,
-      price: medicine.price,
-      image: mainImage || medicine.images?.[0] || '',
-      pharmacy_id: pharmacy?.id || '',
-      pharmacy_name: pharmacy?.pharmacy_name || 'Verified Pharmacy',
-      quantity: quantity
-    });
+    const existingInCart = cartItems.find(i => i.id === medicine.id);
+    if (existingInCart) {
+      updateQuantity(medicine.id, quantity);
+    } else {
+      addToCart({
+        id: medicine.id,
+        name: medicine.name,
+        price: medicine.price,
+        image: mainImage || medicine.images?.[0] || '',
+        pharmacy_id: pharmacy?.id || '',
+        pharmacy_name: pharmacy?.pharmacy_name || 'Verified Pharmacy',
+        quantity: quantity
+      });
+    }
     
     navigate('/checkout');
   };
