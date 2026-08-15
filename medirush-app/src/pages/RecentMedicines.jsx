@@ -129,8 +129,12 @@ export const RecentMedicines = () => {
                 key={med.id} 
                 className="glass-card border-white/60 overflow-hidden hover:shadow-floating transition-all duration-300 flex flex-col h-full group"
               >
-                {/* Image Section */}
-                <div className="h-48 bg-white/20 backdrop-blur-md flex items-center justify-center overflow-hidden relative group border-b border-white/50">
+                {/* Image Section - Clickable */}
+                <div 
+                  onClick={() => navigate(`/medicines/${med.id}`)}
+                  className="h-48 bg-white/20 backdrop-blur-md flex items-center justify-center overflow-hidden relative group border-b border-white/50 cursor-pointer"
+                  title="View medicine details"
+                >
                   {med.images && med.images.length > 0 ? (
                     <img 
                       src={med.images[0]} 
@@ -163,7 +167,13 @@ export const RecentMedicines = () => {
                 {/* Details Section */}
                 <div className="p-5 flex flex-col flex-grow bg-white/40">
                   <span className="text-[9px] font-extrabold text-primary mb-1.5 uppercase tracking-widest bg-primary/10 border border-primary/20 w-fit px-2 py-0.5 rounded shadow-sm">{med.category || 'Medicine'}</span>
-                  <h3 className="font-extrabold text-gray-900 text-lg mb-2 line-clamp-1 drop-shadow-sm">{med.name}</h3>
+                  <h3 
+                    onClick={() => navigate(`/medicines/${med.id}`)}
+                    className="font-extrabold text-gray-900 text-lg mb-2 line-clamp-1 drop-shadow-sm cursor-pointer group-hover:text-primary transition-colors"
+                    title="View medicine details"
+                  >
+                    {med.name}
+                  </h3>
                   <div className="flex items-baseline text-primary mb-4 bg-primary/5 border border-primary/10 w-fit px-3 py-1.5 rounded-xl shadow-inner">
                     <span className="text-sm font-bold mr-0.5">$</span>
                     <span className="text-2xl font-extrabold tracking-tight drop-shadow-sm">{med.price}</span>

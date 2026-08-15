@@ -124,8 +124,13 @@ export const Checkout = () => {
                 <h2 className="text-lg font-extrabold text-gray-900 mb-4">Order Summary</h2>
                 <div className="space-y-4 mb-6">
                   {cartItems.map(item => (
-                    <div key={item.id} className="flex items-center gap-4 py-2 border-b border-gray-100 last:border-0">
-                      <div className="w-12 h-12 bg-gray-50 rounded-lg flex items-center justify-center p-1 border border-gray-200">
+                    <div 
+                      key={item.id} 
+                      onClick={() => navigate(`/medicines/${String(item.id).replace('ai-suggested-bundle-', '')}`)}
+                      className="flex items-center gap-4 py-2 border-b border-gray-100 last:border-0 cursor-pointer group hover:bg-blue-50/50 p-2 rounded-xl transition-all"
+                      title="View product details"
+                    >
+                      <div className="w-12 h-12 bg-gray-50 rounded-lg flex items-center justify-center p-1 border border-gray-200 overflow-hidden flex-shrink-0">
                         {item.image ? (
                           <img src={item.image} alt={item.name} className="w-full h-full object-cover rounded" />
                         ) : (
@@ -133,7 +138,7 @@ export const Checkout = () => {
                         )}
                       </div>
                       <div className="flex-1">
-                        <h4 className="font-bold text-gray-900 text-sm line-clamp-1">{item.name}</h4>
+                        <h4 className="font-bold text-gray-900 text-sm line-clamp-1 group-hover:text-primary transition-colors">{item.name}</h4>
                         <p className="text-xs text-gray-500 font-medium">Qty: {item.quantity}</p>
                       </div>
                       <div className="font-extrabold text-gray-900 text-sm">
