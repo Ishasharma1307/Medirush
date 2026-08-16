@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { mockMedicines } from '../mockData/mockMedicines';
+import { loadAll250kMedicines } from '../utils/medicineData';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -56,57 +57,22 @@ export const Medicines = () => {
   const [isWebcamActive, setIsWebcamActive] = useState(false);
   const mediaStreamRef = useRef(null);
 
-  // Load and enrich mock data (loads top 5,000 immediately, and full 241,954 dataset asynchronously)
+  // Load and enrich mock data (loads top 2,000 immediately, and full 253,973 dataset asynchronously)
   useEffect(() => {
     const fetchAndEnrichMedicines = async () => {
       try {
         setLoading(true);
-        // Instant initial load with top 5,000 authentic Indian medicines
+        // Instant initial load with top 2,000 authentic Indian medicines
         setMedicines(mockMedicines);
         setLoading(false);
 
-        // Background load of complete 241,954 Indian Medicine dataset
-        fetch('/indian_medicines_full.json')
-          .then(res => {
-            if (!res.ok) throw new Error('Full dataset not yet loaded');
-            return res.json();
-          })
-          .then(compactData => {
-            if (compactData && Array.isArray(compactData) && compactData.length > 0) {
-              const fullMeds = compactData.map(([id, name, price, brand, salt, strength, category, reqRx], idx) => {
-                const discountPercent = (idx % 4) * 5 + 10;
-                const origPrice = parseFloat((price * (1 + discountPercent / 100)).toFixed(2));
-                return {
-                  id,
-                  pharmacy_id: "pharm-1",
-                  name,
-                  price,
-                  originalPrice: origPrice,
-                  discountPercent,
-                  brand: brand || 'Indian Healthcare',
-                  manufacturer_name: brand || 'Indian Healthcare',
-                  genericName: salt || 'Active Ingredients',
-                  salt_composition: salt || 'Active Ingredients',
-                  pack_size_label: strength || 'strip of 10 tablets',
-                  strength: strength || 'strip of 10 tablets',
-                  category: category || 'Personal Care',
-                  description: `${name} is an authentic Indian pharmaceutical formulation produced by ${brand} for therapeutic use.`,
-                  side_effects: 'Consult a medical specialist if severe symptoms persist.',
-                  is_available: idx % 20 !== 0,
-                  requires_prescription: reqRx === 1,
-                  rating: (4.2 + (idx % 8) * 0.1).toFixed(1),
-                  reviewCount: 50 + (idx * 7) % 400,
-                  deliveryTime: `${(idx % 3) * 5 + 10} mins`,
-                  images: ['https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=500&auto=format&fit=crop&q=80']
-                };
-              });
-              console.log(`Successfully loaded full database of ${fullMeds.length} authentic Indian medicines!`);
-              setMedicines(fullMeds);
-            }
-          })
-          .catch(e => {
-            console.log('Operating with top 2,000 Indian medicine catalog.');
-          });
+        // Background load of complete 253,973 Indian Medicine dataset
+        loadAll250kMedicines().then(fullData => {
+          if (fullData && Array.isArray(fullData) && fullData.length > 0) {
+            console.log(`Successfully loaded full database of ${fullData.length} authentic Indian medicines!`);
+            setMedicines(fullData);
+          }
+        });
       } catch (err) {
         console.error('Error initializing medicine data:', err);
         setLoading(false);

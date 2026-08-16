@@ -14,10 +14,11 @@ import {
   ShoppingCart, CheckCircle, Share2, Heart, Info, Pill, Truck, Check, Sparkles, ChevronRight
 } from 'lucide-react';
 
-// Import Mock Data
+// Import Mock Data & Full Dataset Resolver
 import { mockMedicines } from '../mockData/mockMedicines';
 import { mockPharmacies } from '../mockData/mockPharmacies';
 import { mockUsers } from '../mockData/mockUsers';
+import { findMedicineById, loadAll250kMedicines } from '../utils/medicineData';
 
 const USE_MOCK_DATA = true;
 
@@ -50,17 +51,17 @@ export const MedicineDetail = () => {
     try {
       setLoading(true);
       
-      // 1. Attempt to find medicine from mockMedicines array
-      let medData = mockMedicines.find(m => m.id === id || m.id === `med-${id}`);
+      // 1. Attempt to find medicine from mockMedicines or full 253k dataset
+      let medData = findMedicineById(id);
       
-      // 2. Fallback: Lookup by index or search string or first item if id is numeric/custom
+      // 2. If not found in memory, load full 253,973 dataset asynchronously and search
+      if (!medData) {
+        const fullList = await loadAll250kMedicines();
+        medData = findMedicineById(id) || fullList.find(m => m.id === id || m.id === `med-${id}`);
+      }
+
       if (!medData && mockMedicines.length > 0) {
-        const parsedIdx = parseInt(id, 10);
-        if (!isNaN(parsedIdx) && mockMedicines[parsedIdx - 1]) {
-          medData = mockMedicines[parsedIdx - 1];
-        } else {
-          medData = mockMedicines.find(m => m.name.toLowerCase().includes((id || '').toLowerCase())) || mockMedicines[0];
-        }
+        medData = mockMedicines[0];
       }
 
       // 3. Fallback: Real Supabase lookup if configured
