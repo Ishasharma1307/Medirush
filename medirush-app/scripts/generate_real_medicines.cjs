@@ -49,25 +49,31 @@ function getMedicineImage(name, category) {
 function categorizeMedicine(name, composition, shortDesc) {
   const text = (name + ' ' + composition + ' ' + shortDesc).toLowerCase();
   
-  if (text.includes('paracetamol') || text.includes('aceclofenac') || text.includes('ibuprofen') || text.includes('nimesulide') || text.includes('pain') || text.includes('spas') || text.includes('diclofenac') || text.includes('tramadol') || text.includes('combiflam') || text.includes('dolo') || text.includes('crocin') || text.includes('volini') || text.includes('voveran')) {
+  if (text.includes('metformin') || text.includes('glimepiride') || text.includes('vildagliptin') || text.includes('sitagliptin') || text.includes('insulin') || text.includes('diabetic') || text.includes('diabetes') || text.includes('teneligliptin') || text.includes('dapagliflozin')) {
+    return 'Diabetes Care';
+  }
+  if (text.includes('atorvastatin') || text.includes('telmisartan') || text.includes('amlodipine') || text.includes('rosuvastatin') || text.includes('clopidogrel') || text.includes('cardiac') || text.includes('blood pressure') || text.includes('hypertension') || text.includes('bp')) {
+    return 'Cardiac Care';
+  }
+  if (text.includes('paracetamol') || text.includes('aceclofenac') || text.includes('ibuprofen') || text.includes('nimesulide') || text.includes('pain') || text.includes('spas') || text.includes('diclofenac') || text.includes('tramadol') || text.includes('combiflam') || text.includes('dolo') || text.includes('crocin') || text.includes('volini') || text.includes('voveran') || text.includes('meftal')) {
     return 'Pain Relief';
   }
-  if (text.includes('amoxycillin') || text.includes('azithromycin') || text.includes('cefixime') || text.includes('ciprofloxacin') || text.includes('antibiotic') || text.includes('ofloxacin') || text.includes('erythromycin') || text.includes('clavulanic') || text.includes('augmentin') || text.includes('azithral') || text.includes('taxim') || text.includes('azee') || text.includes('almox')) {
+  if (text.includes('amoxycillin') || text.includes('azithromycin') || text.includes('cefixime') || text.includes('ciprofloxacin') || text.includes('antibiotic') || text.includes('ofloxacin') || text.includes('erythromycin') || text.includes('clavulanic') || text.includes('augmentin') || text.includes('azithral') || text.includes('taxim') || text.includes('azee') || text.includes('almox') || text.includes('zifi') || text.includes('moxikind')) {
     return 'Antibiotics';
   }
-  if (text.includes('cough') || text.includes('syrup') || text.includes('cold') || text.includes('fexofenadine') || text.includes('cetirizine') || text.includes('pheniramine') || text.includes('montelukast') || text.includes('ambroxol') || text.includes('allegra') || text.includes('ascoril') || text.includes('vicks') || text.includes('strepsils') || text.includes('avil') || text.includes('cheston') || text.includes('sinarest')) {
+  if (text.includes('cough') || text.includes('syrup') || text.includes('cold') || text.includes('fexofenadine') || text.includes('cetirizine') || text.includes('pheniramine') || text.includes('montelukast') || text.includes('ambroxol') || text.includes('allegra') || text.includes('ascoril') || text.includes('vicks') || text.includes('strepsils') || text.includes('avil') || text.includes('cheston') || text.includes('sinarest') || text.includes('alex') || text.includes('benadryl') || text.includes('otrivin')) {
     return 'Cold & Cough';
   }
-  if (text.includes('acid') || text.includes('antacid') || text.includes('ranitidine') || text.includes('pantoprazole') || text.includes('omeprazole') || text.includes('rabeprazole') || text.includes('digestive') || text.includes('eno') || text.includes('electral') || text.includes('digene') || text.includes('pudin') || text.includes('aciloc') || text.includes('gelusil') || text.includes('pan 40') || text.includes('pantocid')) {
+  if (text.includes('acid') || text.includes('antacid') || text.includes('ranitidine') || text.includes('pantoprazole') || text.includes('omeprazole') || text.includes('rabeprazole') || text.includes('digestive') || text.includes('eno') || text.includes('electral') || text.includes('digene') || text.includes('pudin') || text.includes('aciloc') || text.includes('gelusil') || text.includes('pan 40') || text.includes('pantocid') || text.includes('dulcolax')) {
     return 'Digestive Health';
   }
-  if (text.includes('vitamin') || text.includes('calcium') || text.includes('zinc') || text.includes('methylcobalamin') || text.includes('becosules') || text.includes('shelcal') || text.includes('limcee') || text.includes('neurobion') || text.includes('evion') || text.includes('supradyn') || text.includes('revital') || text.includes('arachitol') || text.includes('zincovit')) {
+  if (text.includes('vitamin') || text.includes('calcium') || text.includes('zinc') || text.includes('methylcobalamin') || text.includes('becosules') || text.includes('shelcal') || text.includes('limcee') || text.includes('neurobion') || text.includes('evion') || text.includes('supradyn') || text.includes('revital') || text.includes('arachitol') || text.includes('zincovit') || text.includes('tayo')) {
     return 'Vitamins';
   }
-  if (text.includes('gel') || text.includes('cream') || text.includes('ointment') || text.includes('skin') || text.includes('adapalene') || text.includes('clindamycin') || text.includes('betadine') || text.includes('azelaic') || text.includes('ketoconazole') || text.includes('candid') || text.includes('anovate') || text.includes('clocip')) {
+  if (text.includes('gel') || text.includes('cream') || text.includes('ointment') || text.includes('skin') || text.includes('adapalene') || text.includes('clindamycin') || text.includes('betadine') || text.includes('azelaic') || text.includes('ketoconazole') || text.includes('candid') || text.includes('anovate') || text.includes('clocip') || text.includes('burnol') || text.includes('omnigel')) {
     return 'Skin Care';
   }
-  if (text.includes('dettol') || text.includes('band-aid') || text.includes('antiseptic') || text.includes('bandage') || text.includes('savlon') || text.includes('first aid')) {
+  if (text.includes('dettol') || text.includes('band-aid') || text.includes('antiseptic') || text.includes('bandage') || text.includes('savlon') || text.includes('first aid') || text.includes('cotton') || text.includes('gauze') || text.includes('hydrogen peroxide')) {
     return 'First Aid';
   }
   return 'Personal Care';
@@ -93,7 +99,7 @@ function parseCSVLine(line) {
   return result;
 }
 
-// Icon iconic everyday Indian medicines to guarantee inclusion
+// Iconic everyday Indian medicines to guarantee inclusion
 const TOP_MUST_HAVE_MEDICINES = [
   {
     name: "Dolo 650 Tablet",
@@ -155,7 +161,7 @@ const TOP_MUST_HAVE_MEDICINES = [
     price: 160.00,
     manufacturer: "GlaxoSmithKline",
     category: "Digestive Health",
-    composition: "Soduim Bicarbonate (2.32g) + Citric Acid (2.18g)",
+    composition: "Sodium Bicarbonate (2.32g) + Citric Acid (2.18g)",
     packSize: "bottle of 100g Powder",
     description: "Eno Fruit Salt acts in just 6 seconds to neutralize excess stomach acid and relieve acidity, heaviness, and indigestion.",
     side_effects: "Mild belching",
@@ -251,13 +257,14 @@ const TOP_MUST_HAVE_MEDICINES = [
   }
 ];
 
+console.log('Extracting comprehensive 1000+ medicine dataset from Indian Medicine CSV...');
 const content = fs.readFileSync(csvPath, 'utf8');
 const lines = content.split('\n');
 
 const extractedList = [...TOP_MUST_HAVE_MEDICINES];
 const seenNames = new Set(TOP_MUST_HAVE_MEDICINES.map(m => m.name.toLowerCase()));
 
-let count = 0;
+// Stream through lines to extract 1000 unique valid non-discontinued Indian medicines
 for (let i = 1; i < lines.length; i++) {
   const line = lines[i].trim();
   if (!line) continue;
@@ -285,21 +292,21 @@ for (let i = 1; i < lines.length; i++) {
       extractedList.push({
         name: name,
         price: price,
-        manufacturer: manufacturer || 'Standard Pharmaceuticals',
+        manufacturer: manufacturer || 'Standard Indian Pharmaceuticals',
         category: cat,
-        composition: comp || 'Active Medical Salts',
+        composition: comp || 'Active Pharmaceutical Ingredients',
         packSize: packSize || 'strip of 10 tablets',
         description: desc || `${name} is an authentic Indian pharmaceutical product manufactured by ${manufacturer || 'licensed laboratories'} for targeted relief and symptom management.`,
         side_effects: sideEff || 'Consult your physician if severe reactions occur.',
-        requiresPrescription: name.toLowerCase().includes('625') || name.toLowerCase().includes('500') || cat === 'Antibiotics'
+        requiresPrescription: name.toLowerCase().includes('625') || name.toLowerCase().includes('500') || cat === 'Antibiotics' || cat === 'Diabetes Care' || cat === 'Cardiac Care'
       });
       
-      if (extractedList.length >= 120) break;
+      if (extractedList.length >= 1000) break;
     }
   }
 }
 
-console.log(`Prepared ${extractedList.length} authentic Indian medicines.`);
+console.log(`Prepared ${extractedList.length} authentic Indian medicines for MediRush.`);
 
 // Transform to JS mockMedicines array
 const finalMedicines = extractedList.map((med, index) => {
@@ -309,7 +316,7 @@ const finalMedicines = extractedList.map((med, index) => {
   const rating = (4.2 + (seed % 8) * 0.1).toFixed(1);
   const reviewCount = 80 + (seed * 13) % 450;
   const deliveryTime = `${(seed % 3) * 5 + 10} mins`;
-  const isAvailable = seed % 12 !== 0; // Most available, 1 out of 12 out of stock
+  const isAvailable = seed % 15 !== 0; // Most available
   
   return {
     id: `med-${seed}`,

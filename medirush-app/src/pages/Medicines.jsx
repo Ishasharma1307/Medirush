@@ -38,6 +38,7 @@ export const Medicines = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [address, setAddress] = useState('Flat 402, Block B, Green Glen Layout, Bangalore');
+  const [visibleCount, setVisibleCount] = useState(36);
   // Real Voice Search & Microphone State
   const [showVoiceModal, setShowVoiceModal] = useState(false);
   const [isListening, setIsListening] = useState(false);
@@ -318,13 +319,18 @@ export const Medicines = () => {
       });
   };
 
-  // Filter medicines by Category & Search query
+  // Filter medicines by Category & Search query (searches name, category, brand, generic salts, description)
   const getFilteredMedicines = () => {
     return medicines.filter(med => {
+      const q = searchQuery.toLowerCase().trim();
       const matchesCategory = selectedCategory === 'All' || med.category === selectedCategory;
-      const matchesSearch = med.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            med.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            med.brand?.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesSearch = !q ||
+                            med.name.toLowerCase().includes(q) ||
+                            med.category?.toLowerCase().includes(q) ||
+                            med.brand?.toLowerCase().includes(q) ||
+                            med.genericName?.toLowerCase().includes(q) ||
+                            med.salt_composition?.toLowerCase().includes(q) ||
+                            med.description?.toLowerCase().includes(q);
       return matchesCategory && matchesSearch;
     });
   };
@@ -527,118 +533,132 @@ export const Medicines = () => {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {filteredMeds.map((med) => {
-                const cartItem = cartItems.find(item => item.id === med.id);
-                const quantityInCart = cartItem ? cartItem.quantity : 0;
+            <>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {filteredMeds.slice(0, visibleCount).map((med) => {
+                  const cartItem = cartItems.find(item => item.id === med.id);
+                  const quantityInCart = cartItem ? cartItem.quantity : 0;
 
-                return (
-                  <div 
-                    key={med.id} 
-                    onClick={() => navigate(`/medicines/${med.id}`)}
-                    className="bg-white border border-blue-50/70 rounded-2xl p-3 flex flex-col relative transition-all duration-300 hover:shadow-lg hover:-translate-y-1 group cursor-pointer"
-                  >
-                    {/* Discount Badge */}
-                    {med.discountPercent && (
-                      <div className="absolute top-2.5 left-0 bg-[#E53935] text-white text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-r-md shadow-sm z-10">
-                        {med.discountPercent}% OFF
-                      </div>
-                    )}
-
-                    {/* Delivery Time Badge */}
-                    <div className="absolute top-2.5 right-2.5 flex items-center gap-1 bg-white/90 backdrop-blur-sm border border-gray-100 rounded-md px-1.5 py-0.5 shadow-sm text-[9px] font-bold text-gray-500">
-                      <Clock size={10} className="text-[#2E7D32]" />
-                      <span>{med.deliveryTime || '10 mins'}</span>
-                    </div>
-
-                    {/* Image Box */}
-                    <div className="w-full h-32 bg-gray-50 rounded-xl flex items-center justify-center overflow-hidden mb-3 relative group-hover:bg-gray-100/50 transition-colors">
-                      {med.images && med.images.length > 0 ? (
-                        <img 
-                          src={med.images[0]} 
-                          alt={med.name} 
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                          loading="lazy"
-                          onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src = 'https://placehold.co/400x400/3b82f6/ffffff?text=Medicine';
-                          }}
-                        />
-                      ) : (
-                        <Pill size={32} className="text-gray-300" />
-                      )}
-                      
-                      {/* Rx Badge */}
-                      {med.requires_prescription && (
-                        <div className="absolute bottom-1 right-1 bg-blue-50 text-[#1565C0] border border-blue-100 text-[8px] font-black px-1.5 py-0.5 rounded-md">
-                          Rx Required
+                  return (
+                    <div 
+                      key={med.id} 
+                      onClick={() => navigate(`/medicines/${med.id}`)}
+                      className="bg-white border border-blue-50/70 rounded-2xl p-3 flex flex-col relative transition-all duration-300 hover:shadow-lg hover:-translate-y-1 group cursor-pointer"
+                    >
+                      {/* Discount Badge */}
+                      {med.discountPercent && (
+                        <div className="absolute top-2.5 left-0 bg-[#E53935] text-white text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-r-md shadow-sm z-10">
+                          {med.discountPercent}% OFF
                         </div>
                       )}
-                    </div>
 
-                    {/* Brand */}
-                    <span className="text-[10px] text-gray-400 font-extrabold uppercase tracking-wider mb-0.5">
-                      {med.brand || 'MediRush'}
-                    </span>
-
-                    {/* Title */}
-                    <h3 className="text-sm font-extrabold text-gray-900 line-clamp-1 mb-1 group-hover:text-[#1565C0] transition-colors">
-                      {med.name}
-                    </h3>
-
-                    {/* Strength */}
-                    <span className="text-[11px] text-gray-500 font-bold mb-2">
-                      {med.strength || '10 Tablets'}
-                    </span>
-
-                    {/* Rating */}
-                    <div className="flex items-center gap-0.5 bg-gray-50 border border-gray-100 px-1.5 py-0.5 rounded-md text-[9px] font-black text-gray-600 w-fit mb-3">
-                      <Star size={10} className="fill-amber-400 text-amber-400" />
-                      <span>{med.rating || '4.5'}</span>
-                    </div>
-
-                    {/* Pricing & Add Trigger */}
-                    <div className="flex items-center justify-between mt-auto pt-2 border-t border-gray-50">
-                      <div>
-                        <span className="text-sm font-black text-gray-950">${med.price}</span>
-                        {med.originalPrice && (
-                          <span className="text-[10px] font-bold text-gray-400 line-through ml-1.5">${med.originalPrice}</span>
-                        )}
+                      {/* Delivery Time Badge */}
+                      <div className="absolute top-2.5 right-2.5 flex items-center gap-1 bg-white/90 backdrop-blur-sm border border-gray-100 rounded-md px-1.5 py-0.5 shadow-sm text-[9px] font-bold text-gray-500">
+                        <Clock size={10} className="text-[#2E7D32]" />
+                        <span>{med.deliveryTime || '10 mins'}</span>
                       </div>
 
-                      {/* Add Button Incrementors (Blinkit style) */}
-                      <div className="w-20 h-9 relative flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
-                        {quantityInCart === 0 ? (
-                          <button
-                            onClick={() => handleQuantityIncrement(med)}
-                            className="bg-white text-[#2E7D32] border border-[#2E7D32]/30 shadow-sm rounded-lg hover:bg-green-50/50 transition-all font-black text-xs w-full h-full flex items-center justify-center active:scale-95 cursor-pointer uppercase"
-                          >
-                            ADD
-                            <Plus size={11} className="ml-1 text-[#2E7D32]" />
-                          </button>
+                      {/* Image Box */}
+                      <div className="w-full h-32 bg-gray-50 rounded-xl flex items-center justify-center overflow-hidden mb-3 relative group-hover:bg-gray-100/50 transition-colors">
+                        {med.images && med.images.length > 0 ? (
+                          <img 
+                            src={med.images[0]} 
+                            alt={med.name} 
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            loading="lazy"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = 'https://placehold.co/400x400/3b82f6/ffffff?text=Medicine';
+                            }}
+                          />
                         ) : (
-                          <div className="bg-[#2E7D32] text-white rounded-lg shadow-sm w-full h-full flex items-center justify-between px-2 font-black text-xs select-none">
-                            <button 
-                              onClick={() => handleQuantityDecrement(med)} 
-                              className="hover:scale-110 active:scale-90 font-bold p-1 cursor-pointer"
-                            >
-                              <Minus size={12} />
-                            </button>
-                            <span className="font-extrabold text-sm">{quantityInCart}</span>
-                            <button 
-                              onClick={() => handleQuantityIncrement(med)} 
-                              className="hover:scale-110 active:scale-90 font-bold p-1 cursor-pointer"
-                            >
-                              <Plus size={12} />
-                            </button>
+                          <Pill size={32} className="text-gray-300" />
+                        )}
+                        
+                        {/* Rx Badge */}
+                        {med.requires_prescription && (
+                          <div className="absolute bottom-1 right-1 bg-blue-50 text-[#1565C0] border border-blue-100 text-[8px] font-black px-1.5 py-0.5 rounded-md">
+                            Rx Required
                           </div>
                         )}
                       </div>
+
+                      {/* Brand */}
+                      <span className="text-[10px] text-gray-400 font-extrabold uppercase tracking-wider mb-0.5">
+                        {med.brand || 'MediRush'}
+                      </span>
+
+                      {/* Title */}
+                      <h3 className="text-sm font-extrabold text-gray-900 line-clamp-1 mb-1 group-hover:text-[#1565C0] transition-colors">
+                        {med.name}
+                      </h3>
+
+                      {/* Strength */}
+                      <span className="text-[11px] text-gray-500 font-bold mb-2">
+                        {med.strength || '10 Tablets'}
+                      </span>
+
+                      {/* Rating */}
+                      <div className="flex items-center gap-0.5 bg-gray-50 border border-gray-100 px-1.5 py-0.5 rounded-md text-[9px] font-black text-gray-600 w-fit mb-3">
+                        <Star size={10} className="fill-amber-400 text-amber-400" />
+                        <span>{med.rating || '4.5'}</span>
+                      </div>
+
+                      {/* Pricing & Add Trigger */}
+                      <div className="flex items-center justify-between mt-auto pt-2 border-t border-gray-50">
+                        <div>
+                          <span className="text-sm font-black text-gray-950">₹{med.price}</span>
+                          {med.originalPrice && (
+                            <span className="text-[10px] font-bold text-gray-400 line-through ml-1.5">₹{med.originalPrice}</span>
+                          )}
+                        </div>
+
+                        {/* Add Button Incrementors (Blinkit style) */}
+                        <div className="w-20 h-9 relative flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                          {quantityInCart === 0 ? (
+                            <button
+                              onClick={() => handleQuantityIncrement(med)}
+                              className="bg-white text-[#2E7D32] border border-[#2E7D32]/30 shadow-sm rounded-lg hover:bg-green-50/50 transition-all font-black text-xs w-full h-full flex items-center justify-center active:scale-95 cursor-pointer uppercase"
+                            >
+                              ADD
+                              <Plus size={11} className="ml-1 text-[#2E7D32]" />
+                            </button>
+                          ) : (
+                            <div className="bg-[#2E7D32] text-white rounded-lg shadow-sm w-full h-full flex items-center justify-between px-2 font-black text-xs select-none">
+                              <button 
+                                onClick={() => handleQuantityDecrement(med)} 
+                                className="hover:scale-110 active:scale-90 font-bold p-1 cursor-pointer"
+                              >
+                                <Minus size={12} />
+                              </button>
+                              <span className="font-extrabold text-sm">{quantityInCart}</span>
+                              <button 
+                                onClick={() => handleQuantityIncrement(med)} 
+                                className="hover:scale-110 active:scale-90 font-bold p-1 cursor-pointer"
+                              >
+                                <Plus size={12} />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+
+              {visibleCount < filteredMeds.length && (
+                <div className="flex justify-center pt-6">
+                  <button
+                    onClick={() => setVisibleCount(prev => prev + 36)}
+                    className="bg-white hover:bg-blue-50 text-[#1565C0] font-black border border-blue-200 shadow-md py-3 px-8 rounded-2xl text-xs uppercase tracking-widest transition-all active:scale-95 cursor-pointer flex items-center gap-2"
+                  >
+                    <span>Load More Medicines ({visibleCount} of {filteredMeds.length})</span>
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
 
@@ -667,7 +687,7 @@ export const Medicines = () => {
                   <h3 className="text-xs font-extrabold text-gray-900 truncate mb-1">{med.name}</h3>
                   <span className="text-[10px] text-gray-400 font-bold mb-2">{med.brand}</span>
                   <div className="flex items-center justify-between mt-auto" onClick={(e) => e.stopPropagation()}>
-                    <span className="text-xs font-black text-gray-950">${med.price}</span>
+                    <span className="text-xs font-black text-gray-950">₹{med.price}</span>
                     <button 
                       onClick={() => handleQuantityIncrement(med)}
                       className="bg-white border border-[#2E7D32]/30 text-[#2E7D32] hover:bg-green-50 p-1 px-2 rounded-md text-[9px] font-black uppercase tracking-wider cursor-pointer active:scale-95"
@@ -709,7 +729,7 @@ export const Medicines = () => {
                     <h3 className="text-xs font-extrabold text-gray-900 line-clamp-1 mb-1">{med.name}</h3>
                     <span className="text-[10px] text-gray-400 font-bold mb-2">{med.strength}</span>
                     <div className="flex items-center justify-between mt-auto" onClick={(e) => e.stopPropagation()}>
-                      <span className="text-xs font-black text-gray-950">${med.price}</span>
+                      <span className="text-xs font-black text-gray-950">₹{med.price}</span>
                       <button 
                         onClick={() => handleQuantityIncrement(med)}
                         className="bg-white border border-[#1565C0]/20 text-[#1565C0] hover:bg-blue-50/50 p-1 px-2 rounded-md text-[9px] font-black uppercase tracking-wider cursor-pointer active:scale-95"
@@ -753,7 +773,7 @@ export const Medicines = () => {
                     <h3 className="text-xs font-extrabold text-gray-900 line-clamp-1 mb-1">{med.name}</h3>
                     <span className="text-[10px] text-gray-400 font-bold mb-2">{med.brand}</span>
                     <div className="flex items-center justify-between mt-auto" onClick={(e) => e.stopPropagation()}>
-                      <span className="text-xs font-black text-gray-950">${med.price}</span>
+                      <span className="text-xs font-black text-gray-950">₹{med.price}</span>
                       <button 
                         onClick={() => handleQuantityIncrement(med)}
                         className="bg-white border border-[#1565C0]/20 text-[#1565C0] hover:bg-blue-50/50 p-1 px-2 rounded-md text-[9px] font-black uppercase tracking-wider cursor-pointer active:scale-95"
