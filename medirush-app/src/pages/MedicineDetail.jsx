@@ -22,6 +22,241 @@ import { findMedicineById, loadAll250kMedicines } from '../utils/medicineData';
 
 const USE_MOCK_DATA = true;
 
+// Category & Salt-Specific Medical Details Generator
+function getMedicineMedicalDetails(med) {
+  const name = (med.name || '').toLowerCase();
+  const cat = (med.category || '').toLowerCase();
+  const salt = (med.genericName || med.salt_composition || '').toLowerCase();
+  const desc = (med.description || '').toLowerCase();
+  const combinedText = `${name} ${cat} ${salt} ${desc}`;
+
+  // 1. Cold & Cough / Syrup / Throat
+  if (combinedText.includes('cough') || combinedText.includes('khasi') || combinedText.includes('syrup') || combinedText.includes('cold') || combinedText.includes('throat') || combinedText.includes('ascoril') || combinedText.includes('benadryl') || combinedText.includes('alex') || combinedText.includes('cheston') || combinedText.includes('sinarest') || combinedText.includes('ambroxol') || combinedText.includes('cetirizine') || combinedText.includes('montelukast')) {
+    return {
+      uses: [
+        'Dry & Wet Cough Relief',
+        'Sore Throat & Vocal Cord Irritation',
+        'Chest & Nasal Airway Congestion',
+        'Allergic Sneezing & Watery Eyes'
+      ],
+      dosageInstructions: med.dosageInstructions || 'Take 10ml (2 teaspoons) 2 to 3 times a day after meals, or 1 tablet daily at bedtime. Shake bottle well before use.',
+      sideEffects: [
+        'Mild Drowsiness or Sleepiness',
+        'Dryness in Mouth & Throat',
+        'Light Dizziness or Nausea (rare)',
+        'Mild Gastric Discomfort'
+      ],
+      precautions: [
+        'Avoid driving or operating heavy machinery if drowsy.',
+        'Avoid alcohol intake during cough therapy.',
+        'Store below 25°C away from direct sunlight.'
+      ]
+    };
+  }
+
+  // 2. Acidity / Stomach / Digestive Health
+  if (combinedText.includes('acid') || combinedText.includes('digestive') || combinedText.includes('gas') || combinedText.includes('pantoprazole') || combinedText.includes('omeprazole') || combinedText.includes('rabeprazole') || combinedText.includes('digene') || combinedText.includes('gelusil') || combinedText.includes('eno') || combinedText.includes('pan 40') || combinedText.includes('pudin') || combinedText.includes('aciloc') || combinedText.includes('stomach')) {
+    return {
+      uses: [
+        'Acidity, Heartburn & GERD Relief',
+        'Stomach Gas & Abdominal Bloating',
+        'Gastric & Duodenal Ulcer Healing',
+        'Indigestion & Sour Stomach Fullness'
+      ],
+      dosageInstructions: med.dosageInstructions || 'Take 1 capsule 30 minutes before morning breakfast with plain water. For antacid liquids, take 2 teaspoons after meals.',
+      sideEffects: [
+        'Mild Headache',
+        'Flatulence or Mild Diarrhea (rare)',
+        'Abdominal Fullness',
+        'Dry Mouth'
+      ],
+      precautions: [
+        'Swallow capsule whole without chewing or crushing.',
+        'Avoid oily, heavily spiced, and late-night meals.',
+        'Consult doctor if acid symptoms persist beyond 14 days.'
+      ]
+    };
+  }
+
+  // 3. Skin Care / Cream / Ointment / Gel / Antiseptic
+  if (combinedText.includes('cream') || combinedText.includes('gel') || combinedText.includes('skin') || combinedText.includes('ointment') || combinedText.includes('betadine') || combinedText.includes('candid') || combinedText.includes('ketoconazole') || combinedText.includes('clotrimazole') || combinedText.includes('acne') || combinedText.includes('pimple') || combinedText.includes('fungal')) {
+    return {
+      uses: [
+        'Fungal & Bacterial Skin Infections',
+        'Acne, Pimples & Facial Blemishes',
+        'Skin Rash, Redness & Intense Itching',
+        'Minor Cuts, Wounds & Burn Healing'
+      ],
+      dosageInstructions: med.dosageInstructions || 'Clean and dry the affected area gently. Apply a thin layer 2 times daily. Wash hands before and after application.',
+      sideEffects: [
+        'Mild Local Burning or Tingling Sensation',
+        'Temporary Skin Dryness or Peeling',
+        'Redness at Application Site (rare)'
+      ],
+      precautions: [
+        'For external topical application only.',
+        'Keep away from eyes, nostrils, and deep open wounds.',
+        'Discontinue use if severe skin allergic reaction occurs.'
+      ]
+    };
+  }
+
+  // 4. Diabetes Care
+  if (combinedText.includes('diabet') || combinedText.includes('sugar') || combinedText.includes('metformin') || combinedText.includes('glimepiride') || combinedText.includes('vildagliptin') || combinedText.includes('insulin') || combinedText.includes('teneligliptin')) {
+    return {
+      uses: [
+        'Type-2 Diabetes Blood Sugar Control',
+        'Post-Meal Glucose Spike Prevention',
+        'Insulin Sensitivity Optimization',
+        'Long-term Diabetic Complication Prevention'
+      ],
+      dosageInstructions: med.dosageInstructions || 'Take 1 tablet daily during or immediately after morning breakfast as advised by your physician.',
+      sideEffects: [
+        'Mild Hypoglycemia (Low Sugar if meal skipped)',
+        'Nausea or Metallic Taste (initial days)',
+        'Mild Abdominal Gas'
+      ],
+      precautions: [
+        'Monitor blood glucose levels regularly.',
+        'Keep candy/glucose powder handy for low sugar episodes.',
+        'Do not skip meals while on diabetic therapy.'
+      ]
+    };
+  }
+
+  // 5. Cardiac Care & BP
+  if (combinedText.includes('bp') || combinedText.includes('cardiac') || combinedText.includes('heart') || combinedText.includes('telmisartan') || combinedText.includes('atorvastatin') || combinedText.includes('amlodipine') || combinedText.includes('rosuvastatin')) {
+    return {
+      uses: [
+        'High Blood Pressure (Hypertension) Management',
+        'Bad Cholesterol (LDL) & Triglyceride Control',
+        'Heart Attack & Stroke Risk Reduction',
+        'Arterial Health & Blood Flow Protection'
+      ],
+      dosageInstructions: med.dosageInstructions || 'Take 1 tablet once daily at the same fixed time every morning with water as prescribed.',
+      sideEffects: [
+        'Mild Ankle Swelling',
+        'Dizziness upon standing quickly',
+        'Mild Fatigue in initial weeks'
+      ],
+      precautions: [
+        'Do not stop medication abruptly.',
+        'Maintain low-sodium (low salt) diet.',
+        'Check blood pressure weekly.'
+      ]
+    };
+  }
+
+  // 6. Antibiotics
+  if (combinedText.includes('antibiotic') || combinedText.includes('amoxicillin') || combinedText.includes('azithromycin') || combinedText.includes('cefixime') || combinedText.includes('augmentin') || combinedText.includes('ciprofloxacin') || combinedText.includes('zifi') || combinedText.includes('taxim')) {
+    return {
+      uses: [
+        'Bacterial Respiratory & ENT Infections',
+        'Urinary Tract (UTI) Bacterial Control',
+        'Skin & Soft Tissue Bacterial Infections',
+        'Post-Surgical Bacterial Contamination Prevention'
+      ],
+      dosageInstructions: med.dosageInstructions || 'Take 1 tablet twice daily after meals every 12 hours for the complete course prescribed by your doctor.',
+      sideEffects: [
+        'Mild Diarrhea or Soft Stools',
+        'Stomach Discomfort or Nausea',
+        'Temporary Alteration of Taste'
+      ],
+      precautions: [
+        'Complete full course; do not stop early even if feeling better.',
+        'Take strictly under medical prescription.',
+        'Inform doctor of any penicillin allergies.'
+      ]
+    };
+  }
+
+  // 7. Vitamins & Supplements
+  if (combinedText.includes('vitamin') || combinedText.includes('calcium') || combinedText.includes('zinc') || combinedText.includes('becosules') || combinedText.includes('shelcal') || combinedText.includes('zincovit') || combinedText.includes('revital') || combinedText.includes('evion') || combinedText.includes('neurobion')) {
+    return {
+      uses: [
+        'Nutritional Vitamin & Mineral Deficiency',
+        'Daily Immunity & Stamina Enhancement',
+        'Bone Strength & Calcium Absorption',
+        'Nerve Health & Hemoglobin Support'
+      ],
+      dosageInstructions: med.dosageInstructions || 'Take 1 capsule/tablet daily after lunch or dinner with a glass of water.',
+      sideEffects: [
+        'Bright Yellow Urine (Harmless B-vitamin excretion)',
+        'Mild Gastric Fullness'
+      ],
+      precautions: [
+        'Do not exceed daily recommended dietary allowance.',
+        'Store in a cool dry place away from heat.',
+        'Keep out of reach of children.'
+      ]
+    };
+  }
+
+  // 8. Eye / Ear / Nasal Drops
+  if (combinedText.includes('drop') || combinedText.includes('nasal') || combinedText.includes('spray') || combinedText.includes('eye') || combinedText.includes('ear')) {
+    return {
+      uses: [
+        'Eye Dryness, Redness & Strain Relief',
+        'Nasal Congestion & Blocked Nose Clearing',
+        'Allergic Itching & Irritation Relief',
+        'Ophthalmic / ENT Hygiene & Moisturization'
+      ],
+      dosageInstructions: med.dosageInstructions || 'Instill 1 to 2 drops into affected eye/ear or 1 spray per nostril 2 to 3 times daily as prescribed.',
+      sideEffects: [
+        'Mild Temporary Stinging or Burning',
+        'Temporary Blurry Vision (Eye Drops)'
+      ],
+      precautions: [
+        'Do not touch dropper/nozzle tip to skin or eye surface.',
+        'Discard bottle 30 days after opening container.',
+        'Remove contact lenses before eye drop application.'
+      ]
+    };
+  }
+
+  // 9. First Aid
+  if (combinedText.includes('dettol') || combinedText.includes('bandage') || combinedText.includes('first aid') || combinedText.includes('savlon') || combinedText.includes('cotton')) {
+    return {
+      uses: [
+        'Antiseptic Disinfection of Cuts & Scraps',
+        'Wound Protection & Bandaging',
+        'Medical Dressing & Microbial Barrier',
+        'First Aid Hygiene Cleansing'
+      ],
+      dosageInstructions: med.dosageInstructions || 'Apply diluted liquid to wound using sterile cotton, or wrap bandage firmly over injured area.',
+      sideEffects: [
+        'Mild Local Stinging on Broken Skin'
+      ],
+      precautions: [
+        'For external hygiene & first aid use only.',
+        'Avoid contact with eyes.',
+        'Consult doctor if wound is deep or bleeding heavily.'
+      ]
+    };
+  }
+
+  // 10. Default Pain Relief & Fever
+  return {
+    uses: [
+      'Fever & High Body Temperature Reduction',
+      'Headache & Body Pain Relief',
+      'Mild Inflammatory & Muscle Soreness',
+      'General Pain Management'
+    ],
+    dosageInstructions: med.dosageInstructions || 'Take 1 tablet with water after meals every 6 to 8 hours as needed. Do not exceed recommended dosage.',
+    sideEffects: [
+      'Mild Stomach Upset or Heartburn',
+      'Drowsiness or Dizziness (rare)',
+      'Skin Rash (discontinue if allergic)'
+    ],
+    precautions: [
+      'Avoid consuming alcohol while taking medication.',
+      'Consult doctor if pre-existing liver/kidney conditions exist.',
+      'Pregnancy & Lactation: Take under medical advice.'
+    ]
+  };
+}
+
 export const MedicineDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -76,27 +311,28 @@ export const MedicineDetail = () => {
 
       // Enrich Medicine Object with Realistic Retail & Medical Specs
       if (medData) {
+        const medicalDetails = getMedicineMedicalDetails(medData);
+        const medIdNum = parseInt(String(medData.id || '1').replace('med-', ''), 10) || 1;
+        const expMonth = ((medIdNum % 12) + 1).toString().padStart(2, '0');
+        const expYear = 2027 + (medIdNum % 3);
+
         const enrichedMed = {
           ...medData,
-          brand: medData.brand || medData.manufacturer_name || 'Cipla Healthcare',
-          strength: medData.strength || medData.pack_size_label || '10 Tablets Strip',
-          genericName: medData.genericName || medData.salt_composition || 'Paracetamol IP 500mg',
-          rating: medData.rating || 4.7,
-          reviewCount: medData.reviewCount || 142,
-          deliveryTime: medData.deliveryTime || '10 mins',
-          discountPercent: medData.discountPercent || 25,
-          originalPrice: medData.originalPrice || parseFloat((medData.price * 1.33).toFixed(2)),
-          manufacturer: medData.manufacturer_name || medData.brand || 'Cipla Pharmaceuticals Ltd.',
-          expiryDate: medData.expiryDate || '12/2027',
-          batchNumber: medData.batchNumber || 'CP-98231',
-          uses: medData.uses || ['Fever & High Temperature', 'Body Pain & Headaches', 'Mild Inflammation', 'Post-Vaccination Pain'],
-          dosageInstructions: medData.dosageInstructions || 'Take 1 tablet after meals with water every 6 to 8 hours as needed. Do not exceed recommended dosage unless advised by a doctor.',
-          sideEffects: Array.isArray(medData.sideEffects) ? medData.sideEffects : (medData.side_effects ? [medData.side_effects] : ['Mild Nausea or Upset Stomach', 'Drowsiness (rare)', 'Allergic Reaction / Skin Rash (seek immediate care if occurs)']),
-          precautions: medData.precautions || [
-            'Alcohol interaction: Avoid consuming alcohol while taking medication.',
-            'Liver Care: Consult doctor if you have pre-existing liver conditions.',
-            'Pregnancy & Lactation: Take strictly under medical supervision.'
-          ],
+          brand: medData.brand || medData.manufacturer_name || 'Indian Healthcare Ltd',
+          strength: medData.strength || medData.pack_size_label || 'strip of 10 tablets',
+          genericName: medData.genericName || medData.salt_composition || 'Active Pharmaceutical Ingredient',
+          rating: medData.rating || (4.2 + (medIdNum % 8) * 0.1).toFixed(1),
+          reviewCount: medData.reviewCount || (50 + (medIdNum * 7) % 400),
+          deliveryTime: medData.deliveryTime || `${(medIdNum % 3) * 5 + 10} mins`,
+          discountPercent: medData.discountPercent || ((medIdNum % 4) * 5 + 10),
+          originalPrice: medData.originalPrice || parseFloat((medData.price * 1.25).toFixed(2)),
+          manufacturer: medData.manufacturer_name || medData.brand || 'Indian Healthcare Ltd.',
+          expiryDate: medData.expiryDate || `${expMonth}/${expYear}`,
+          batchNumber: medData.batchNumber || `BN-${(800000 + (medIdNum * 37) % 199999)}`,
+          uses: medData.uses || medicalDetails.uses,
+          dosageInstructions: medData.dosageInstructions || medicalDetails.dosageInstructions,
+          sideEffects: Array.isArray(medData.sideEffects) ? medData.sideEffects : medicalDetails.sideEffects,
+          precautions: medData.precautions || medicalDetails.precautions,
           images: medData.images && medData.images.length > 0 ? medData.images : [
             'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=600&auto=format&fit=crop&q=80'
           ]
