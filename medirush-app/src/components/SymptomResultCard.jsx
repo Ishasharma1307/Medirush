@@ -89,7 +89,7 @@ export const SymptomResultCard = ({ result, onRestart, isMedicineFlow = false })
       id: `ai-suggested-bundle-${Date.now()}`,
       name: isHi ? `AI संस्तुत दवा पैक: ${top?.disease || 'स्वास्थ्य देखभाल'}` : `AI Recommended Package: ${top?.disease || 'General Care'}`,
       brand: isHi ? 'MediRush AI सत्यापित' : 'MediRush AI Verified',
-      price: 12.00,
+      price: 149.00,
       quantity: 1,
       images: ['https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=500&auto=format&fit=crop&q=60']
     });

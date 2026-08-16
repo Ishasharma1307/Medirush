@@ -28,7 +28,7 @@ export const MedicineCard = ({ medicine, onClick, className }) => {
       </div>
       <div className="flex-1">
         <h3 className="font-bold text-gray-900 text-lg truncate pr-2">{medicine.name}</h3>
-        <p className="text-primary font-extrabold mt-1 text-xl">${medicine.price}</p>
+        <p className="text-primary font-extrabold mt-1 text-xl">₹{medicine.price}</p>
         <div className="mt-2.5 flex items-center justify-between">
           <span className={cn(
             "inline-flex items-center text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-lg",

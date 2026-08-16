@@ -80,17 +80,17 @@ export const Medicines = () => {
 
         // Enrich medicine objects with realistic retail styling attributes
         const enriched = baseMeds.map(med => {
-          const seed = med.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+          const seed = med.id ? med.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) : 1;
           const brands = ['Cipla', 'Abbott', 'Dettol', 'Himalaya', 'Sun Pharma', 'Dr. Reddy\'s', 'GSK', 'Apollo Life'];
-          const brand = brands[seed % brands.length];
+          const brand = med.brand || med.manufacturer_name || brands[seed % brands.length];
           
           const strengths = ['10 Tablets', '150ml Liquid', '50g Gel', 'Pack of 1', '100g Spray', '15 Capsules'];
-          const strength = strengths[seed % strengths.length];
+          const strength = med.strength || med.pack_size_label || strengths[seed % strengths.length];
           
-          const discountPercent = (seed % 4) * 5 + 10; // 10%, 15%, 20%, 25%
-          const originalPrice = parseFloat((med.price * (1 + discountPercent / 100)).toFixed(2));
-          const rating = (4.1 + (seed % 9) * 0.1).toFixed(1);
-          const deliveryTime = `${(seed % 3) * 5 + 10} mins`;
+          const discountPercent = med.discountPercent || ((seed % 4) * 5 + 10);
+          const originalPrice = med.originalPrice || parseFloat((med.price * (1 + discountPercent / 100)).toFixed(2));
+          const rating = med.rating || (4.1 + (seed % 9) * 0.1).toFixed(1);
+          const deliveryTime = med.deliveryTime || `${(seed % 3) * 5 + 10} mins`;
           
           return {
             ...med,

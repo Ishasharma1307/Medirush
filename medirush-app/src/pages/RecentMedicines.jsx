@@ -175,7 +175,7 @@ export const RecentMedicines = () => {
                     {med.name}
                   </h3>
                   <div className="flex items-baseline text-primary mb-4 bg-primary/5 border border-primary/10 w-fit px-3 py-1.5 rounded-xl shadow-inner">
-                    <span className="text-sm font-bold mr-0.5">$</span>
+                    <span className="text-sm font-bold mr-0.5">₹</span>
                     <span className="text-2xl font-extrabold tracking-tight drop-shadow-sm">{med.price}</span>
                   </div>
                   

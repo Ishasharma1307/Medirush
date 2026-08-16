@@ -77,29 +77,27 @@ export const MedicineDetail = () => {
       if (medData) {
         const enrichedMed = {
           ...medData,
-          brand: medData.brand || 'Cipla Healthcare',
-          strength: medData.strength || '10 Tablets Strip',
-          genericName: medData.genericName || 'Paracetamol IP 500mg',
+          brand: medData.brand || medData.manufacturer_name || 'Cipla Healthcare',
+          strength: medData.strength || medData.pack_size_label || '10 Tablets Strip',
+          genericName: medData.genericName || medData.salt_composition || 'Paracetamol IP 500mg',
           rating: medData.rating || 4.7,
           reviewCount: medData.reviewCount || 142,
           deliveryTime: medData.deliveryTime || '10 mins',
           discountPercent: medData.discountPercent || 25,
           originalPrice: medData.originalPrice || parseFloat((medData.price * 1.33).toFixed(2)),
-          manufacturer: medData.manufacturer || 'Cipla Pharmaceuticals Ltd.',
+          manufacturer: medData.manufacturer_name || medData.brand || 'Cipla Pharmaceuticals Ltd.',
           expiryDate: medData.expiryDate || '12/2027',
           batchNumber: medData.batchNumber || 'CP-98231',
           uses: medData.uses || ['Fever & High Temperature', 'Body Pain & Headaches', 'Mild Inflammation', 'Post-Vaccination Pain'],
-          dosageInstructions: medData.dosageInstructions || 'Take 1 tablet after meals with water every 6 to 8 hours as needed. Do not exceed 4 tablets in 24 hours unless advised by a doctor.',
-          sideEffects: medData.sideEffects || ['Mild Nausea or Upset Stomach', 'Drowsiness (rare)', 'Allergic Reaction / Skin Rash (seek immediate care if occurs)'],
+          dosageInstructions: medData.dosageInstructions || 'Take 1 tablet after meals with water every 6 to 8 hours as needed. Do not exceed recommended dosage unless advised by a doctor.',
+          sideEffects: Array.isArray(medData.sideEffects) ? medData.sideEffects : (medData.side_effects ? [medData.side_effects] : ['Mild Nausea or Upset Stomach', 'Drowsiness (rare)', 'Allergic Reaction / Skin Rash (seek immediate care if occurs)']),
           precautions: medData.precautions || [
-            'Alcohol interaction: Avoid consuming alcohol while taking paracetamol.',
+            'Alcohol interaction: Avoid consuming alcohol while taking medication.',
             'Liver Care: Consult doctor if you have pre-existing liver conditions.',
-            'Pregnancy & Lactation: Generally safe under medical supervision.'
+            'Pregnancy & Lactation: Take strictly under medical supervision.'
           ],
           images: medData.images && medData.images.length > 0 ? medData.images : [
-            'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=600&auto=format&fit=crop&q=80',
-            'https://images.unsplash.com/photo-1577401239170-897942555fb3?w=600&auto=format&fit=crop&q=80',
-            'https://images.unsplash.com/photo-1471864190281-a93a3070b6de?w=600&auto=format&fit=crop&q=80'
+            'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=600&auto=format&fit=crop&q=80'
           ]
         };
 
@@ -464,9 +462,9 @@ export const MedicineDetail = () => {
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Total Price</p>
                   <div className="flex items-baseline gap-2 mt-0.5">
-                    <span className="text-3xl font-black text-gray-950">${totalPrice}</span>
+                    <span className="text-3xl font-black text-gray-950">₹{totalPrice}</span>
                     {medicine.originalPrice && (
-                      <span className="text-sm font-bold text-gray-400 line-through">${(medicine.originalPrice * quantity).toFixed(2)}</span>
+                      <span className="text-sm font-bold text-gray-400 line-through">₹{(medicine.originalPrice * quantity).toFixed(2)}</span>
                     )}
                     {medicine.discountPercent && (
                       <span className="text-xs font-black text-[#E53935] bg-red-100 px-2 py-0.5 rounded-md">
@@ -566,7 +564,7 @@ export const MedicineDetail = () => {
                    : !isPharmacyOpen ? 'Pharmacy Closed'
                    : !isAvailable ? 'Out of Stock' 
                    : medicine.requires_prescription && prescriptionFiles.length === 0 ? 'Upload Rx to Order'
-                   : `Order Now · $${totalPrice}`}
+                   : `Order Now · ₹${totalPrice}`}
                 </button>
               </div>
 
@@ -718,7 +716,7 @@ export const MedicineDetail = () => {
                   <h4 className="text-xs font-extrabold text-gray-900 line-clamp-1 group-hover:text-[#1565C0]">{subMed.name}</h4>
                   <span className="text-[10px] text-gray-400 font-bold mb-2">{subMed.category}</span>
                   <div className="flex items-center justify-between mt-auto">
-                    <span className="text-xs font-black text-gray-950">${subMed.price}</span>
+                    <span className="text-xs font-black text-gray-950">₹{subMed.price}</span>
                     <span className="text-[9px] font-black bg-blue-50 text-[#1565C0] px-2 py-1 rounded-md border border-blue-100">
                       View Details
                     </span>
@@ -735,7 +733,7 @@ export const MedicineDetail = () => {
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 p-3 shadow-2xl flex items-center justify-between gap-3">
         <div>
           <span className="text-[9px] font-black uppercase text-gray-400 block">Total ({quantity} item)</span>
-          <span className="text-lg font-black text-gray-950">${totalPrice}</span>
+          <span className="text-lg font-black text-gray-950">₹{totalPrice}</span>
         </div>
         <div className="flex gap-2">
           <button

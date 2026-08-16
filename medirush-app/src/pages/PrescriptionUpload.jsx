@@ -33,7 +33,7 @@ export const PrescriptionUpload = () => {
       id: `prescribed-bundle-${Date.now()}`,
       name: 'Prescribed Medicines Package',
       brand: 'Apollo Pharmacy Verified',
-      price: 14.50,
+      price: 149.00,
       quantity: 1,
       images: ['https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=500&auto=format&fit=crop&q=60']
     });
@@ -217,7 +217,7 @@ export const PrescriptionUpload = () => {
               <div className="bg-white/80 rounded-xl p-3 border border-gray-150 space-y-1.5">
                 <div className="flex items-center justify-between text-xs font-extrabold text-gray-800">
                   <span>Prescribed Medicines Package</span>
-                  <span className="text-[#1565C0]">$14.50</span>
+                  <span className="text-[#1565C0]">₹149.00</span>
                 </div>
                 <p className="text-[10px] text-green-700 font-extrabold flex items-center gap-1">
                   <CheckCircle2 size={11} /> All prescribed medicines in stock
