@@ -275,24 +275,25 @@ function getMedicineMedicalDetails(med) {
     };
   }
 
-  // 10. Default Pain Relief & Fever
+  // 10. Medically Neutral Category-Aware Fallback
+  const categoryTitle = med.category && med.category !== 'All' ? med.category : 'General Healthcare';
   return {
     uses: [
-      'Fever & High Body Temperature Reduction',
-      'Headache & Body Pain Relief',
-      'Mild Inflammatory & Muscle Soreness',
-      'General Pain Management'
+      `${categoryTitle} Therapeutic Relief & Management`,
+      'Prescription & Certified Pharmacy Quality Assured',
+      'Targeted Symptom Treatment as Advised by Doctor',
+      'Clinical Health & Wellness Support'
     ],
-    dosageInstructions: med.dosageInstructions || 'Take 1 tablet with water after meals every 6 to 8 hours as needed. Do not exceed recommended dosage.',
+    dosageInstructions: med.dosageInstructions || 'Take strictly in the dosage and duration advised by your registered medical practitioner.',
     sideEffects: [
-      'Mild Stomach Upset or Heartburn',
-      'Drowsiness or Dizziness (rare)',
-      'Skin Rash (discontinue if allergic)'
+      'Mild Gastric Fullness or Discomfort (rare)',
+      'Transient Dizziness (discontinue if severe)',
+      'Individual Allergic Sensitivity (discontinue if rash occurs)'
     ],
     precautions: [
-      'Avoid consuming alcohol while taking medication.',
-      'Consult doctor if pre-existing liver/kidney conditions exist.',
-      'Pregnancy & Lactation: Take under medical advice.'
+      'Take strictly under registered medical prescription & guidance.',
+      'Inform your doctor of any pre-existing kidney, liver, or cardiac conditions.',
+      'Store in a cool, dry place away from direct heat and sunlight.'
     ]
   };
 }
