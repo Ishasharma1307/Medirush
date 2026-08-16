@@ -30,7 +30,47 @@ function getMedicineMedicalDetails(med) {
   const desc = (med.description || '').toLowerCase();
   const combinedText = `${name} ${cat} ${salt} ${desc}`;
 
-  // 1. Cold & Cough / Syrup / Throat
+  // 1. Pain Relief, Fever, Spasms & Antispasmodics (Anafortan, Paracetamol, Camylofin, Dolo, Crocin, Meftal, Diclofenac, Aceclofenac, Ibuprofen, etc.)
+  if (
+    combinedText.includes('fever') || combinedText.includes('bukhar') || combinedText.includes('paracetamol') ||
+    combinedText.includes('camylofin') || combinedText.includes('anafortan') || combinedText.includes('dolo') ||
+    combinedText.includes('crocin') || combinedText.includes('combiflam') || combinedText.includes('aceclofenac') ||
+    combinedText.includes('diclofenac') || combinedText.includes('ibuprofen') || combinedText.includes('nimesulide') ||
+    combinedText.includes('dicyclomine') || combinedText.includes('meftal') || combinedText.includes('disprin') ||
+    combinedText.includes('saridon') || combinedText.includes('headache') || combinedText.includes('sardard') ||
+    combinedText.includes('body pain') || combinedText.includes('spasm') || combinedText.includes('antispasmodic') ||
+    combinedText.includes('cramps') || cat === 'pain relief'
+  ) {
+    const isAntispasmodic = combinedText.includes('camylofin') || combinedText.includes('dicyclomine') || combinedText.includes('anafortan') || combinedText.includes('spasm') || combinedText.includes('cramps');
+    return {
+      uses: isAntispasmodic ? [
+        'Abdominal Cramps & Spasmodic Muscle Pain Relief',
+        'Fever & Mild-to-Moderate Body Pain Reduction',
+        'Stomach & Intestinal Smooth Muscle Relaxation',
+        'General Pain & Inflammatory Discomfort Management'
+      ] : [
+        'Fever & High Body Temperature Reduction',
+        'Headache, Joint & Body Ache Relief',
+        'Mild-to-Moderate Inflammatory Soreness',
+        'General Pain & Temperature Management'
+      ],
+      dosageInstructions: med.dosageInstructions || 'Take 1 tablet with water after meals every 6 to 8 hours as needed. Do not exceed recommended dosage.',
+      sideEffects: [
+        'Dryness in Mouth (for antispasmodics)',
+        'Mild Gastric Fullness or Nausea',
+        'Light Drowsiness or Dizziness',
+        'Transient Constipation'
+      ],
+      precautions: [
+        'Do not exceed 4000mg of Paracetamol daily from all sources.',
+        'Avoid consuming alcohol while on pain & fever therapy.',
+        'Inform doctor if you have severe kidney or liver impairment.',
+        'Store in a cool, dry place below 30°C.'
+      ]
+    };
+  }
+
+  // 2. Cold & Cough / Syrup / Throat
   if (combinedText.includes('cough') || combinedText.includes('khasi') || combinedText.includes('syrup') || combinedText.includes('cold') || combinedText.includes('throat') || combinedText.includes('ascoril') || combinedText.includes('benadryl') || combinedText.includes('alex') || combinedText.includes('cheston') || combinedText.includes('sinarest') || combinedText.includes('ambroxol') || combinedText.includes('cetirizine') || combinedText.includes('montelukast')) {
     return {
       uses: [
@@ -54,8 +94,8 @@ function getMedicineMedicalDetails(med) {
     };
   }
 
-  // 2. Acidity / Stomach / Digestive Health
-  if (combinedText.includes('acid') || combinedText.includes('digestive') || combinedText.includes('gas') || combinedText.includes('pantoprazole') || combinedText.includes('omeprazole') || combinedText.includes('rabeprazole') || combinedText.includes('digene') || combinedText.includes('gelusil') || combinedText.includes('eno') || combinedText.includes('pan 40') || combinedText.includes('pudin') || combinedText.includes('aciloc') || combinedText.includes('stomach')) {
+  // 3. Acidity, Heartburn & GERD (Strict Antacids - require specific antacid keywords)
+  if (combinedText.includes('acid') || combinedText.includes('heartburn') || combinedText.includes('gerd') || combinedText.includes('pantoprazole') || combinedText.includes('omeprazole') || combinedText.includes('rabeprazole') || combinedText.includes('digene') || combinedText.includes('gelusil') || combinedText.includes('eno') || combinedText.includes('pan 40') || combinedText.includes('pudin') || combinedText.includes('aciloc') || combinedText.includes('antacid') || combinedText.includes('ulcer')) {
     return {
       uses: [
         'Acidity, Heartburn & GERD Relief',
