@@ -399,24 +399,23 @@ export const Medicines = () => {
       const medBrand = (med.brand || '').toLowerCase();
       const medGeneric = (med.genericName || med.salt_composition || '').toLowerCase();
       const medCategory = (med.category || '').toLowerCase();
+      const medDesc = (med.description || '').toLowerCase();
+      const medFullText = `${medName} ${medBrand} ${medGeneric} ${medCategory} ${medDesc}`;
 
-      if (medBrand.includes(rawQ) || medGeneric.includes(rawQ) || medCategory.includes(rawQ)) {
+      if (medBrand.includes(rawQ) || medGeneric.includes(rawQ) || medCategory.includes(rawQ) || medDesc.includes(rawQ)) {
         results.push(med);
         if (results.length >= maxResults) break;
         continue;
       }
 
-      // 3. Hinglish / Hindi Natural Language Intent Match Check
-      if (intentCategory) {
-        if (med.category === intentCategory) {
-          results.push(med);
-          if (results.length >= maxResults) break;
-          continue;
-        }
+      // 3. Hinglish / Hindi Natural Language Symptom Intent Match Check
+      if (matchedIntent) {
+        const matchesBrandOrSaltOrTrigger = 
+          intentBrands.some(b => medFullText.includes(b)) ||
+          intentSalts.some(s => medFullText.includes(s)) ||
+          matchedIntent.triggers.some(t => medFullText.includes(t));
 
-        const matchesBrandOrSalt = intentBrands.some(b => medBrand.includes(b) || medName.includes(b)) ||
-                                   intentSalts.some(s => medGeneric.includes(s));
-        if (matchesBrandOrSalt) {
+        if (matchesBrandOrSaltOrTrigger) {
           results.push(med);
           if (results.length >= maxResults) break;
           continue;
@@ -551,84 +550,113 @@ export const Medicines = () => {
       {/* Main Container */}
       <div className="max-w-7xl mx-auto px-4 mt-4 space-y-8">
 
-        {/* 3. Sleek Balanced Action Banners */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          
-          {/* Card A: Prescription Uploader Banner */}
-          <div className="bg-gradient-to-r from-[#1565C0] to-blue-800 text-white rounded-2xl p-4 sm:p-5 relative overflow-hidden shadow-md border border-blue-500/20 flex items-center justify-between gap-4">
-            <div className="space-y-1.5 max-w-[70%] relative z-10">
-              <div className="inline-flex items-center gap-1 bg-white/20 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider">
-                <FileText size={10} className="text-blue-100" /> Have Doctor's Slip?
-              </div>
-              <h2 className="text-base sm:text-lg font-extrabold tracking-tight">Upload Prescription</h2>
-              <p className="text-blue-100 text-xs font-medium line-clamp-2">
-                Upload slip for instant pharmacy stock quote & doorstep delivery.
-              </p>
-            </div>
-            <Button 
-              onClick={() => navigate('/prescription-upload')}
-              className="bg-white text-[#1565C0] font-black rounded-xl text-xs uppercase tracking-wider py-2.5 px-3.5 shadow-sm border border-white hover:bg-blue-50 active:scale-95 transition-all flex items-center gap-1.5 whitespace-nowrap flex-shrink-0"
-            >
-              Upload <ArrowRight size={13} />
-            </Button>
-          </div>
-
-          {/* Card B: AI Symptom Checker Banner */}
-          <div className="bg-gradient-to-r from-[#2E7D32] to-emerald-800 text-white rounded-2xl p-4 sm:p-5 relative overflow-hidden shadow-md border border-emerald-500/20 flex items-center justify-between gap-4">
-            <div className="space-y-1.5 max-w-[70%] relative z-10">
-              <div className="inline-flex items-center gap-1 bg-white/20 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider">
-                <Sparkles size={10} className="text-yellow-300" /> Don't Know Medicine Name?
-              </div>
-              <h2 className="text-base sm:text-lg font-extrabold tracking-tight">AI Symptom Assistant</h2>
-              <p className="text-emerald-100 text-xs font-medium line-clamp-2">
-                Describe symptoms to get suggested medicines with pharmacist review.
-              </p>
-            </div>
-            <Button 
-              onClick={() => navigate('/symptom-checker?source=medicines')}
-              className="bg-white text-[#2E7D32] font-black rounded-xl text-xs uppercase tracking-wider py-2.5 px-3.5 shadow-sm border border-white hover:bg-emerald-50 active:scale-95 transition-all flex items-center gap-1.5 whitespace-nowrap flex-shrink-0"
-            >
-              Check <ArrowRight size={13} />
-            </Button>
-          </div>
-
-        </div>
-
-        {/* 4. Medicine Categories Chips */}
-        <div>
-          <div className="flex items-center justify-between mb-3.5">
-            <h2 className="text-lg font-black text-gray-900 uppercase tracking-wider">Browse Categories</h2>
-          </div>
-          <div className="flex overflow-x-auto gap-2.5 pb-2 no-scrollbar scroll-smooth">
-            {CATEGORIES.map((cat) => {
-              const active = selectedCategory === cat;
-              return (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={cn(
-                    "px-4 py-2.5 rounded-full text-xs font-black uppercase tracking-wider border transition-all duration-200 whitespace-nowrap cursor-pointer active:scale-95",
-                    active 
-                      ? "bg-[#1565C0] text-white border-[#1565C0] shadow-sm shadow-blue-500/20" 
-                      : "bg-white text-gray-600 border-gray-150 hover:bg-gray-50"
-                  )}
+        {/* 3. Action Banners & Category Chips (Shown only when not searching) */}
+        {!searchQuery.trim() && (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              
+              {/* Card A: Prescription Uploader Banner */}
+              <div className="bg-gradient-to-r from-[#1565C0] to-blue-800 text-white rounded-2xl p-4 sm:p-5 relative overflow-hidden shadow-md border border-blue-500/20 flex items-center justify-between gap-4">
+                <div className="space-y-1.5 max-w-[70%] relative z-10">
+                  <div className="inline-flex items-center gap-1 bg-white/20 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider">
+                    <FileText size={10} className="text-blue-100" /> Have Doctor's Slip?
+                  </div>
+                  <h2 className="text-base sm:text-lg font-extrabold tracking-tight">Upload Prescription</h2>
+                  <p className="text-blue-100 text-xs font-medium line-clamp-2">
+                    Upload slip for instant pharmacy stock quote & doorstep delivery.
+                  </p>
+                </div>
+                <Button 
+                  onClick={() => navigate('/prescription-upload')}
+                  className="bg-white text-[#1565C0] font-black rounded-xl text-xs uppercase tracking-wider py-2.5 px-3.5 shadow-sm border border-white hover:bg-blue-50 active:scale-95 transition-all flex items-center gap-1.5 whitespace-nowrap flex-shrink-0"
                 >
-                  {cat}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+                  Upload <ArrowRight size={13} />
+                </Button>
+              </div>
+
+              {/* Card B: AI Symptom Checker Banner */}
+              <div className="bg-gradient-to-r from-[#2E7D32] to-emerald-800 text-white rounded-2xl p-4 sm:p-5 relative overflow-hidden shadow-md border border-emerald-500/20 flex items-center justify-between gap-4">
+                <div className="space-y-1.5 max-w-[70%] relative z-10">
+                  <div className="inline-flex items-center gap-1 bg-white/20 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider">
+                    <Sparkles size={10} className="text-yellow-300" /> Don't Know Medicine Name?
+                  </div>
+                  <h2 className="text-base sm:text-lg font-extrabold tracking-tight">AI Symptom Assistant</h2>
+                  <p className="text-emerald-100 text-xs font-medium line-clamp-2">
+                    Describe symptoms to get suggested medicines with pharmacist review.
+                  </p>
+                </div>
+                <Button 
+                  onClick={() => navigate('/symptom-checker?source=medicines')}
+                  className="bg-white text-[#2E7D32] font-black rounded-xl text-xs uppercase tracking-wider py-2.5 px-3.5 shadow-sm border border-white hover:bg-emerald-50 active:scale-95 transition-all flex items-center gap-1.5 whitespace-nowrap flex-shrink-0"
+                >
+                  Check <ArrowRight size={13} />
+                </Button>
+              </div>
+
+            </div>
+
+            {/* 4. Medicine Categories Chips */}
+            <div>
+              <div className="flex items-center justify-between mb-3.5">
+                <h2 className="text-lg font-black text-gray-900 uppercase tracking-wider">Browse Categories</h2>
+              </div>
+              <div className="flex overflow-x-auto gap-2.5 pb-2 no-scrollbar scroll-smooth">
+                {CATEGORIES.map((cat) => {
+                  const active = selectedCategory === cat;
+                  return (
+                    <button
+                      key={cat}
+                      onClick={() => setSelectedCategory(cat)}
+                      className={cn(
+                        "px-4 py-2.5 rounded-full text-xs font-black uppercase tracking-wider border transition-all duration-200 whitespace-nowrap cursor-pointer active:scale-95",
+                        active 
+                          ? "bg-[#1565C0] text-white border-[#1565C0] shadow-sm shadow-blue-500/20" 
+                          : "bg-white text-gray-600 border-gray-150 hover:bg-gray-50"
+                      )}
+                    >
+                      {cat}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </>
+        )}
 
         {/* 5. Main Filtered Products Grid */}
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-black text-gray-900 uppercase tracking-wider">
-              {selectedCategory === 'All' ? 'Featured Medicines' : `${selectedCategory} Store`}
-            </h2>
-            <span className="text-xs font-bold text-gray-400">
-              {filteredMeds.length} Products
-            </span>
+            <div>
+              <h2 className="text-lg font-black text-gray-900 uppercase tracking-wider">
+                {searchQuery.trim() ? (
+                  <span className="flex items-center gap-2">
+                    <span>Search Results for</span>
+                    <span className="text-[#1565C0] underline">"{searchQuery.trim()}"</span>
+                  </span>
+                ) : (
+                  selectedCategory === 'All' ? 'Featured Medicines' : `${selectedCategory} Store`
+                )}
+              </h2>
+              {searchQuery.trim() && (
+                <p className="text-xs text-gray-500 font-bold mt-0.5">
+                  Showing medicines relevant to your search
+                </p>
+              )}
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-black bg-blue-50 text-[#1565C0] px-3 py-1 rounded-full border border-blue-100">
+                {filteredMeds.length} Found
+              </span>
+              {searchQuery.trim() && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="text-xs font-black text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1 rounded-full border border-red-200 cursor-pointer transition-all active:scale-95"
+                >
+                  Clear Search ✕
+                </button>
+              )}
+            </div>
           </div>
 
           {loading ? (
@@ -784,130 +812,135 @@ export const Medicines = () => {
           )}
         </div>
 
-        {/* 6. Recently Ordered medicines */}
-        {recentlyOrderedMeds.length > 0 && (
-          <div>
-            <div className="flex items-center gap-2 mb-3.5">
-              <TrendingUp className="text-[#1565C0]" size={20} />
-              <h2 className="text-lg font-black text-gray-900 uppercase tracking-wider">Recently Ordered</h2>
-            </div>
-            <div className="flex overflow-x-auto gap-4 pb-2 no-scrollbar scroll-smooth">
-              {recentlyOrderedMeds.map((med) => (
-                <div 
-                  key={`recent-${med.id}`}
-                  onClick={() => navigate(`/medicines/${med.id}`)}
-                  className="bg-white border border-blue-50/50 rounded-2xl p-3 flex-shrink-0 w-36 flex flex-col relative cursor-pointer hover:shadow-md transition-all"
-                >
-                  <div className="w-full h-24 bg-gray-50 rounded-xl flex items-center justify-center overflow-hidden mb-2">
-                    <img 
-                      src={med.images[0]} 
-                      alt={med.name} 
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                    />
-                  </div>
-                  <h3 className="text-xs font-extrabold text-gray-900 truncate mb-1">{med.name}</h3>
-                  <span className="text-[10px] text-gray-400 font-bold mb-2">{med.brand}</span>
-                  <div className="flex items-center justify-between mt-auto" onClick={(e) => e.stopPropagation()}>
-                    <span className="text-xs font-black text-gray-950">₹{med.price}</span>
-                    <button 
-                      onClick={() => handleQuantityIncrement(med)}
-                      className="bg-white border border-[#2E7D32]/30 text-[#2E7D32] hover:bg-green-50 p-1 px-2 rounded-md text-[9px] font-black uppercase tracking-wider cursor-pointer active:scale-95"
-                    >
-                      Reorder
-                    </button>
-                  </div>
+        {/* Static Extra Sections (Shown only when NOT searching) */}
+        {!searchQuery.trim() && (
+          <>
+            {/* 6. Recently Ordered medicines */}
+            {recentlyOrderedMeds.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-3.5">
+                  <TrendingUp className="text-[#1565C0]" size={20} />
+                  <h2 className="text-lg font-black text-gray-900 uppercase tracking-wider">Recently Ordered</h2>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
+                <div className="flex overflow-x-auto gap-4 pb-2 no-scrollbar scroll-smooth">
+                  {recentlyOrderedMeds.map((med) => (
+                    <div 
+                      key={`recent-${med.id}`}
+                      onClick={() => navigate(`/medicines/${med.id}`)}
+                      className="bg-white border border-blue-50/50 rounded-2xl p-3 flex-shrink-0 w-36 flex flex-col relative cursor-pointer hover:shadow-md transition-all"
+                    >
+                      <div className="w-full h-24 bg-gray-50 rounded-xl flex items-center justify-center overflow-hidden mb-2">
+                        <img 
+                          src={med.images[0]} 
+                          alt={med.name} 
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
+                      </div>
+                      <h3 className="text-xs font-extrabold text-gray-900 truncate mb-1">{med.name}</h3>
+                      <span className="text-[10px] text-gray-400 font-bold mb-2">{med.brand}</span>
+                      <div className="flex items-center justify-between mt-auto" onClick={(e) => e.stopPropagation()}>
+                        <span className="text-xs font-black text-gray-950">₹{med.price}</span>
+                        <button 
+                          onClick={() => handleQuantityIncrement(med)}
+                          className="bg-white border border-[#2E7D32]/30 text-[#2E7D32] hover:bg-green-50 p-1 px-2 rounded-md text-[9px] font-black uppercase tracking-wider cursor-pointer active:scale-95"
+                        >
+                          Reorder
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
-        {/* 7. Recommended For You */}
-        {recommendedMeds.length > 0 && (
-          <div>
-            <div className="flex items-center gap-2 mb-4">
-              <Sparkles className="text-[#2E7D32]" size={20} />
-              <h2 className="text-lg font-black text-gray-900 uppercase tracking-wider">Recommended For You</h2>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              {recommendedMeds.map((med) => {
-                const cartItem = cartItems.find(item => item.id === med.id);
-                const quantityInCart = cartItem ? cartItem.quantity : 0;
-                return (
-                  <div 
-                    key={`rec-${med.id}`}
-                    onClick={() => navigate(`/medicines/${med.id}`)}
-                    className="bg-white border border-blue-50/50 rounded-2xl p-3 flex flex-col relative cursor-pointer hover:shadow-md transition-all"
-                  >
-                    <div className="w-full h-24 bg-gray-50 rounded-xl flex items-center justify-center overflow-hidden mb-2">
-                      <img 
-                        src={med.images[0]} 
-                        alt={med.name} 
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
-                    </div>
-                    <h3 className="text-xs font-extrabold text-gray-900 line-clamp-1 mb-1">{med.name}</h3>
-                    <span className="text-[10px] text-gray-400 font-bold mb-2">{med.strength}</span>
-                    <div className="flex items-center justify-between mt-auto" onClick={(e) => e.stopPropagation()}>
-                      <span className="text-xs font-black text-gray-950">₹{med.price}</span>
-                      <button 
-                        onClick={() => handleQuantityIncrement(med)}
-                        className="bg-white border border-[#1565C0]/20 text-[#1565C0] hover:bg-blue-50/50 p-1 px-2 rounded-md text-[9px] font-black uppercase tracking-wider cursor-pointer active:scale-95"
+            {/* 7. Recommended For You */}
+            {recommendedMeds.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <Sparkles className="text-[#2E7D32]" size={20} />
+                  <h2 className="text-lg font-black text-gray-900 uppercase tracking-wider">Recommended For You</h2>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                  {recommendedMeds.map((med) => {
+                    const cartItem = cartItems.find(item => item.id === med.id);
+                    const quantityInCart = cartItem ? cartItem.quantity : 0;
+                    return (
+                      <div 
+                        key={`rec-${med.id}`}
+                        onClick={() => navigate(`/medicines/${med.id}`)}
+                        className="bg-white border border-blue-50/50 rounded-2xl p-3 flex flex-col relative cursor-pointer hover:shadow-md transition-all"
                       >
-                        + Add
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
+                        <div className="w-full h-24 bg-gray-50 rounded-xl flex items-center justify-center overflow-hidden mb-2">
+                          <img 
+                            src={med.images[0]} 
+                            alt={med.name} 
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                          />
+                        </div>
+                        <h3 className="text-xs font-extrabold text-gray-900 line-clamp-1 mb-1">{med.name}</h3>
+                        <span className="text-[10px] text-gray-400 font-bold mb-2">{med.strength}</span>
+                        <div className="flex items-center justify-between mt-auto" onClick={(e) => e.stopPropagation()}>
+                          <span className="text-xs font-black text-gray-950">₹{med.price}</span>
+                          <button 
+                            onClick={() => handleQuantityIncrement(med)}
+                            className="bg-white border border-[#1565C0]/20 text-[#1565C0] hover:bg-blue-50/50 p-1 px-2 rounded-md text-[9px] font-black uppercase tracking-wider cursor-pointer active:scale-95"
+                          >
+                            + Add
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
-        {/* 8. Popular Nearby */}
-        {popularNearbyMeds.length > 0 && (
-          <div>
-            <div className="flex items-center gap-2 mb-4">
-              <MapPin className="text-[#E53935]" size={20} />
-              <h2 className="text-lg font-black text-gray-900 uppercase tracking-wider">Popular Nearby</h2>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              {popularNearbyMeds.map((med) => {
-                return (
-                  <div 
-                    key={`pop-${med.id}`}
-                    onClick={() => navigate(`/medicines/${med.id}`)}
-                    className="bg-white border border-blue-50/50 rounded-2xl p-3 flex flex-col relative cursor-pointer hover:shadow-md transition-all"
-                  >
-                    <div className="absolute top-1 right-1 bg-amber-50 text-amber-700 text-[8px] font-black px-1 rounded shadow-sm">
-                      TRENDING
-                    </div>
-                    <div className="w-full h-24 bg-gray-50 rounded-xl flex items-center justify-center overflow-hidden mb-2">
-                      <img 
-                        src={med.images[0]} 
-                        alt={med.name} 
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
-                    </div>
-                    <h3 className="text-xs font-extrabold text-gray-900 line-clamp-1 mb-1">{med.name}</h3>
-                    <span className="text-[10px] text-gray-400 font-bold mb-2">{med.brand}</span>
-                    <div className="flex items-center justify-between mt-auto" onClick={(e) => e.stopPropagation()}>
-                      <span className="text-xs font-black text-gray-950">₹{med.price}</span>
-                      <button 
-                        onClick={() => handleQuantityIncrement(med)}
-                        className="bg-white border border-[#1565C0]/20 text-[#1565C0] hover:bg-blue-50/50 p-1 px-2 rounded-md text-[9px] font-black uppercase tracking-wider cursor-pointer active:scale-95"
+            {/* 8. Popular Nearby */}
+            {popularNearbyMeds.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <MapPin className="text-[#E53935]" size={20} />
+                  <h2 className="text-lg font-black text-gray-900 uppercase tracking-wider">Popular Nearby</h2>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                  {popularNearbyMeds.map((med) => {
+                    return (
+                      <div 
+                        key={`pop-${med.id}`}
+                        onClick={() => navigate(`/medicines/${med.id}`)}
+                        className="bg-white border border-blue-50/50 rounded-2xl p-3 flex flex-col relative cursor-pointer hover:shadow-md transition-all"
                       >
-                        + Add
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+                        <div className="absolute top-1 right-1 bg-amber-50 text-amber-700 text-[8px] font-black px-1 rounded shadow-sm">
+                          TRENDING
+                        </div>
+                        <div className="w-full h-24 bg-gray-50 rounded-xl flex items-center justify-center overflow-hidden mb-2">
+                          <img 
+                            src={med.images[0]} 
+                            alt={med.name} 
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                          />
+                        </div>
+                        <h3 className="text-xs font-extrabold text-gray-900 line-clamp-1 mb-1">{med.name}</h3>
+                        <span className="text-[10px] text-gray-400 font-bold mb-2">{med.brand}</span>
+                        <div className="flex items-center justify-between mt-auto" onClick={(e) => e.stopPropagation()}>
+                          <span className="text-xs font-black text-gray-950">₹{med.price}</span>
+                          <button 
+                            onClick={() => handleQuantityIncrement(med)}
+                            className="bg-white border border-[#1565C0]/20 text-[#1565C0] hover:bg-blue-50/50 p-1 px-2 rounded-md text-[9px] font-black uppercase tracking-wider cursor-pointer active:scale-95"
+                          >
+                            + Add
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </>
         )}
 
       </div>
