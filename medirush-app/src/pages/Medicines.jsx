@@ -29,6 +29,70 @@ const CATEGORIES = [
   'Personal Care'
 ];
 
+// Comprehensive Hindi & Hinglish Medical Natural Language Intent Thesaurus
+const HINDI_HINGLISH_INTENTS = [
+  {
+    triggers: ['khasi', 'khansi', 'khashi', 'khasr', 'gala', 'throat', 'cough', 'coughing', 'sore throat', 'cough syrup', 'khasi ki dwai', 'khansi ki dawai'],
+    category: 'Cold & Cough',
+    salts: ['ambroxol', 'dextromethorphan', 'cetirizine', 'fexofenadine', 'montelukast', 'chlorpheniramine', 'levosalbutamol', 'terbutaline'],
+    brands: ['ascoril', 'benadryl', 'alex', 'cheston', 'sinarest', 'otrivin', 'vicks', 'strepsils', 'avil', 'cough']
+  },
+  {
+    triggers: ['sardard', 'sar dard', 'sir dard', 'headache', 'head ache', 'sir me dard', 'head pain', 'sar me dard', 'sirDard'],
+    category: 'Pain Relief',
+    salts: ['paracetamol', 'aceclofenac', 'ibuprofen', 'diclofenac', 'nimesulide', 'aspirin', 'tramadol'],
+    brands: ['dolo', 'crocin', 'combiflam', 'disprin', 'saridon', 'meftal', 'sumo', 'volini', 'voveran']
+  },
+  {
+    triggers: ['bukhar', 'bukar', 'fever', 'feaver', 'bukhari', 'temperature', 'body pain', 'badan dard', 'tap', 'fevar'],
+    category: 'Pain Relief',
+    salts: ['paracetamol', 'mefenamic acid', 'aceclofenac', 'nimesulide'],
+    brands: ['dolo 650', 'crocin', 'combiflam', 'calpol', 'pacimol', 'fever', 'sumo', 'meftal-forte']
+  },
+  {
+    triggers: ['pet dard', 'petdard', 'stomach pain', 'pet me dard', 'stomach ache', 'gas', 'acidity', 'pet kharab', 'dast', 'loose motion', 'vomiting', 'ulti', 'kabz', 'constipation', 'cramps', 'acid', 'gastric'],
+    category: 'Digestive Health',
+    salts: ['pantoprazole', 'omeprazole', 'rabeprazole', 'ranitidine', 'domperidone', 'ondansetron', 'dicyclomine', 'loperamide', 'ors', 'magnesium hydroxide'],
+    brands: ['pan 40', 'pantocid', 'digene', 'gelusil', 'eno', 'aciloc', 'pudin hara', 'electral', 'dulcolax', 'zinetac', 'norflox-tz']
+  },
+  {
+    triggers: ['khujli', 'khujli ki dawai', 'daad', 'fungal', 'pimple', 'acne', 'skin rash', 'allergy', 'itch', 'daag', 'chhaley', 'chamdi', 'skin'],
+    category: 'Skin Care',
+    salts: ['ketoconazole', 'clotrimazole', 'miconazole', 'beclomethasone', 'clobetasol', 'adapalene', 'clindamycin', 'povidone iodine', 'fusidic acid'],
+    brands: ['betadine', 'candid', 'clocip', 'omnigel', 'burnol', 'anovate', 'skin', 'cream', 'ointment']
+  },
+  {
+    triggers: ['sugar', 'diabetes', 'sugar ki bimari', 'madhumeh', 'blood sugar', 'diabetic'],
+    category: 'Diabetes Care',
+    salts: ['metformin', 'glimepiride', 'sitagliptin', 'vildagliptin', 'teneligliptin', 'dapagliflozin', 'empagliflozin', 'gliclazide'],
+    brands: ['glycomet', 'galvus', 'januvia', 'istamet', 'teneligliptin', 'insulin']
+  },
+  {
+    triggers: ['bp', 'high bp', 'blood pressure', 'heart', 'dil ki bimari', 'hypertension', 'cardiac', 'pulse'],
+    category: 'Cardiac Care',
+    salts: ['telmisartan', 'atorvastatin', 'amlodipine', 'rosuvastatin', 'clopidogrel', 'losartan', 'metoprolol', 'ramipril'],
+    brands: ['telmikind', 'atorva', 'stamlo', 'rosuvas', 'ecosprin']
+  },
+  {
+    triggers: ['taakat', 'kamzori', 'multivitamin', 'vitamin', 'energy', 'khoon ki kami', 'iron', 'calcium', 'haaddi', 'bone', 'weakness'],
+    category: 'Vitamins',
+    salts: ['methylcobalamin', 'cholecalciferol', 'vitamin c', 'vitamin d3', 'zinc', 'ferrous ascorbate', 'folic acid', 'calcium carbonate'],
+    brands: ['becosules', 'shelcal', 'zincovit', 'revital', 'evion', 'neurobion', 'supradyn', 'limcee', 'tayo']
+  },
+  {
+    triggers: ['ghav', 'infection', 'zakhm', 'antibiotic', 'chot', 'pus', 'cut'],
+    category: 'Antibiotics',
+    salts: ['amoxicillin', 'clavulanic acid', 'azithromycin', 'cefixime', 'ciprofloxacin', 'ofloxacin', 'cefpodoxime'],
+    brands: ['augmentin', 'azithral', 'taxim', 'zifi', 'moxikind', 'azee', 'almox', 'ciplox']
+  },
+  {
+    triggers: ['dettol', 'bandage', 'patti', 'antiseptic', 'bandaid', 'first aid', 'sot', 'gauze'],
+    category: 'First Aid',
+    salts: ['chlorhexidine', 'povidone iodine'],
+    brands: ['dettol', 'band-aid', 'savlon', 'bandage', 'cotton', 'gauze']
+  }
+];
+
 export const Medicines = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -286,19 +350,41 @@ export const Medicines = () => {
       });
   };
 
-  // Filter medicines by Category & Search query (searches name, category, brand, generic salts, description)
+  // Filter medicines by Category & Natural Language Search query (supports Hindi, Hinglish & English intent mapping)
   const getFilteredMedicines = () => {
+    const rawQ = searchQuery.toLowerCase().trim();
+
     return medicines.filter(med => {
-      const q = searchQuery.toLowerCase().trim();
       const matchesCategory = selectedCategory === 'All' || med.category === selectedCategory;
-      const matchesSearch = !q ||
-                            med.name.toLowerCase().includes(q) ||
-                            med.category?.toLowerCase().includes(q) ||
-                            med.brand?.toLowerCase().includes(q) ||
-                            med.genericName?.toLowerCase().includes(q) ||
-                            med.salt_composition?.toLowerCase().includes(q) ||
-                            med.description?.toLowerCase().includes(q);
-      return matchesCategory && matchesSearch;
+      if (!matchesCategory) return false;
+
+      if (!rawQ) return true;
+
+      // 1. Direct Keyword Match
+      const directMatch = med.name.toLowerCase().includes(rawQ) ||
+                          (med.category && med.category.toLowerCase().includes(rawQ)) ||
+                          (med.brand && med.brand.toLowerCase().includes(rawQ)) ||
+                          (med.genericName && med.genericName.toLowerCase().includes(rawQ)) ||
+                          (med.salt_composition && med.salt_composition.toLowerCase().includes(rawQ)) ||
+                          (med.description && med.description.toLowerCase().includes(rawQ));
+
+      if (directMatch) return true;
+
+      // 2. Hinglish / Hindi Natural Language Medical Intent Search
+      const matchedIntent = HINDI_HINGLISH_INTENTS.find(intent => 
+        intent.triggers.some(trigger => rawQ.includes(trigger) || trigger.includes(rawQ))
+      );
+
+      if (matchedIntent) {
+        if (med.category === matchedIntent.category) return true;
+
+        const fullMedText = `${med.name} ${med.brand} ${med.genericName} ${med.salt_composition} ${med.description}`.toLowerCase();
+        const matchesBrandOrSalt = matchedIntent.brands.some(b => fullMedText.includes(b)) ||
+                                   matchedIntent.salts.some(s => fullMedText.includes(s));
+        if (matchesBrandOrSalt) return true;
+      }
+
+      return false;
     });
   };
 
@@ -367,7 +453,7 @@ export const Medicines = () => {
           <Search className="text-[#1565C0] mr-3 flex-shrink-0" size={22} />
           <input 
             type="text" 
-            placeholder="Search medicines, salts, or health products..."
+            placeholder="Search medicines or symptoms in Hindi/Hinglish (e.g. Khasi, Sardard, Bukhar, Pet dard, Dolo)..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full bg-transparent border-none outline-none font-extrabold text-gray-900 placeholder:text-gray-400 placeholder:font-medium text-sm md:text-base"
@@ -390,6 +476,38 @@ export const Medicines = () => {
               <span className="hidden sm:inline">Voice</span>
             </button>
           </div>
+        </div>
+
+        {/* Quick Hindi Symptom Chips Bar */}
+        <div className="max-w-7xl mx-auto flex items-center gap-2 overflow-x-auto pt-2 pb-1 no-scrollbar text-xs font-extrabold">
+          <span className="text-gray-400 uppercase tracking-widest text-[10px] flex-shrink-0 mr-1">Quick Symptoms:</span>
+          {[
+            { label: 'Khasi (Cough)', query: 'khasi' },
+            { label: 'Sardard (Headache)', query: 'sardard' },
+            { label: 'Bukhar (Fever)', query: 'bukhar' },
+            { label: 'Pet Dard (Acidity)', query: 'pet dard' },
+            { label: 'Sugar (Diabetes)', query: 'sugar' },
+            { label: 'Khujli (Skin)', query: 'khujli' },
+            { label: 'Kamzori (Vitamins)', query: 'kamzori' }
+          ].map(chip => (
+            <button
+              key={chip.query}
+              onClick={() => setSearchQuery(chip.query)}
+              className={`px-3 py-1 rounded-full border transition-all flex-shrink-0 cursor-pointer ${
+                searchQuery.toLowerCase() === chip.query ? 'bg-[#1565C0] text-white border-[#1565C0] shadow-sm' : 'bg-white text-gray-700 border-gray-200 hover:bg-blue-50 hover:text-[#1565C0]'
+              }`}
+            >
+              {chip.label}
+            </button>
+          ))}
+          {searchQuery && (
+            <button 
+              onClick={() => setSearchQuery('')}
+              className="text-xs text-red-500 font-extrabold hover:underline ml-2 flex-shrink-0"
+            >
+              Clear Search
+            </button>
+          )}
         </div>
       </div>
 
