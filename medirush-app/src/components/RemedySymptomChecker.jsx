@@ -205,14 +205,14 @@ export const RemedySymptomChecker = () => {
         minDelayPromise
       ]);
 
-      const rawQuery = userAnswers.rawText || "";
+      const rawQuery = userAnswers?.rawText || "";
       const qLower = rawQuery.toLowerCase();
 
       // Match best natural home remedy from database
       const scoredRemedies = mockHomeRemedies.map(r => {
         let score = 0;
-        const prob = r.problem.toLowerCase();
-        const cat = r.category.toLowerCase();
+        const prob = r.problem?.toLowerCase() || '';
+        const cat = r.category?.toLowerCase() || '';
         const kw = r.keywords || [];
 
         if (prob.includes(qLower)) score += 60;
@@ -226,10 +226,10 @@ export const RemedySymptomChecker = () => {
       }).sort((a, b) => b.score - a.score);
 
       const primaryRemedy = scoredRemedies[0]?.score > 0 ? scoredRemedies[0].r : mockHomeRemedies[0];
-      const specificMeds = CLINICAL_MEDICINES_MAP[primaryRemedy.category] || CLINICAL_MEDICINES_MAP["Cold & Cough"];
+      const specificMeds = CLINICAL_MEDICINES_MAP[primaryRemedy?.category] || CLINICAL_MEDICINES_MAP["Cold & Cough"];
 
       const isEmergency = 
-        ruleAnalysis.level === 'Emergency' || 
+        ruleAnalysis?.level === 'Emergency' || 
         qLower.includes('chest pain') || 
         qLower.includes('breathless') || 
         qLower.includes('seene me dard') || 
@@ -240,8 +240,8 @@ export const RemedySymptomChecker = () => {
       setAnalysisResult({
         query: rawQuery,
         primaryRemedy: primaryRemedy,
-        suggestedMedicines: specificMeds,
-        ruleAnalysis: ruleAnalysis,
+        suggestedMedicines: specificMeds || [],
+        ruleAnalysis: ruleAnalysis || {},
         isEmergency: isEmergency
       });
     } catch (err) {
@@ -254,6 +254,12 @@ export const RemedySymptomChecker = () => {
   const handleRestart = () => {
     setAnalysisResult(null);
   };
+
+  const remedy = analysisResult?.primaryRemedy || mockHomeRemedies[0];
+  const remedySymptoms = remedy.symptoms || [];
+  const remedySteps = remedy.remedies || [];
+  const remedyYoga = remedy.yoga_tips || [];
+  const remedyWarning = remedy.warning ? [remedy.warning] : (remedy.warnings || [remedy.when_to_see_doctor].filter(Boolean));
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6">
@@ -298,7 +304,7 @@ export const RemedySymptomChecker = () => {
             <div className="flex items-center gap-2">
               <Sparkles size={18} className="text-emerald-700" />
               <span className="text-xs font-black text-gray-900 uppercase tracking-wider">
-                Natural Care & Diagnostic Plan ({analysisResult.ruleAnalysis.disease || 'General Care'})
+                Natural Care & Diagnostic Plan ({analysisResult.ruleAnalysis?.disease || 'General Care'})
               </span>
             </div>
             <button
@@ -360,13 +366,13 @@ export const RemedySymptomChecker = () => {
             {/* Remedy Title & Overview */}
             <div>
               <span className="text-[10px] font-black text-emerald-300 uppercase tracking-widest bg-white/10 px-2.5 py-0.5 rounded-md border border-white/15">
-                {analysisResult.primaryRemedy.category}
+                {remedy.category}
               </span>
               <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white drop-shadow-sm mt-2">
-                {analysisResult.primaryRemedy.problem}
+                {remedy.problem}
               </h2>
               <p className="text-xs sm:text-sm text-emerald-100 font-medium mt-1 leading-relaxed">
-                {analysisResult.primaryRemedy.description}
+                {remedy.description}
               </p>
             </div>
 
@@ -374,161 +380,171 @@ export const RemedySymptomChecker = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               
               {/* Common Symptoms List */}
-              <div className="space-y-3 bg-white/10 backdrop-blur-md p-5 rounded-2xl border border-white/15">
-                <h4 className="text-xs font-black uppercase tracking-wider text-emerald-300 flex items-center gap-1.5">
-                  <Info size={16} /> Common Symptoms (लक्षण):
-                </h4>
-                <ul className="space-y-2">
-                  {analysisResult.primaryRemedy.symptoms.map((sym, idx) => (
-                    <li key={idx} className="flex items-start text-xs font-extrabold text-white leading-relaxed">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 mr-2.5 flex-shrink-0" />
-                      <span>{sym}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              {remedySymptoms.length > 0 && (
+                <div className="space-y-3 bg-white/10 backdrop-blur-md p-5 rounded-2xl border border-white/15">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-emerald-300 flex items-center gap-1.5">
+                    <Info size={16} /> Common Symptoms (लक्षण):
+                  </h4>
+                  <ul className="space-y-2">
+                    {remedySymptoms.map((sym, idx) => (
+                      <li key={idx} className="flex items-start text-xs font-extrabold text-white leading-relaxed">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 mr-2.5 flex-shrink-0" />
+                        <span>{sym}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
               {/* Natural Preparation & Home Ingredients */}
-              <div className="space-y-3 bg-white/10 backdrop-blur-md p-5 rounded-2xl border border-white/15">
-                <h4 className="text-xs font-black uppercase tracking-wider text-emerald-300 flex items-center gap-1.5">
-                  <Leaf size={16} /> Natural Preparation & Home Ingredients (घरेलू नुस्खे):
-                </h4>
-                <ul className="space-y-2.5">
-                  {analysisResult.primaryRemedy.remedies.map((rem, idx) => (
-                    <li key={idx} className="flex items-start text-xs font-extrabold text-white leading-relaxed">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 mt-1.5 mr-2.5 flex-shrink-0" />
-                      <span>{rem}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              {remedySteps.length > 0 && (
+                <div className="space-y-3 bg-white/10 backdrop-blur-md p-5 rounded-2xl border border-white/15">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-emerald-300 flex items-center gap-1.5">
+                    <Leaf size={16} /> Natural Preparation & Home Ingredients (घरेलू नुस्खे):
+                  </h4>
+                  <ul className="space-y-2.5">
+                    {remedySteps.map((rem, idx) => (
+                      <li key={idx} className="flex items-start text-xs font-extrabold text-white leading-relaxed">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 mt-1.5 mr-2.5 flex-shrink-0" />
+                        <span>{rem}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
             </div>
 
             {/* Yoga & Breathing Exercises */}
-            <div className="space-y-2 bg-purple-950/40 backdrop-blur-md p-5 rounded-2xl border border-purple-400/20">
-              <h4 className="text-xs font-black uppercase tracking-wider text-purple-300 flex items-center gap-1.5">
-                <Activity size={16} /> Recommended Yoga & Recovery (योग एवं व्यायाम):
-              </h4>
-              <ul className="space-y-2">
-                {analysisResult.primaryRemedy.yoga_tips.map((tip, idx) => (
-                  <li key={idx} className="flex items-start text-xs font-bold text-purple-100">
-                    <span className="w-1.5 h-1.5 rounded-full bg-purple-400 mt-1.5 mr-2.5 flex-shrink-0" />
-                    <span>{tip}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            {remedyYoga.length > 0 && (
+              <div className="space-y-2 bg-purple-950/40 backdrop-blur-md p-5 rounded-2xl border border-purple-400/20">
+                <h4 className="text-xs font-black uppercase tracking-wider text-purple-300 flex items-center gap-1.5">
+                  <Activity size={16} /> Recommended Yoga & Recovery (योग एवं व्यायाम):
+                </h4>
+                <ul className="space-y-2">
+                  {remedyYoga.map((tip, idx) => (
+                    <li key={idx} className="flex items-start text-xs font-bold text-purple-100">
+                      <span className="w-1.5 h-1.5 rounded-full bg-purple-400 mt-1.5 mr-2.5 flex-shrink-0" />
+                      <span>{tip}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
             {/* Important Precautions */}
-            <div className="space-y-2 bg-amber-950/30 backdrop-blur-md p-4 rounded-2xl border border-amber-400/20">
-              <h4 className="text-xs font-black uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
-                <ShieldAlert size={16} /> Important Warning & Precautions (सावधानियां):
-              </h4>
-              <ul className="space-y-1.5">
-                {analysisResult.primaryRemedy.warnings.map((warn, idx) => (
-                  <li key={idx} className="flex items-start text-xs font-bold text-amber-100">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5 mr-2.5 flex-shrink-0" />
-                    <span>{warn}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            {remedyWarning.length > 0 && (
+              <div className="space-y-2 bg-amber-950/30 backdrop-blur-md p-4 rounded-2xl border border-amber-400/20">
+                <h4 className="text-xs font-black uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
+                  <ShieldAlert size={16} /> Important Warning & Precautions (सावधानियां):
+                </h4>
+                <ul className="space-y-1.5">
+                  {remedyWarning.map((warn, idx) => (
+                    <li key={idx} className="flex items-start text-xs font-bold text-amber-100">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5 mr-2.5 flex-shrink-0" />
+                      <span>{warn}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
           </div>
 
           {/* 💊 2ND PRIORITY: SUGGESTED OTC MEDICINES WITH DIRECT 1-CLICK ORDER */}
-          <div className="bg-white rounded-3xl p-6 border border-gray-200 shadow-md space-y-4">
-            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-              <div className="flex items-center gap-2">
-                <Pill size={20} className="text-[#1565C0]" />
-                <h4 className="text-xs font-black text-gray-900 uppercase tracking-wider">
-                  2nd Priority: Recommended OTC Medicines for {analysisResult.primaryRemedy.category}
-                </h4>
+          {analysisResult.suggestedMedicines?.length > 0 && (
+            <div className="bg-white rounded-3xl p-6 border border-gray-200 shadow-md space-y-4">
+              <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <Pill size={20} className="text-[#1565C0]" />
+                  <h4 className="text-xs font-black text-gray-900 uppercase tracking-wider">
+                    2nd Priority: Recommended OTC Medicines for {remedy.category}
+                  </h4>
+                </div>
+                <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-2.5 py-0.5 rounded-md">
+                  Secondary Relief
+                </span>
               </div>
-              <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-2.5 py-0.5 rounded-md">
-                Secondary Relief
-              </span>
-            </div>
 
-            <p className="text-xs text-gray-500 font-medium leading-relaxed">
-              If natural remedies do not provide fast relief within 1-2 days, these targeted medicines are recommended for your symptom:
-            </p>
+              <p className="text-xs text-gray-500 font-medium leading-relaxed">
+                If natural remedies do not provide fast relief within 1-2 days, these targeted medicines are recommended for your symptom:
+              </p>
 
-            <div className="space-y-3">
-              {analysisResult.suggestedMedicines.map((med) => {
-                const isAdded = addedMedId === med.id;
+              <div className="space-y-3">
+                {analysisResult.suggestedMedicines.map((med) => {
+                  const isAdded = addedMedId === med.id;
 
-                return (
-                  <div 
-                    key={med.id}
-                    className="p-4 rounded-2xl border border-blue-100 bg-blue-50/40 hover:bg-blue-50/80 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs"
-                  >
-                    <div className="flex items-center gap-3">
-                      <img 
-                        src={med.image} 
-                        alt={med.name} 
-                        className="w-14 h-14 object-cover rounded-xl border border-gray-200 flex-shrink-0 bg-white"
-                      />
-                      <div>
-                        <span className="text-[10px] font-bold text-blue-800 bg-blue-100 px-2 py-0.5 rounded-md">
-                          {med.brand}
-                        </span>
-                        <h5 className="text-sm font-black text-gray-900 mt-0.5">
-                          {med.name}
-                        </h5>
-                        <p className="text-[11px] text-gray-500 font-medium">
-                          {med.genericName}
-                        </p>
-                        <p className="text-[11px] text-emerald-700 font-bold mt-1">
-                          💡 Usage: {med.dosageNote}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="w-full sm:w-auto flex sm:flex-col items-center sm:items-end justify-between gap-2 border-t sm:border-t-0 pt-3 sm:pt-0 border-blue-100">
-                      <div>
-                        <span className="text-sm font-black text-gray-900">₹{med.price}</span>
-                        <span className="text-xs text-gray-400 line-through ml-1.5">₹{med.originalPrice}</span>
+                  return (
+                    <div 
+                      key={med.id}
+                      className="p-4 rounded-2xl border border-blue-100 bg-blue-50/40 hover:bg-blue-50/80 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs"
+                    >
+                      <div className="flex items-center gap-3">
+                        <img 
+                          src={med.image} 
+                          alt={med.name} 
+                          className="w-14 h-14 object-cover rounded-xl border border-gray-200 flex-shrink-0 bg-white"
+                        />
+                        <div>
+                          <span className="text-[10px] font-bold text-blue-800 bg-blue-100 px-2 py-0.5 rounded-md">
+                            {med.brand}
+                          </span>
+                          <h5 className="text-sm font-black text-gray-900 mt-0.5">
+                            {med.name}
+                          </h5>
+                          <p className="text-[11px] text-gray-500 font-medium">
+                            {med.genericName}
+                          </p>
+                          <p className="text-[11px] text-emerald-700 font-bold mt-1">
+                            💡 Usage: {med.dosageNote}
+                          </p>
+                        </div>
                       </div>
 
-                      {/* DIRECT 1-CLICK ORDER THIS MEDICINE BUTTON */}
-                      <button
-                        onClick={() => handleDirectOrder(med)}
-                        className={cn(
-                          "py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer shadow-md flex items-center justify-center gap-1.5 whitespace-nowrap active:scale-95",
-                          isAdded 
-                            ? "bg-emerald-700 text-white shadow-emerald-700/25" 
-                            : "bg-[#1565C0] hover:bg-blue-800 text-white shadow-blue-700/25"
-                        )}
-                      >
-                        {isAdded ? (
-                          <>
-                            <Check size={15} /> Added to Cart!
-                          </>
-                        ) : (
-                          <>
-                            <ShoppingBag size={15} /> Order This Medicine
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                      <div className="w-full sm:w-auto flex sm:flex-col items-center sm:items-end justify-between gap-2 border-t sm:border-t-0 pt-3 sm:pt-0 border-blue-100">
+                        <div>
+                          <span className="text-sm font-black text-gray-900">₹{med.price}</span>
+                          <span className="text-xs text-gray-400 line-through ml-1.5">₹{med.originalPrice}</span>
+                        </div>
 
-            <div className="pt-2 flex justify-between items-center border-t border-gray-100 text-xs">
-              <span className="text-gray-500 font-medium">Need more generic alternatives?</span>
-              <button
-                onClick={() => navigate(`/medicines?search=${encodeURIComponent(analysisResult.primaryRemedy.category)}`)}
-                className="font-black text-[#1565C0] hover:underline flex items-center gap-1 cursor-pointer"
-              >
-                <span>Browse All Medicines</span>
-                <ArrowRight size={14} />
-              </button>
+                        {/* DIRECT 1-CLICK ORDER THIS MEDICINE BUTTON */}
+                        <button
+                          onClick={() => handleDirectOrder(med)}
+                          className={cn(
+                            "py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer shadow-md flex items-center justify-center gap-1.5 whitespace-nowrap active:scale-95",
+                            isAdded 
+                              ? "bg-emerald-700 text-white shadow-emerald-700/25" 
+                              : "bg-[#1565C0] hover:bg-blue-800 text-white shadow-blue-700/25"
+                          )}
+                        >
+                          {isAdded ? (
+                            <>
+                              <Check size={15} /> Added to Cart!
+                            </>
+                          ) : (
+                            <>
+                              <ShoppingBag size={15} /> Order This Medicine
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="pt-2 flex justify-between items-center border-t border-gray-100 text-xs">
+                <span className="text-gray-500 font-medium">Need more generic alternatives?</span>
+                <button
+                  onClick={() => navigate(`/medicines?search=${encodeURIComponent(remedy.category)}`)}
+                  className="font-black text-[#1565C0] hover:underline flex items-center gap-1 cursor-pointer"
+                >
+                  <span>Browse All Medicines</span>
+                  <ArrowRight size={14} />
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* 🧠 3RD PRIORITY: AI CLINICAL DIAGNOSIS PREDICTION BREAKDOWN */}
           <div className="bg-white rounded-3xl p-6 border border-purple-100 shadow-md space-y-4">
@@ -543,20 +559,22 @@ export const RemedySymptomChecker = () => {
               <div>
                 <p className="text-[10px] font-bold text-purple-700 uppercase tracking-wider">Top Medical Condition Match</p>
                 <h3 className="text-base font-black text-purple-950 mt-0.5">
-                  {analysisResult.ruleAnalysis.disease || 'General Health Condition'}
+                  {analysisResult.ruleAnalysis?.disease || 'General Health Condition'}
                 </h3>
               </div>
               <div className="text-right">
                 <span className="text-lg font-black text-purple-900">
-                  {analysisResult.ruleAnalysis.confidence || 75}%
+                  {analysisResult.ruleAnalysis?.confidence || 75}%
                 </span>
                 <p className="text-[9px] font-bold text-purple-600 uppercase tracking-wider">Confidence</p>
               </div>
             </div>
 
-            <p className="text-xs text-gray-500 font-medium leading-relaxed">
-              {analysisResult.ruleAnalysis.description}
-            </p>
+            {analysisResult.ruleAnalysis?.description && (
+              <p className="text-xs text-gray-500 font-medium leading-relaxed">
+                {analysisResult.ruleAnalysis.description}
+              </p>
+            )}
           </div>
 
         </motion.div>
