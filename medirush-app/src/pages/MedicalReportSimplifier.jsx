@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Activity, FileText, Loader2, Wand2, Sparkles, HeartPulse, Droplets, ShieldCheck, Flame, Scale, Brain, Play } from 'lucide-react';
+import { ArrowLeft, Activity, FileText, Loader2, Wand2, Sparkles, Play } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ReportUploader } from '../components/ReportUploader';
 import { ReportResultCard } from '../components/ReportResultCard';
@@ -55,17 +55,6 @@ export const MedicalReportSimplifier = () => {
     visible: { y: 0, opacity: 1 }
   };
 
-  const samplePresets = [
-    { key: 'fullMasterDemo', label: '🌟 FULL MASTER DEMO REPORT (ALL TESTS)', color: 'text-indigo-700 bg-indigo-100 border-indigo-300 font-black shadow-sm' },
-    { key: 'bloodTest', label: '🩸 Complete Blood Count (CBC)', color: 'text-red-700 bg-red-50 border-red-200' },
-    { key: 'lft', label: '🧪 Liver Function Test (LFT)', color: 'text-amber-700 bg-amber-50 border-amber-200' },
-    { key: 'kft', label: '💧 Kidney Function Test (KFT)', color: 'text-blue-700 bg-blue-50 border-blue-200' },
-    { key: 'lipid', label: '❤️ Lipid Profile (Cholesterol)', color: 'text-purple-700 bg-purple-50 border-purple-200' },
-    { key: 'diabetes', label: '🍬 Diabetes HbA1c Panel', color: 'text-emerald-700 bg-emerald-50 border-emerald-200' },
-    { key: 'thyroid', label: '🦋 Thyroid Profile (T3, T4, TSH)', color: 'text-teal-700 bg-teal-50 border-teal-200' },
-    { key: 'emergency', label: '🚨 Emergency ECG / Heart Attack', color: 'text-red-900 bg-red-100 border-red-300 font-black' },
-  ];
-
   return (
     <div className="min-h-screen bg-background font-sans pb-24 relative overflow-hidden">
       
@@ -98,7 +87,7 @@ export const MedicalReportSimplifier = () => {
             AI Medical Report Simplifier
           </h1>
           <p className="text-indigo-100 mt-1.5 text-xs sm:text-sm font-medium max-w-sm mx-auto leading-relaxed drop-shadow-sm">
-            Paste or upload any complex lab report (CBC, LFT, KFT, Lipid, Diabetes, Thyroid) for instant simplified analysis in plain language.
+            Paste or upload any medical report (CBC, LFT, KFT, Lipid, Diabetes, Thyroid) for instant simplified analysis in plain language.
           </p>
         </motion.div>
       </div>
@@ -115,7 +104,7 @@ export const MedicalReportSimplifier = () => {
           {!result ? (
             <motion.div key="input" variants={containerVariants} initial="hidden" animate="visible" exit={{ opacity: 0, y: -20 }} className="space-y-6">
               
-              {/* ⚡ PROMINENT 1-CLICK MASTER DEMO REPORT CALLOUT BANNER */}
+              {/* ⚡ 1-CLICK MASTER DEMO REPORT CALLOUT BANNER */}
               <motion.div 
                 variants={itemVariants}
                 className="bg-gradient-to-r from-amber-500 via-emerald-600 to-teal-700 text-white p-5 sm:p-6 rounded-3xl shadow-xl border border-amber-300 flex flex-col sm:flex-row items-center justify-between gap-4"
@@ -129,7 +118,7 @@ export const MedicalReportSimplifier = () => {
                       ⚡ 1-Click Master Test Demo
                     </span>
                     <h3 className="text-base font-black mt-0.5">
-                      Try Full Master Demo Report (सब कुछ शामिल टेस्ट)
+                      Try Full Master Demo Report (सब कुछ शामिल रिपोर्ट देखें)
                     </h3>
                     <p className="text-xs text-amber-100 font-medium">
                       Contains CBC, Liver, Kidney, Cholesterol, Diabetes, and Thyroid test values.
@@ -173,27 +162,6 @@ export const MedicalReportSimplifier = () => {
                   rows={6}
                   className="w-full resize-none rounded-2xl border border-gray-200 bg-gray-50 p-4 text-xs font-bold text-gray-900 focus:outline-none focus:bg-white focus:ring-2 focus:ring-indigo-600 transition-all leading-relaxed placeholder:text-gray-400"
                 />
-                
-                {/* Preset Complex Report Buttons */}
-                <div className="space-y-2 pt-1 border-t border-gray-100">
-                  <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-1">
-                    <Sparkles size={12} className="text-indigo-600" /> Or Choose Specific Test Presets (1-Click Run):
-                  </span>
-                  <div className="flex flex-wrap gap-2">
-                    {samplePresets.map((preset) => (
-                      <button
-                        key={preset.key}
-                        onClick={() => fillMockAndAnalyze(preset.key)}
-                        className={cn(
-                          "px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer hover:shadow-sm active:scale-95 flex items-center gap-1",
-                          preset.color
-                        )}
-                      >
-                        {preset.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
               </motion.div>
 
               {/* 3. Action Button */}
