@@ -211,13 +211,6 @@ export const HomeRemedies = () => {
           >
             <ArrowLeft size={16} /> Dashboard
           </button>
-
-          <button
-            onClick={() => navigate('/nearby')}
-            className="bg-emerald-500/20 hover:bg-emerald-500/30 backdrop-blur-md text-emerald-200 border border-emerald-400/30 px-3.5 py-2 rounded-2xl text-xs font-black uppercase tracking-wider flex items-center gap-1.5 cursor-pointer active:scale-95"
-          >
-            <MapPin size={15} /> Find Hospitals / Map
-          </button>
         </div>
 
         <motion.div 
