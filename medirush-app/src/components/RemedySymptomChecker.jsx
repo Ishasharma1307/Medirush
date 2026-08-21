@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Mic, MicOff, Search, Sparkles, AlertTriangle, ShieldAlert, HeartPulse, 
-  CheckCircle2, Leaf, Pill, MapPin, Activity, PhoneCall, ArrowRight, RotateCcw, Info, ShoppingBag, Check
+  CheckCircle2, Leaf, Pill, MapPin, Activity, PhoneCall, ArrowRight, RotateCcw, Info, ShoppingBag, Check, Globe, Send, Stethoscope
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { analyzeSymptoms } from '../utils/symptomRules';
@@ -10,19 +10,33 @@ import { mockHomeRemedies } from '../data/mockHomeRemedies';
 import { useCart } from '../context/CartContext';
 import { cn } from '../utils/cn';
 
-// Quick symptom selector options for tap-to-select
-const QUICK_SYMPTOMS = [
-  { id: 'cough', label: 'Cough & Throat (खांसी/गला खराब)', icon: '🗣️', keywords: 'khasi cough sore throat gala' },
-  { id: 'fever', label: 'Fever & Chills (बुखार)', icon: '🤒', keywords: 'fever bukhar chills' },
-  { id: 'headache', label: 'Headache & Stress (सिरदर्द)', icon: '💆', keywords: 'headache sardard migraine' },
-  { id: 'acidity', label: 'Acidity & Gas (पेट में गैस/जलन)', icon: '🤢', keywords: 'acidity gas gerd heartburn' },
-  { id: 'stomach', label: 'Stomach Cramps (पेट दर्द/मरोड़)', icon: '😣', keywords: 'stomach pain pet dard cramps' },
-  { id: 'bodypain', label: 'Body Ache & Joints (बदन दर्द)', icon: '🦴', keywords: 'body pain badan dard joints' },
-  { id: 'toothache', label: 'Toothache (दांत का दर्द)', icon: '🦷', keywords: 'toothache dant dard teeth' },
-  { id: 'skin', label: 'Skin Rash & Itching (खुजली/दाद)', icon: '🌿', keywords: 'skin rash khujli itching allergy' },
-  { id: 'weakness', label: 'Weakness (कमजोरी/चक्कर)', icon: '⚡', keywords: 'weakness kamjori fatigue dizziness' },
-  { id: 'constipation', label: 'Constipation (कब्ज/पाचन)', icon: '💩', keywords: 'constipation kabz digestion' }
-];
+// Multilingual Quick Symptom Prompts
+const QUICK_PROMPTS = {
+  hi: [
+    { label: '🗣️ गले में खराश / सूखी खांसी', text: 'गले में खराश और सूखी खांसी हो रही है' },
+    { label: '🤒 हल्का बुखार और बदन दर्द', text: 'हल्का बुखार और शरीर में दर्द महसूस हो रहा है' },
+    { label: '💆 सिरदर्द और माइग्रेन', text: 'सिर में बहुत तेज दर्द और भारीपन है' },
+    { label: '🤢 पेट में गैस और जलन', text: 'पेट में बहुत एसिडिटी, गैस और जलन है' },
+    { label: '😣 पेट में मरोड़ / दर्द', text: 'पेट में मरोड़ और दर्द हो रहा है' },
+    { label: '🦴 जोड़ों और बदन में दर्द', text: 'जोड़ों और बदन में जकड़न और थकान है' }
+  ],
+  hinglish: [
+    { label: '🗣️ Gale me kharash & khasi', text: 'Gale me kharash aur sukhi khasi he' },
+    { label: '🤒 Bukhar & Badan dard', text: 'Halka bukhar aur badan me dard ho raha he' },
+    { label: '💆 Sar me tez dard', text: 'Sir me bahut tez dard he' },
+    { label: '🤢 Pet me gas & acidity', text: 'Pet me gas, acidity aur jalan he' },
+    { label: '😣 Pet me dard / cramps', text: 'Pet me dard aur cramps ho rahe he' },
+    { label: '🦴 Body pain & joint stiffness', text: 'Body pain aur joints me stiffness he' }
+  ],
+  en: [
+    { label: '🗣️ Sore Throat & Dry Cough', text: 'I have a sore throat and dry cough' },
+    { label: '🤒 Mild Fever & Body Ache', text: 'Feeling mild fever and full body ache' },
+    { label: '💆 Headache & Migraine', text: 'Severe throbbing headache and strain' },
+    { label: '🤢 Acidity & Gas Reflux', text: 'Heartburn, acidity and stomach bloating' },
+    { label: '😣 Stomach Pain & Cramps', text: 'Sharp stomach cramps and gut pain' },
+    { label: '🦴 Joint Pain & Fatigue', text: 'Joint stiffness and heavy fatigue' }
+  ]
+};
 
 // Situation-based clinically accurate medicine mapping database
 const CLINICAL_MEDICINES_MAP = {
@@ -182,19 +196,19 @@ export const RemedySymptomChecker = () => {
   const navigate = useNavigate();
   const { addToCart } = useCart();
 
-  const [selectedSymptoms, setSelectedSymptoms] = useState([]);
-  const [customText, setCustomText] = useState('');
-  const [duration, setDuration] = useState('1-2 Days');
+  // Language selection state: 'hi' | 'hinglish' | 'en'
+  const [lang, setLang] = useState('hi');
+  const [inputText, setInputText] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState(null);
 
   // Cart toast notification
   const [addedMedId, setAddedMedId] = useState(null);
 
-  // Voice Search States
+  // Voice Input States
   const [isListening, setIsListening] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(true);
-  const [voiceMsg, setVoiceMsg] = useState('');
+  const [voiceToast, setVoiceToast] = useState('');
   const recognitionRef = useRef(null);
 
   useEffect(() => {
@@ -203,27 +217,31 @@ export const RemedySymptomChecker = () => {
       const recognition = new SpeechRecognition();
       recognition.continuous = false;
       recognition.interimResults = false;
-      recognition.lang = 'hi-IN';
+      recognition.lang = lang === 'en' ? 'en-US' : 'hi-IN';
 
       recognition.onstart = () => {
         setIsListening(true);
-        setVoiceMsg('Listening... Describe how you are feeling (e.g. gale me kharash aur sir me dard)');
+        setVoiceToast(
+          lang === 'hi' ? 'सुन रहे हैं... अपने लक्षण बोलें' :
+          lang === 'hinglish' ? 'Listening... Speak your symptoms' :
+          'Listening... Describe your symptoms'
+        );
       };
 
       recognition.onresult = (event) => {
         const transcript = event.results[0][0].transcript;
         if (transcript) {
-          setCustomText(prev => prev ? `${prev}, ${transcript}` : transcript);
-          setVoiceMsg(`Recognized: "${transcript}"`);
-          setTimeout(() => setVoiceMsg(''), 4000);
+          setInputText(prev => prev ? `${prev}, ${transcript}` : transcript);
+          setVoiceToast(`Recognized: "${transcript}"`);
+          setTimeout(() => setVoiceToast(''), 3000);
         }
         setIsListening(false);
       };
 
       recognition.onerror = () => {
         setIsListening(false);
-        setVoiceMsg('Could not hear clearly. Try again or type symptoms.');
-        setTimeout(() => setVoiceMsg(''), 4000);
+        setVoiceToast('Could not hear clearly. Please try typing.');
+        setTimeout(() => setVoiceToast(''), 3000);
       };
 
       recognition.onend = () => setIsListening(false);
@@ -231,12 +249,12 @@ export const RemedySymptomChecker = () => {
     } else {
       setSpeechSupported(false);
     }
-  }, []);
+  }, [lang]);
 
   const handleVoiceInput = () => {
     if (!speechSupported) {
-      setVoiceMsg('Voice search not supported in this browser.');
-      setTimeout(() => setVoiceMsg(''), 3000);
+      setVoiceToast('Voice input is not supported in this browser.');
+      setTimeout(() => setVoiceToast(''), 3000);
       return;
     }
     if (isListening) {
@@ -246,14 +264,6 @@ export const RemedySymptomChecker = () => {
       try {
         recognitionRef.current?.start();
       } catch (e) {}
-    }
-  };
-
-  const toggleSymptom = (symId) => {
-    if (selectedSymptoms.includes(symId)) {
-      setSelectedSymptoms(selectedSymptoms.filter(id => id !== symId));
-    } else {
-      setSelectedSymptoms([...selectedSymptoms, symId]);
     }
   };
 
@@ -277,26 +287,23 @@ export const RemedySymptomChecker = () => {
   };
 
   // Run AI Symptom Analysis prioritizing Natural Home Remedies
-  const handleRunAnalysis = async () => {
-    const combinedInputParts = [
-      ...selectedSymptoms.map(id => QUICK_SYMPTOMS.find(s => s.id === id)?.keywords || id),
-      customText
-    ].filter(Boolean);
+  const handleRunAnalysis = async (customQuery) => {
+    const queryToAnalyze = (customQuery || inputText).trim();
+    if (!queryToAnalyze) return;
 
-    const fullQuery = combinedInputParts.join(' ');
-    if (!fullQuery.trim()) return;
+    if (customQuery) setInputText(customQuery);
 
     setIsAnalyzing(true);
     setAnalysisResult(null);
 
-    // Simulate AI analysis delay
-    await new Promise(r => setTimeout(r, 600));
+    // AI Analysis delay for processing feel
+    await new Promise(r => setTimeout(r, 1200));
 
     // 1. Analyze general severity via rules engine
-    const ruleAnalysis = await analyzeSymptoms({ rawText: fullQuery, lang: 'hi' });
+    const ruleAnalysis = await analyzeSymptoms({ rawText: queryToAnalyze, lang: lang });
 
     // 2. Find best matching home remedy from natural database
-    const qLower = fullQuery.toLowerCase();
+    const qLower = queryToAnalyze.toLowerCase();
     const scoredRemedies = mockHomeRemedies.map(r => {
       let score = 0;
       const prob = r.problem.toLowerCase();
@@ -329,153 +336,168 @@ export const RemedySymptomChecker = () => {
       qLower.includes('104');
 
     setAnalysisResult({
-      query: fullQuery,
+      query: queryToAnalyze,
       primaryRemedy: primaryRemedy,
       suggestedMedicines: specificMeds,
       ruleAnalysis: ruleAnalysis,
       isEmergency: isEmergency,
-      duration: duration
+      lang: lang
     });
 
     setIsAnalyzing(false);
   };
 
   const handleReset = () => {
-    setSelectedSymptoms([]);
-    setCustomText('');
+    setInputText('');
     setAnalysisResult(null);
   };
 
   return (
     <div className="space-y-6">
       
-      {/* Toast Messages */}
+      {/* Toast Notification */}
       <AnimatePresence>
-        {voiceMsg && (
+        {voiceToast && (
           <div className="bg-emerald-950 text-white rounded-full px-5 py-2.5 shadow-xl text-xs font-black flex items-center gap-2 max-w-md mx-auto">
             <Sparkles size={16} className="text-yellow-400 animate-pulse" />
-            <span>{voiceMsg}</span>
+            <span>{voiceToast}</span>
           </div>
         )}
       </AnimatePresence>
 
-      {/* SYMPTOM CHECKER INPUT WIZARD */}
-      {!analysisResult && (
+      {/* 🟢 CONVERSATIONAL SYMPTOM CHECKER CARD (Simpler, Clean Conversational UI) */}
+      {!analysisResult && !isAnalyzing && (
         <div className="bg-white rounded-3xl p-6 shadow-xl border border-emerald-100 space-y-6">
           
-          <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
-            <div className="bg-emerald-700 text-white p-3 rounded-2xl shadow-md">
-              <HeartPulse size={24} />
+          {/* Header & Language Switcher */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-gray-100">
+            <div className="flex items-center gap-3">
+              <div className="bg-emerald-700 text-white p-3 rounded-2xl shadow-md">
+                <HeartPulse size={24} />
+              </div>
+              <div>
+                <h2 className="text-lg font-black text-gray-900">AI Symptom Diagnostics</h2>
+                <p className="text-xs text-gray-500 font-bold">Describe your symptoms in your preferred language</p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-lg font-black text-gray-900">AI Remedy Symptom Diagnostics</h2>
-              <p className="text-xs text-gray-500 font-bold">Select or speak your symptoms for natural remedy recommendations</p>
-            </div>
-          </div>
 
-          {/* Quick Symptom Chips */}
-          <div className="space-y-2">
-            <label className="block text-xs font-extrabold text-gray-700 uppercase tracking-wider">
-              1. Tap your symptoms (लक्षण चुनें)
-            </label>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {QUICK_SYMPTOMS.map(sym => {
-                const isSelected = selectedSymptoms.includes(sym.id);
-                return (
-                  <button
-                    key={sym.id}
-                    type="button"
-                    onClick={() => toggleSymptom(sym.id)}
-                    className={cn(
-                      "p-3 rounded-2xl border text-left font-bold text-xs transition-all cursor-pointer flex items-center gap-2.5 active:scale-95",
-                      isSelected 
-                        ? "bg-emerald-700 text-white border-emerald-700 shadow-md" 
-                        : "bg-gray-50 text-gray-800 border-gray-200 hover:bg-emerald-50 hover:border-emerald-200"
-                    )}
-                  >
-                    <span className="text-base">{sym.icon}</span>
-                    <span className="truncate">{sym.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Custom Text / Voice Description */}
-          <div className="space-y-2">
-            <label className="block text-xs font-extrabold text-gray-700 uppercase tracking-wider">
-              2. Describe more in your own words (और विस्तार से बताएं)
-            </label>
-            <div className="relative">
-              <input
-                type="text"
-                value={customText}
-                onChange={(e) => setCustomText(e.target.value)}
-                placeholder="e.g. gale me kharash aur halka bukhar he..."
-                className="w-full py-3.5 pl-4 pr-12 bg-gray-50 border border-gray-200 rounded-2xl font-bold text-gray-900 text-xs sm:text-sm focus:bg-white focus:ring-2 focus:ring-emerald-600 outline-none"
-              />
-              <button
-                type="button"
-                onClick={handleVoiceInput}
-                className={cn(
-                  "absolute right-2 top-2 p-2 rounded-xl transition-all cursor-pointer",
-                  isListening ? "bg-red-500 text-white animate-pulse" : "bg-emerald-100 text-emerald-800 hover:bg-emerald-200"
-                )}
-                title="Speak Symptom"
-              >
-                {isListening ? <MicOff size={16} /> : <Mic size={16} />}
-              </button>
-            </div>
-          </div>
-
-          {/* Duration Selection */}
-          <div className="space-y-2">
-            <label className="block text-xs font-extrabold text-gray-700 uppercase tracking-wider">
-              3. Symptom Duration (कितने समय से है?)
-            </label>
-            <div className="flex gap-2">
-              {['1-2 Days', '3-5 Days', '1 Week+'].map(dur => (
+            {/* Language Selector Buttons */}
+            <div className="flex items-center gap-1 bg-gray-100 p-1.5 rounded-2xl border border-gray-200 self-stretch sm:self-auto">
+              {[
+                { id: 'hi', label: '🇮🇳 हिंदी' },
+                { id: 'hinglish', label: '🗣️ Hinglish' },
+                { id: 'en', label: '🇬🇧 English' }
+              ].map(l => (
                 <button
-                  key={dur}
+                  key={l.id}
                   type="button"
-                  onClick={() => setDuration(dur)}
+                  onClick={() => setLang(l.id)}
                   className={cn(
-                    "px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider border transition-all cursor-pointer",
-                    duration === dur 
-                      ? "bg-emerald-800 text-white border-emerald-800 shadow-sm" 
-                      : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
+                    "flex-1 sm:flex-none px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer",
+                    lang === l.id 
+                      ? "bg-emerald-700 text-white shadow-sm" 
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-200/50"
                   )}
                 >
-                  {dur}
+                  {l.label}
                 </button>
               ))}
             </div>
           </div>
 
+          {/* Quick One-Tap Symptom Prompts */}
+          <div className="space-y-2">
+            <label className="block text-xs font-extrabold text-gray-700 uppercase tracking-wider">
+              {lang === 'hi' ? '⚡ त्वरित लक्षण चुनें (One-Tap Start)' : lang === 'hinglish' ? '⚡ Tap any symptom to start' : '⚡ Quick select symptoms'}
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {QUICK_PROMPTS[lang].map((prompt, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => handleRunAnalysis(prompt.text)}
+                  className="p-3 rounded-2xl border border-emerald-100 bg-emerald-50/40 hover:bg-emerald-100/60 hover:border-emerald-300 text-emerald-950 font-bold text-xs text-left transition-all cursor-pointer flex items-center justify-between group active:scale-95"
+                >
+                  <span>{prompt.label}</span>
+                  <ArrowRight size={14} className="text-emerald-700 group-hover:translate-x-1 transition-transform" />
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Direct Natural Language Input Box */}
+          <div className="space-y-2 pt-2 border-t border-gray-100">
+            <label className="block text-xs font-extrabold text-gray-700 uppercase tracking-wider">
+              {lang === 'hi' ? '✍️ या विस्तार से लिखें / बोलकर बताएं:' : lang === 'hinglish' ? '✍️ Or type / speak how you are feeling:' : '✍️ Or describe in your own words:'}
+            </label>
+
+            <div className="relative">
+              <textarea
+                rows={3}
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                placeholder={
+                  lang === 'hi' ? "उदाहरण: मुझे 2 दिन से सूखी खांसी और गले में दर्द हो रहा है..." :
+                  lang === 'hinglish' ? "e.g. 2 din se gale me kharash aur sir dard he..." :
+                  "e.g. Having sore throat and headache since 2 days..."
+                }
+                className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl font-bold text-gray-900 text-sm focus:bg-white focus:ring-2 focus:ring-emerald-600 outline-none resize-none"
+              />
+
+              {/* Voice Mic Button */}
+              <button
+                type="button"
+                onClick={handleVoiceInput}
+                className={cn(
+                  "absolute right-3 bottom-3 p-2.5 rounded-xl transition-all cursor-pointer shadow-sm",
+                  isListening ? "bg-red-500 text-white animate-pulse" : "bg-emerald-100 text-emerald-800 hover:bg-emerald-200"
+                )}
+                title="Speak Symptoms"
+              >
+                {isListening ? <MicOff size={18} /> : <Mic size={18} />}
+              </button>
+            </div>
+          </div>
+
           {/* Submit Action Button */}
           <button
-            onClick={handleRunAnalysis}
-            disabled={isAnalyzing || (selectedSymptoms.length === 0 && !customText.trim())}
+            onClick={() => handleRunAnalysis()}
+            disabled={!inputText.trim()}
             className="w-full py-4 rounded-2xl font-black text-xs uppercase tracking-wider bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 text-white shadow-lg shadow-emerald-700/25 transition-all cursor-pointer active:scale-95 flex items-center justify-center gap-2"
           >
-            {isAnalyzing ? (
-              <>
-                <Sparkles size={18} className="animate-spin text-yellow-300" />
-                <span>Analyzing Symptoms & Natural Care...</span>
-              </>
-            ) : (
-              <>
-                <Sparkles size={18} className="text-yellow-300" />
-                <span>Analyze Symptoms & Get Natural Remedies</span>
-              </>
-            )}
+            <Sparkles size={18} className="text-yellow-300" />
+            <span>
+              {lang === 'hi' ? 'घरेलू नुस्खे एवं मेडिकल चेकअप प्राप्त करें' : 
+               lang === 'hinglish' ? 'Get Home Remedies & Health Care Plan' : 
+               'Analyze Symptoms & Get Home Remedies'}
+            </span>
           </button>
 
         </div>
       )}
 
-      {/* RESULTS DASHBOARD: PRIORITIZES HOME REMEDIES FIRST! */}
-      {analysisResult && (
+      {/* ⏳ AI PROCESSING SCREEN */}
+      {isAnalyzing && (
+        <div className="bg-white rounded-3xl p-12 shadow-xl border border-emerald-100 text-center space-y-6 flex flex-col items-center justify-center min-h-[350px]">
+          <div className="relative">
+            <div className="w-20 h-20 bg-emerald-200/50 rounded-full animate-ping absolute opacity-75"></div>
+            <div className="w-20 h-20 bg-emerald-700 text-white rounded-full flex items-center justify-center relative z-10 shadow-lg">
+              <Stethoscope size={36} className="animate-pulse" />
+            </div>
+          </div>
+          <div>
+            <h3 className="text-xl font-black text-gray-900">
+              {lang === 'hi' ? 'AI चिकित्सा विश्लेषण चल रहा है...' : 'AI Medical Analysis Running...'}
+            </h3>
+            <p className="text-xs text-gray-500 font-bold mt-1.5 max-w-sm mx-auto leading-relaxed">
+              {lang === 'hi' ? 'आपके लक्षणों का आयुर्वेदिक एवं मेडिकल डेटाबेस से मिलान किया जा रहा है...' : 'Matching your symptoms against natural remedies and medical databases...'}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* 🏆 RESULTS DASHBOARD: PRIORITIZES HOME REMEDIES FIRST! */}
+      {analysisResult && !isAnalyzing && (
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
