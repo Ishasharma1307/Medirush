@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Activity, FileText, Loader2, Wand2, Sparkles, HeartPulse, Droplets, ShieldCheck, Flame, Scale, Brain } from 'lucide-react';
+import { ArrowLeft, Activity, FileText, Loader2, Wand2, Sparkles, HeartPulse, Droplets, ShieldCheck, Flame, Scale, Brain, Play } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ReportUploader } from '../components/ReportUploader';
 import { ReportResultCard } from '../components/ReportResultCard';
@@ -24,18 +24,25 @@ export const MedicalReportSimplifier = () => {
 
     // Simulate AI processing delay
     setTimeout(() => {
-      const textToAnalyze = text.trim() || mockReportExamples.bloodTest;
+      const textToAnalyze = text.trim() || mockReportExamples.fullMasterDemo;
       const analysisResult = simplifyReport(textToAnalyze);
       setResult(analysisResult);
       setIsAnalyzing(false);
-    }, 1500);
+    }, 1400);
   };
 
-  const fillMock = (type) => {
-    const sampleText = mockReportExamples[type] || mockReportExamples.bloodTest;
+  const fillMockAndAnalyze = (type) => {
+    const sampleText = mockReportExamples[type] || mockReportExamples.fullMasterDemo;
     setText(sampleText);
     setFile(null);
+    setIsAnalyzing(true);
     setResult(null);
+
+    setTimeout(() => {
+      const analysisResult = simplifyReport(sampleText);
+      setResult(analysisResult);
+      setIsAnalyzing(false);
+    }, 1200);
   };
 
   const containerVariants = {
@@ -49,13 +56,14 @@ export const MedicalReportSimplifier = () => {
   };
 
   const samplePresets = [
-    { key: 'bloodTest', label: '🩸 Complete Blood Count (CBC)', icon: Droplets, color: 'text-red-600 bg-red-50 border-red-200' },
-    { key: 'lft', label: '🧪 Liver Function Test (LFT)', icon: Activity, color: 'text-amber-600 bg-amber-50 border-amber-200' },
-    { key: 'kft', label: '💧 Kidney Function Test (KFT)', icon: ShieldCheck, color: 'text-blue-600 bg-blue-50 border-blue-200' },
-    { key: 'lipid', label: '❤️ Lipid Profile (Cholesterol)', icon: HeartPulse, color: 'text-purple-600 bg-purple-50 border-purple-200' },
-    { key: 'diabetes', label: '🍬 Diabetes HbA1c Panel', icon: Flame, color: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
-    { key: 'thyroid', label: '🦋 Thyroid Profile (T3, T4, TSH)', icon: Scale, color: 'text-teal-600 bg-teal-50 border-teal-200' },
-    { key: 'emergency', label: '🚨 Emergency ECG / Troponin', icon: Brain, color: 'text-red-700 bg-red-100 border-red-300 font-black' },
+    { key: 'fullMasterDemo', label: '🌟 FULL MASTER DEMO REPORT (ALL TESTS)', color: 'text-indigo-700 bg-indigo-100 border-indigo-300 font-black shadow-sm' },
+    { key: 'bloodTest', label: '🩸 Complete Blood Count (CBC)', color: 'text-red-700 bg-red-50 border-red-200' },
+    { key: 'lft', label: '🧪 Liver Function Test (LFT)', color: 'text-amber-700 bg-amber-50 border-amber-200' },
+    { key: 'kft', label: '💧 Kidney Function Test (KFT)', color: 'text-blue-700 bg-blue-50 border-blue-200' },
+    { key: 'lipid', label: '❤️ Lipid Profile (Cholesterol)', color: 'text-purple-700 bg-purple-50 border-purple-200' },
+    { key: 'diabetes', label: '🍬 Diabetes HbA1c Panel', color: 'text-emerald-700 bg-emerald-50 border-emerald-200' },
+    { key: 'thyroid', label: '🦋 Thyroid Profile (T3, T4, TSH)', color: 'text-teal-700 bg-teal-50 border-teal-200' },
+    { key: 'emergency', label: '🚨 Emergency ECG / Heart Attack', color: 'text-red-900 bg-red-100 border-red-300 font-black' },
   ];
 
   return (
@@ -107,6 +115,36 @@ export const MedicalReportSimplifier = () => {
           {!result ? (
             <motion.div key="input" variants={containerVariants} initial="hidden" animate="visible" exit={{ opacity: 0, y: -20 }} className="space-y-6">
               
+              {/* ⚡ PROMINENT 1-CLICK MASTER DEMO REPORT CALLOUT BANNER */}
+              <motion.div 
+                variants={itemVariants}
+                className="bg-gradient-to-r from-amber-500 via-emerald-600 to-teal-700 text-white p-5 sm:p-6 rounded-3xl shadow-xl border border-amber-300 flex flex-col sm:flex-row items-center justify-between gap-4"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="bg-white/20 p-3 rounded-2xl backdrop-blur-md border border-white/20 flex-shrink-0">
+                    <Sparkles size={24} className="text-amber-200 animate-pulse" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-widest bg-white/20 px-2 py-0.5 rounded-md border border-white/20">
+                      ⚡ 1-Click Master Test Demo
+                    </span>
+                    <h3 className="text-base font-black mt-0.5">
+                      Try Full Master Demo Report (सब कुछ शामिल टेस्ट)
+                    </h3>
+                    <p className="text-xs text-amber-100 font-medium">
+                      Contains CBC, Liver, Kidney, Cholesterol, Diabetes, and Thyroid test values.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => fillMockAndAnalyze('fullMasterDemo')}
+                  className="w-full sm:w-auto bg-white text-emerald-900 hover:bg-emerald-50 px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-wider shadow-md flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-95 whitespace-nowrap flex-shrink-0"
+                >
+                  <Play size={15} fill="currentColor" /> Load & Analyze Demo Report
+                </button>
+              </motion.div>
+
               {/* 1. Uploader */}
               <motion.div variants={itemVariants} className="bg-white/90 backdrop-blur-md p-5 rounded-3xl border border-indigo-100 shadow-lg space-y-3">
                 <p className="text-[11px] font-black text-gray-500 uppercase tracking-widest flex items-center">
@@ -139,15 +177,15 @@ export const MedicalReportSimplifier = () => {
                 {/* Preset Complex Report Buttons */}
                 <div className="space-y-2 pt-1 border-t border-gray-100">
                   <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-1">
-                    <Sparkles size={12} className="text-indigo-600" /> Or Test With Preset Complex Lab Reports:
+                    <Sparkles size={12} className="text-indigo-600" /> Or Choose Specific Test Presets (1-Click Run):
                   </span>
                   <div className="flex flex-wrap gap-2">
                     {samplePresets.map((preset) => (
                       <button
                         key={preset.key}
-                        onClick={() => fillMock(preset.key)}
+                        onClick={() => fillMockAndAnalyze(preset.key)}
                         className={cn(
-                          "px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer hover:shadow-sm active:scale-95",
+                          "px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer hover:shadow-sm active:scale-95 flex items-center gap-1",
                           preset.color
                         )}
                       >
