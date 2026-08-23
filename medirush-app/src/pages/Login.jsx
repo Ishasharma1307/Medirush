@@ -22,7 +22,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 export const Login = () => {
   const navigate = useNavigate();
   const { 
-    loginAsDemo, 
+    loginAsDemo,
+    loginAsDemoPharmacy, 
     loginWithGoogle, 
     loginWithApple, 
     sendPhoneOtp, 
@@ -34,6 +35,38 @@ export const Login = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [successMsg, setSuccessMsg] = useState(null);
+
+  // Redirect user based on their role
+  const handleRoleRedirect = async (sessionUser) => {
+    if (!sessionUser) {
+      navigate('/home');
+      return;
+    }
+
+    try {
+      // Check user role from metadata first
+      let role = sessionUser.user_metadata?.role;
+      if (!role) {
+        const { data: profile } = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', sessionUser.id)
+          .maybeSingle();
+        role = profile?.role || 'user';
+      }
+
+      if (role === 'pharmacy') {
+        navigate('/pharmacy/dashboard');
+      } else if (role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/home');
+      }
+    } catch (err) {
+      console.error('Error during role redirect:', err);
+      navigate('/home');
+    }
+  };
   
   // View states: 'email' (standard form), 'phone' (enter phone details), 'otp' (verify phone OTP), 'email_otp' (verify email OTP)
   const [loginMode, setLoginMode] = useState('email'); 
@@ -134,7 +167,7 @@ export const Login = () => {
       if (data.session) {
         localStorage.removeItem('sandbox_active');
         localStorage.removeItem('demo_user');
-        navigate('/home');
+        await handleRoleRedirect(data.user || data.session?.user);
       } else {
         setError('Please verify your email address before logging in.');
       }
@@ -727,19 +760,32 @@ export const Login = () => {
             </div>
           )}
 
-          {/* Quick Demo Login */}
+          {/* Quick Demo Logins */}
           {loginMode === 'email' && (
-            <Button 
-              type="button" 
-              variant="glass"
-              className="w-full py-4 mt-4 text-primary border-primary/20 hover:bg-primary/5 flex items-center justify-center rounded-2xl font-bold text-xs" 
-              onClick={() => {
-                loginAsDemo();
-                navigate('/home');
-              }}
-            >
-              Quick Demo Login
-            </Button>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+              <Button 
+                type="button" 
+                variant="glass"
+                className="w-full py-3.5 text-primary border-primary/20 hover:bg-primary/5 flex items-center justify-center rounded-2xl font-bold text-xs" 
+                onClick={() => {
+                  loginAsDemo();
+                  navigate('/home');
+                }}
+              >
+                Quick Demo Customer
+              </Button>
+              <Button 
+                type="button" 
+                variant="glass"
+                className="w-full py-3.5 text-emerald-800 bg-emerald-50/80 hover:bg-emerald-100/80 border-emerald-300 flex items-center justify-center rounded-2xl font-bold text-xs shadow-sm" 
+                onClick={() => {
+                  loginAsDemoPharmacy();
+                  navigate('/pharmacy/dashboard');
+                }}
+              >
+                ⚡ Quick Demo Pharmacy
+              </Button>
+            </div>
           )}
 
           {/* Signup Link */}

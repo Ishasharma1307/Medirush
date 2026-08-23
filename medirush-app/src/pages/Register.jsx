@@ -57,6 +57,35 @@ export const Register = () => {
   const [otpTimer, setOtpTimer] = useState(60);
   const [canResendOtp, setCanResendOtp] = useState(false);
 
+  // Helper to handle role-based navigation and pharmacy profile linking after registration
+  const redirectAfterSignup = async (userId, role, name, email, phone) => {
+    localStorage.removeItem('sandbox_active');
+    localStorage.removeItem('demo_user');
+    
+    if (role === 'pharmacy') {
+      try {
+        await supabase.from('pharmacies').insert([
+          {
+            owner_id: userId,
+            pharmacy_name: `${name}'s Pharmacy`,
+            license_number: `DL-IND-${Date.now()}`,
+            phone: phone || null,
+            email: email,
+            address: 'Address pending verification',
+            verification_status: 'pending',
+            verified: false,
+            is_open: true
+          }
+        ]);
+      } catch (pErr) {
+        console.warn('Pharmacy profile auto-creation notice:', pErr);
+      }
+      navigate('/pharmacy/dashboard');
+    } else {
+      navigate('/home');
+    }
+  };
+
   // Countdown timer for resending OTP
   useEffect(() => {
     let interval = null;
@@ -217,8 +246,7 @@ export const Register = () => {
           setOtpTimer(60);
           setCanResendOtp(false);
         } else {
-          localStorage.removeItem('sandbox_active');
-          navigate('/home');
+          await redirectAfterSignup(authData.user.id, role, name, email, phone);
         }
       }
     } catch (err) {
@@ -285,7 +313,7 @@ export const Register = () => {
           console.warn('Failed to insert sandbox user profile in DB:', dbErr);
         }
 
-        navigate('/home');
+        await redirectAfterSignup(sandboxUser.id, formData.role, formData.name, formData.email, formData.phone);
         return;
       } else {
         setError('Invalid sandbox verification code. Hint: Use 123456');
@@ -314,8 +342,7 @@ export const Register = () => {
           throw dbError;
         }
 
-        localStorage.removeItem('demo_user');
-        navigate('/home');
+        await redirectAfterSignup(data.user.id, formData.role, formData.name, formData.email, formData.phone);
       }
     } catch (err) {
       setError(err.message || 'Invalid or expired verification code. Please try again.');

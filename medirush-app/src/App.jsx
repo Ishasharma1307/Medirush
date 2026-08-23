@@ -4,6 +4,7 @@ import { Layout } from './components/Layout';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { PharmacyRoute } from './components/PharmacyRoute';
 
 // Importing pages
 import { Landing } from './pages/Landing';
@@ -31,9 +32,16 @@ import { OrderTracking } from './pages/OrderTracking';
 import { AuthCallback } from './pages/AuthCallback';
 import { ForgotPassword } from './pages/ForgotPassword';
 
+// Pharmacy Portal Pages
+import { PharmacyDashboard } from './pages/pharmacy/PharmacyDashboard';
+
 function NotFoundRedirect() {
-  const { user } = useAuth();
-  return <Navigate to={user ? "/home" : "/"} replace />;
+  const { user, userProfile } = useAuth();
+  const role = userProfile?.role || user?.user_metadata?.role || 'user';
+  
+  if (!user) return <Navigate to="/" replace />;
+  if (role === 'pharmacy') return <Navigate to="/pharmacy/dashboard" replace />;
+  return <Navigate to="/home" replace />;
 }
 
 function App() {
@@ -41,43 +49,49 @@ function App() {
     <AuthProvider>
       <CartProvider>
         <BrowserRouter>
-        <Routes>
-          {/* Public Routes without Navbar layout */}
-          <Route path="/" element={<Landing />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/auth/callback" element={<AuthCallback />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/admin" element={<Admin />} />
+          <Routes>
+            {/* Public Routes without Navbar layout */}
+            <Route path="/" element={<Landing />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/admin" element={<Admin />} />
 
-          {/* Main App Routes wrapped in the Layout (Navbar) */}
-          <Route element={<Layout />}>
-            {/* Protected Routes inside Layout */}
-            <Route element={<ProtectedRoute />}>
-              <Route path="/home" element={<Home />} />
-              <Route path="/medicines" element={<Medicines />} />
-              <Route path="/medicines/:id" element={<MedicineDetail />} />
-              <Route path="/home-remedies" element={<HomeRemedies />} />
-              <Route path="/nearby" element={<NearbyHealthcare />} />
-              <Route path="/symptom-checker" element={<SymptomChecker />} />
-              <Route path="/emergency-request" element={<EmergencyRequest />} />
-              <Route path="/emergency" element={<EmergencyRequest />} />
-              <Route path="/prescription-upload" element={<PrescriptionUpload />} />
-              <Route path="/medicine-reminder" element={<MedicineReminder />} />
-              <Route path="/report-simplifier" element={<MedicalReportSimplifier />} />
-              <Route path="/recent-medicines" element={<RecentMedicines />} />
-              <Route path="/pharmacies" element={<PharmacyDirectory />} />
-              <Route path="/orders" element={<Orders />} />
-              <Route path="/cart" element={<Cart />} />
-              <Route path="/checkout" element={<Checkout />} />
-              <Route path="/order-confirmation/:id" element={<OrderConfirmation />} />
-              <Route path="/track-order/:id" element={<OrderTracking />} />
-              <Route path="/profile" element={<Profile />} />
+            {/* Dedicated Pharmacy Partner Portal Routes */}
+            <Route element={<PharmacyRoute />}>
+              <Route path="/pharmacy/dashboard" element={<PharmacyDashboard />} />
             </Route>
-          </Route>
-          <Route path="*" element={<NotFoundRedirect />} />
-        </Routes>
-      </BrowserRouter>
+
+            {/* Main Customer App Routes wrapped in Layout (Navbar) */}
+            <Route element={<Layout />}>
+              {/* Protected Customer Routes */}
+              <Route element={<ProtectedRoute />}>
+                <Route path="/home" element={<Home />} />
+                <Route path="/medicines" element={<Medicines />} />
+                <Route path="/medicines/:id" element={<MedicineDetail />} />
+                <Route path="/home-remedies" element={<HomeRemedies />} />
+                <Route path="/nearby" element={<NearbyHealthcare />} />
+                <Route path="/symptom-checker" element={<SymptomChecker />} />
+                <Route path="/emergency-request" element={<EmergencyRequest />} />
+                <Route path="/emergency" element={<EmergencyRequest />} />
+                <Route path="/prescription-upload" element={<PrescriptionUpload />} />
+                <Route path="/medicine-reminder" element={<MedicineReminder />} />
+                <Route path="/report-simplifier" element={<MedicalReportSimplifier />} />
+                <Route path="/recent-medicines" element={<RecentMedicines />} />
+                <Route path="/pharmacies" element={<PharmacyDirectory />} />
+                <Route path="/orders" element={<Orders />} />
+                <Route path="/cart" element={<Cart />} />
+                <Route path="/checkout" element={<Checkout />} />
+                <Route path="/order-confirmation/:id" element={<OrderConfirmation />} />
+                <Route path="/track-order/:id" element={<OrderTracking />} />
+                <Route path="/profile" element={<Profile />} />
+              </Route>
+            </Route>
+            
+            <Route path="*" element={<NotFoundRedirect />} />
+          </Routes>
+        </BrowserRouter>
       </CartProvider>
     </AuthProvider>
   );
