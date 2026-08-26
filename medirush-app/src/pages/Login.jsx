@@ -151,21 +151,10 @@ export const Login = () => {
       });
 
       if (authError) {
-        if (authError.status === 429 || authError.message.includes('rate limit') || authError.message.includes('rate_limit') || authError.message.includes('exceeded')) {
-          localStorage.setItem('sandbox_active', 'true');
-          setSuccessMsg('Supabase login rate limit reached. Activating sandbox verification mode. Enter 123456 to verify!');
-          setLoginMode('email_otp');
-          setOtpToken('');
-          setOtpTimer(60);
-          setCanResendOtp(false);
-          setLoading(false);
-          return;
-        }
         throw authError;
       }
 
       if (data.session) {
-        localStorage.removeItem('sandbox_active');
         localStorage.removeItem('demo_user');
         await handleRoleRedirect(data.user || data.session?.user);
       } else {
@@ -176,11 +165,9 @@ export const Login = () => {
       if (message.includes('Invalid login credentials') || message.includes('invalid_credentials')) {
         message = 'Incorrect email or password. Please try again.';
       } else if (message.includes('Email not confirmed') || message.includes('email_not_confirmed')) {
-        // Trigger verification code resend immediately and switch mode
         try {
           await resendSignupOtp(email);
-          localStorage.removeItem('sandbox_active');
-          setSuccessMsg('Your email is not verified yet. We have sent a 6-digit verification code to your email.');
+          setSuccessMsg('Your email is not verified yet. A 6-digit verification code has been sent to your email.');
           setLoginMode('email_otp');
           setOtpToken('');
           setOtpTimer(60);
@@ -188,27 +175,10 @@ export const Login = () => {
           setLoading(false);
           return;
         } catch (resendErr) {
-          if (resendErr.status === 429 || resendErr.message.includes('rate limit') || resendErr.message.includes('rate_limit') || resendErr.message.includes('exceeded')) {
-            localStorage.setItem('sandbox_active', 'true');
-            setSuccessMsg('Supabase OTP limit reached. Activating sandbox verification mode. Enter 123456 to verify!');
-            setLoginMode('email_otp');
-            setOtpToken('');
-            setOtpTimer(60);
-            setCanResendOtp(false);
-            setLoading(false);
-            return;
-          }
-          message = 'Email is not verified. Failed to send verification code. Please try again later.';
+          message = resendErr.message || 'Email is not verified. Failed to send verification code.';
         }
       } else if (message.includes('rate limit') || message.includes('rate_limit')) {
-        localStorage.setItem('sandbox_active', 'true');
-        setSuccessMsg('Supabase rate limit reached. Activating sandbox verification mode. Enter 123456 to verify!');
-        setLoginMode('email_otp');
-        setOtpToken('');
-        setOtpTimer(60);
-        setCanResendOtp(false);
-        setLoading(false);
-        return;
+        message = 'Login rate limit exceeded. Please wait a few minutes before trying again.';
       } else if (message.includes('fetch') || message.includes('NetworkError') || message.includes('TypeError')) {
         message = 'Network error. Could not connect to Supabase. Please verify your internet connection.';
       }
@@ -218,66 +188,56 @@ export const Login = () => {
     }
   };
 
-  // 1b. Email OTP Verification Handler
+  // 1b. Real Email OTP Verification Handler
   const handleEmailVerifyOtp = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     setSuccessMsg(null);
 
-    if (otpToken.length < 6) {
+    const token = otpToken.trim();
+    if (token.length < 6) {
       setError('Please enter the 6-digit verification code.');
       setLoading(false);
       return;
     }
 
-    // Universal Test OTP Fallback (123456)
-    if (otpToken === '123456' || localStorage.getItem('sandbox_active') === 'true') {
-      const sandboxUser = {
-        id: 'sandbox-' + Date.now(),
-        email: formData.email,
-        user_metadata: { name: 'Sandbox User', role: 'user' }
-      };
-      localStorage.setItem('demo_user', JSON.stringify(sandboxUser));
-      localStorage.removeItem('sandbox_active');
-      await handleRoleRedirect(sandboxUser);
-      setLoading(false);
-      return;
-    }
-
     try {
-      const data = await verifySignupOtp(formData.email, otpToken);
-      if (data.session) {
+      const data = await verifySignupOtp(formData.email, token);
+      if (data.session || data.user) {
         localStorage.removeItem('demo_user');
+        setSuccessMsg('Email verified successfully! Logging you in...');
         await handleRoleRedirect(data.user || data.session?.user);
       }
     } catch (err) {
-      console.warn('Supabase OTP error, falling back:', err.message);
-      setError('Verification code invalid or expired. Hint: Use 123456 if email OTP did not arrive!');
+      let msg = err.message || 'Invalid or expired verification code.';
+      if (msg.includes('Token has expired') || msg.includes('expired')) {
+        msg = 'Verification code has expired. Please click "Resend OTP" to get a new code.';
+      } else if (msg.includes('invalid') || msg.includes('Invalid')) {
+        msg = 'Invalid verification code. Please check your email and try again.';
+      }
+      setError(msg);
     } finally {
       setLoading(false);
     }
   };
 
-  // 1c. Resend Email OTP Handler
+  // 1c. Real Resend Email OTP Handler
   const handleResendEmailOtp = async () => {
     setLoading(true);
     setError(null);
     setSuccessMsg(null);
-    if (localStorage.getItem('sandbox_active') === 'true') {
-      setSuccessMsg('Sandbox Verification Code resent. Use 123456!');
-      setOtpTimer(60);
-      setCanResendOtp(false);
-      setLoading(false);
-      return;
-    }
     try {
       await resendSignupOtp(formData.email);
-      setSuccessMsg('Verification code resent to your email.');
+      setSuccessMsg('A new 6-digit verification code has been sent to your email.');
       setOtpTimer(60);
       setCanResendOtp(false);
     } catch (err) {
-      setError(err.message || 'Failed to resend code. Please try again later.');
+      let msg = err.message || 'Failed to resend code.';
+      if (msg.includes('rate limit') || msg.includes('rate_limit')) {
+        msg = 'Email rate limit reached. Please wait a few minutes before resending.';
+      }
+      setError(msg);
     } finally {
       setLoading(false);
     }

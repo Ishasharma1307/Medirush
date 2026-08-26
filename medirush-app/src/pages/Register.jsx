@@ -194,7 +194,7 @@ export const Register = () => {
     }
 
     try {
-      // Create user in Supabase Auth with metadata (which triggers profile check on callback/sign-in)
+      // Create user in Supabase Auth with metadata
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -205,47 +205,19 @@ export const Register = () => {
       });
 
       if (authError) {
-        if (authError.status === 429 || authError.message.includes('rate limit') || authError.message.includes('rate_limit') || authError.message.includes('exceeded')) {
-          localStorage.setItem('sandbox_active', 'true');
-          setSuccessMsg('Supabase signup rate limit reached. Activating sandbox verification mode. Enter 123456 to verify!');
-          setSignupMode('email_otp');
-          setOtpToken('');
-          setOtpTimer(60);
-          setCanResendOtp(false);
-          setLoading(false);
-          return;
-        }
         throw authError;
       }
 
-      // Optimistically create the profile immediately (database trigger or fallback will double check)
       if (authData.user) {
-        const { error: dbError } = await supabase
-          .from('users')
-          .insert([
-            {
-              id: authData.user.id,
-              name,
-              email,
-              phone: phone || null,
-              role,
-              verified: false
-            }
-          ]);
-        
-        // Ignore duplicate profiles, only throw other errors
-        if (dbError && !dbError.message.includes('unique constraint') && !dbError.message.includes('duplicate key')) {
-          throw dbError;
-        }
-
+        // If session was not returned immediately, email confirmation is required
         if (!authData.session) {
-          localStorage.removeItem('sandbox_active');
-          setSuccessMsg('Account created successfully! Please check your email for the 6-digit verification code.');
+          setSuccessMsg('Account created! Please check your email for the 6-digit verification code.');
           setSignupMode('email_otp');
           setOtpToken('');
           setOtpTimer(60);
           setCanResendOtp(false);
         } else {
+          // If session returned immediately (email confirmation disabled in Supabase), proceed directly
           await redirectAfterSignup(authData.user.id, role, name, email, phone);
         }
       }
@@ -258,13 +230,13 @@ export const Register = () => {
         message.includes('duplicate key') || 
         message.includes('users_email_key')
       ) {
-        message = 'An account with this email already exists.';
+        message = 'An account with this email already exists. Please log in.';
       } else if (message.includes('weak_password') || message.includes('Password should be at least')) {
         message = 'Password is too weak. Please use at least 6 characters.';
       } else if (message.includes('invalid_email') || message.includes('Valid email required')) {
         message = 'Please enter a valid email address.';
       } else if (message.includes('rate limit') || message.includes('rate_limit')) {
-        message = 'Sign up rate limit exceeded. Please wait a few minutes before trying again.';
+        message = 'Supabase email rate limit reached. Please wait a few minutes or configure custom SMTP in Supabase Dashboard.';
       } else if (message.includes('fetch') || message.includes('NetworkError') || message.includes('TypeError')) {
         message = 'Network error. Could not connect to Supabase. Please verify your internet connection.';
       }
@@ -274,99 +246,57 @@ export const Register = () => {
     }
   };
 
-  // 1b. Email OTP Verification Handler
+  // 1b. Real Email OTP Verification Handler
   const handleEmailVerifyOtp = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     setSuccessMsg(null);
 
-    if (otpToken.length < 6) {
+    const token = otpToken.trim();
+    if (token.length < 6) {
       setError('Please enter the 6-digit verification code.');
       setLoading(false);
       return;
     }
 
-    // Universal Test OTP Fallback (123456) if email is delayed or rate-limited
-    if (otpToken === '123456' || localStorage.getItem('sandbox_active') === 'true') {
-      const demoId = 'user-' + Date.now();
-      const sandboxUser = {
-        id: demoId,
-        email: formData.email,
-        user_metadata: { name: formData.name, phone: formData.phone || null, role: formData.role }
-      };
-      localStorage.setItem('demo_user', JSON.stringify(sandboxUser));
-      localStorage.removeItem('sandbox_active');
-      
-      try {
-        await supabase.from('users').insert([
-          {
-            id: sandboxUser.id,
-            name: formData.name,
-            email: formData.email,
-            phone: formData.phone || null,
-            role: formData.role,
-            verified: true
-          }
-        ]);
-      } catch (dbErr) {
-        console.warn('Failed to insert sandbox user profile in DB:', dbErr);
-      }
-
-      await redirectAfterSignup(sandboxUser.id, formData.role, formData.name, formData.email, formData.phone);
-      setLoading(false);
-      return;
-    }
-
     try {
-      const data = await verifySignupOtp(formData.email, otpToken);
-      if (data.session) {
-        const { error: dbError } = await supabase
-          .from('users')
-          .insert([
-            {
-              id: data.user.id,
-              name: formData.name,
-              email: formData.email,
-              phone: formData.phone || null,
-              role: formData.role,
-              verified: true
-            }
-          ]);
-        
-        if (dbError && !dbError.message.includes('unique constraint') && !dbError.message.includes('duplicate key')) {
-          throw dbError;
-        }
-
-        await redirectAfterSignup(data.user.id, formData.role, formData.name, formData.email, formData.phone);
+      // Call Supabase auth.verifyOtp with type: 'signup'
+      const data = await verifySignupOtp(formData.email, token);
+      if (data.session || data.user) {
+        const userId = data.user?.id || data.session?.user?.id;
+        setSuccessMsg('Email verified successfully! Logging you in...');
+        await redirectAfterSignup(userId, formData.role, formData.name, formData.email, formData.phone);
       }
     } catch (err) {
-      console.warn('Supabase OTP error, falling back:', err.message);
-      setError('Verification code invalid or expired. Hint: Use 123456 if email OTP did not arrive!');
+      let msg = err.message || 'Invalid or expired verification code.';
+      if (msg.includes('Token has expired') || msg.includes('expired')) {
+        msg = 'Verification code has expired. Please click "Resend OTP" to get a new code.';
+      } else if (msg.includes('invalid') || msg.includes('Invalid')) {
+        msg = 'Invalid verification code. Please check your email and try again.';
+      }
+      setError(msg);
     } finally {
       setLoading(false);
     }
   };
 
-  // 1c. Resend Email OTP Handler
+  // 1c. Real Resend Email OTP Handler
   const handleResendEmailOtp = async () => {
     setLoading(true);
     setError(null);
     setSuccessMsg(null);
-    if (localStorage.getItem('sandbox_active') === 'true') {
-      setSuccessMsg('Sandbox Verification Code resent. Use 123456!');
-      setOtpTimer(60);
-      setCanResendOtp(false);
-      setLoading(false);
-      return;
-    }
     try {
       await resendSignupOtp(formData.email);
-      setSuccessMsg('Verification code resent to your email.');
+      setSuccessMsg('A new 6-digit verification code has been sent to your email.');
       setOtpTimer(60);
       setCanResendOtp(false);
     } catch (err) {
-      setError(err.message || 'Failed to resend code. Please try again later.');
+      let msg = err.message || 'Failed to resend code.';
+      if (msg.includes('rate limit') || msg.includes('rate_limit')) {
+        msg = 'Email rate limit reached. Please wait a few minutes before resending.';
+      }
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -963,20 +893,6 @@ export const Register = () => {
                 />
               </div>
 
-              {/* Instant Test OTP Fallback Badge */}
-              <div className="bg-amber-500/10 border border-amber-500/30 text-amber-900 p-3 rounded-2xl text-xs font-bold flex items-center justify-between shadow-sm">
-                <span className="flex items-center gap-1.5 text-[11px] font-extrabold">
-                  ⚡ If email is delayed:
-                </span>
-                <button 
-                  type="button" 
-                  onClick={() => setOtpToken('123456')}
-                  className="bg-amber-500 hover:bg-amber-600 active:scale-95 text-white px-3 py-1 rounded-xl text-[11px] font-black tracking-wider uppercase transition-all shadow-sm"
-                >
-                  Use 123456
-                </button>
-              </div>
-
               <div className="flex items-center justify-between px-1 text-xs">
                 <span className="text-gray-500 font-bold">
                   {otpTimer > 0 ? `Resend OTP in ${otpTimer}s` : 'Did not receive code?'}
@@ -1029,20 +945,6 @@ export const Register = () => {
                   className="w-full text-center tracking-[1.5em] pl-6 py-4 bg-white/60 backdrop-blur-sm border border-white/60 rounded-2xl focus:bg-white focus:ring-2 focus:ring-secondary/35 focus:border-secondary outline-none transition-all font-extrabold text-xl text-gray-900 shadow-inner"
                   placeholder="000000"
                 />
-              </div>
-
-              {/* Instant Test OTP Fallback Badge */}
-              <div className="bg-amber-500/10 border border-amber-500/30 text-amber-900 p-3 rounded-2xl text-xs font-bold flex items-center justify-between shadow-sm">
-                <span className="flex items-center gap-1.5 text-[11px] font-extrabold">
-                  ⚡ If SMS is delayed:
-                </span>
-                <button 
-                  type="button" 
-                  onClick={() => setOtpToken('123456')}
-                  className="bg-amber-500 hover:bg-amber-600 active:scale-95 text-white px-3 py-1 rounded-xl text-[11px] font-black tracking-wider uppercase transition-all shadow-sm"
-                >
-                  Use 123456
-                </button>
               </div>
 
               <div className="flex items-center justify-between px-1 text-xs">
