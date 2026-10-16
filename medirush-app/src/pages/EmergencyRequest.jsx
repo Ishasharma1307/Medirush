@@ -66,9 +66,9 @@ const EMERGENCY_TYPES = [
 
 // ─── Mock nearby places builder ─────────────────────────────────────────────
 const buildNearbyPlaces = (lat, lng) => [
-  { id: 'h1', category: 'Hospital',      name: 'General City Hospital',   lat: lat + 0.003, lng: lng + 0.002, phone: '+91-112',      isOpen: true,  is24x7: true,  icon: '🏥', iconColor: '#E53935' },
-  { id: 'a1', category: 'Ambulance',     name: 'MediRush Ambulance',      lat: lat - 0.002, lng: lng + 0.004, phone: '+91-102',      isOpen: true,  is24x7: true,  icon: '🚑', iconColor: '#1565C0' },
-  { id: 'p1', category: '24/7 Pharmacy', name: 'City Central Pharmacy',  lat: lat - 0.003, lng: lng - 0.002, phone: '+91-555-0101', isOpen: true,  is24x7: true,  icon: '💊', iconColor: '#7B1FA2' },
+  { id: 'h1', category: 'Hospital',      name: 'AIIMS / Max Super Speciality Hospital', lat: lat + 0.003, lng: lng + 0.002, phone: '112',           isOpen: true,  is24x7: true,  icon: '🏥', iconColor: '#E53935' },
+  { id: 'a1', category: 'Ambulance',     name: 'MediRush Emergency EV Ambulance',        lat: lat - 0.002, lng: lng + 0.004, phone: '108',           isOpen: true,  is24x7: true,  icon: '🚑', iconColor: '#1565C0' },
+  { id: 'p1', category: '24/7 Pharmacy', name: 'Apollo Pharmacy 24x7 Emergency Hub',     lat: lat - 0.003, lng: lng - 0.002, phone: '+919876543210', isOpen: true,  is24x7: true,  icon: '💊', iconColor: '#7B1FA2' },
 ];
 
 const CATEGORY_META = {

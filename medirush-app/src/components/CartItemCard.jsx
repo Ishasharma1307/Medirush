@@ -46,7 +46,7 @@ export const CartItemCard = ({ item, onUpdateQuantity, onRemove }) => {
               </span>
             )}
           </div>
-          <p className="font-extrabold text-primary text-lg drop-shadow-sm ml-2">${(item.price * item.quantity).toFixed(2)}</p>
+          <p className="font-extrabold text-primary text-lg drop-shadow-sm ml-2">₹{(item.price * item.quantity).toFixed(2)}</p>
         </div>
 
         {/* Actions */}

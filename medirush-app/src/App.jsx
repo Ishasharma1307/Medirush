@@ -85,6 +85,9 @@ function App() {
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/order-confirmation/:id" element={<OrderConfirmation />} />
                 <Route path="/track-order/:id" element={<OrderTracking />} />
+                <Route path="/track-order" element={<OrderTracking />} />
+                <Route path="/order-tracking/:id" element={<OrderTracking />} />
+                <Route path="/order-tracking" element={<OrderTracking />} />
                 <Route path="/profile" element={<Profile />} />
               </Route>
             </Route>

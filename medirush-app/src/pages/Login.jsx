@@ -423,7 +423,7 @@ export const Login = () => {
         </motion.div>
         
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="relative z-10 text-[11px] uppercase tracking-widest text-blue-200/70 font-bold">
-          &copy; {new Date().getFullYear()} MediRush Inc.
+          &copy; {new Date().getFullYear()} MediRush India — 10-Minute Emergency Medicine Delivery.
         </motion.div>
       </div>
 

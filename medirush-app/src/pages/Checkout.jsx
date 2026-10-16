@@ -35,7 +35,41 @@ export const Checkout = () => {
     
     // Simulate payment processing
     setTimeout(() => {
-      const fakeOrderId = 'ORD' + Math.floor(Math.random() * 1000000);
+      const fakeOrderId = 'ORD-' + Math.floor(100000 + Math.random() * 900000);
+      const deliveryOtp = String(Math.floor(1000 + Math.random() * 9000));
+      const newCheckoutOrder = {
+        id: fakeOrderId,
+        status: 'Accepted',
+        date: new Date().toISOString(),
+        total: total,
+        pharmacy_name: 'Apollo Pharmacy Express Hub',
+        pharmacy_address: '14/B Health Complex, Commercial Ring Road',
+        pharmacist_name: 'Dr. Suresh Verma (Lic. #4892)',
+        delivery_address: 'Apt 4B, Health Avenue, Mumbai 400001',
+        deliveryEta: '10-15 mins',
+        otp: deliveryOtp,
+        items: cartItems.map(item => ({
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price
+        })),
+        timeline: [
+          { status: 'Pending', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), completed: true },
+          { status: 'Accepted', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), completed: true },
+          { status: 'Packed', time: null, completed: false },
+          { status: 'Out for Delivery', time: null, completed: false },
+          { status: 'Delivered', time: null, completed: false }
+        ]
+      };
+
+      try {
+        const existing = JSON.parse(localStorage.getItem('medirush_orders') || '[]');
+        existing.unshift(newCheckoutOrder);
+        localStorage.setItem('medirush_orders', JSON.stringify(existing));
+      } catch (err) {
+        console.warn('Could not save checkout order to local storage', err);
+      }
+
       clearCart();
       navigate(`/order-confirmation/${fakeOrderId}`);
     }, 2500);
@@ -142,7 +176,7 @@ export const Checkout = () => {
                         <p className="text-xs text-gray-500 font-medium">Qty: {item.quantity}</p>
                       </div>
                       <div className="font-extrabold text-gray-900 text-sm">
-                        ${(item.price * item.quantity).toFixed(2)}
+                        ₹{(item.price * item.quantity).toFixed(2)}
                       </div>
                     </div>
                   ))}
@@ -151,23 +185,23 @@ export const Checkout = () => {
                 <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-100 space-y-3">
                   <div className="flex justify-between text-gray-600 text-sm font-medium">
                     <span>Subtotal</span>
-                    <span>${cartSubtotal.toFixed(2)}</span>
+                    <span>₹{cartSubtotal.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-gray-600 text-sm font-medium">
                     <span>Delivery Fee</span>
-                    <span>${deliveryFee.toFixed(2)}</span>
+                    <span>₹{deliveryFee.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-gray-600 text-sm font-medium">
                     <span>Platform Fee</span>
-                    <span>${platformFee.toFixed(2)}</span>
+                    <span>₹{platformFee.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-gray-600 text-sm font-medium">
                     <span>Taxes</span>
-                    <span>${taxes.toFixed(2)}</span>
+                    <span>₹{taxes.toFixed(2)}</span>
                   </div>
                   <div className="pt-3 border-t border-gray-200 flex justify-between items-center">
                     <span className="font-extrabold text-gray-900">Grand Total</span>
-                    <span className="text-xl font-extrabold text-primary">${total.toFixed(2)}</span>
+                    <span className="text-xl font-extrabold text-primary">₹{total.toFixed(2)}</span>
                   </div>
                 </div>
               </div>
@@ -197,12 +231,12 @@ export const Checkout = () => {
                   <div className="glass-card p-6 border-white/60">
                     <div className="flex justify-between items-center mb-6">
                       <h2 className="text-lg font-extrabold text-gray-900">Payment Method</h2>
-                      <span className="text-xl font-extrabold text-primary">${total.toFixed(2)}</span>
+                      <span className="text-xl font-extrabold text-primary">₹{total.toFixed(2)}</span>
                     </div>
 
                     <div className="space-y-3">
                       {[
-                        { id: 'upi', label: 'UPI (GPay, PhonePe)', icon: Smartphone },
+                        { id: 'upi', label: 'UPI (GPay, PhonePe, Paytm)', icon: Smartphone },
                         { id: 'card', label: 'Credit / Debit Card', icon: CreditCard },
                         { id: 'netbanking', label: 'Net Banking', icon: Landmark },
                         { id: 'wallet', label: 'Wallets', icon: Wallet },
@@ -242,7 +276,7 @@ export const Checkout = () => {
                     size="lg" 
                     className="w-full py-4 shadow-lg shadow-primary/30 text-lg flex items-center justify-center gap-2"
                   >
-                    Pay ${total.toFixed(2)} <ChevronRight size={20} />
+                    Pay ₹{total.toFixed(2)} <ChevronRight size={20} />
                   </Button>
                 </>
               )}

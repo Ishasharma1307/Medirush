@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
 import { 
   Pill, Leaf, MapPin, Stethoscope, FileText, Bell, Activity, 
-  Store, ArrowRight, AlertTriangle, ShieldCheck, Zap
+  Store, ArrowRight, AlertTriangle, ShieldCheck, Zap, Package
 } from 'lucide-react';
 
 import { ActionCard } from '../components/cards/ActionCard';
@@ -165,12 +165,13 @@ export const Home = () => {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
             <ActionCard title="Order Medicine" icon={Pill} onClick={() => navigate('/medicines')} colorClass="text-primary bg-primary/10" className="col-span-1" />
-            <ActionCard title="Home Remedies" icon={Leaf} onClick={() => navigate('/home-remedies')} colorClass="text-secondary bg-secondary/10" className="col-span-1" />
+            <ActionCard title="Upload Rx" icon={FileText} onClick={() => navigate('/prescription-upload')} colorClass="text-orange-600 bg-orange-600/10" className="col-span-1" />
+            <ActionCard title="Track Orders" icon={Package} onClick={() => navigate('/orders')} colorClass="text-blue-600 bg-blue-600/10" className="col-span-1" />
             <ActionCard title="Nearby Pharmacy" icon={MapPin} onClick={() => navigate('/nearby')} colorClass="text-purple-600 bg-purple-600/10" className="col-span-1" />
             <ActionCard title="Symptom Checker" icon={Stethoscope} onClick={() => navigate('/symptom-checker')} colorClass="text-teal-600 bg-teal-600/10" className="col-span-1" />
-            <ActionCard title="Upload Prescription" icon={FileText} onClick={() => navigate('/prescription-upload')} colorClass="text-orange-600 bg-orange-600/10" className="col-span-1" />
+            <ActionCard title="Home Remedies" icon={Leaf} onClick={() => navigate('/home-remedies')} colorClass="text-secondary bg-secondary/10" className="col-span-1" />
             <ActionCard title="Medicine Reminder" icon={Bell} onClick={() => navigate('/medicine-reminder')} colorClass="text-yellow-600 bg-yellow-600/10" className="col-span-1" />
-            <ActionCard title="Report Simplifier" icon={Activity} onClick={() => navigate('/report-simplifier')} colorClass="text-pink-600 bg-pink-600/10" className="col-span-2 md:col-span-2" />
+            <ActionCard title="Report Simplifier" icon={Activity} onClick={() => navigate('/report-simplifier')} colorClass="text-pink-600 bg-pink-600/10" className="col-span-1" />
           </div>
         </motion.div>
 

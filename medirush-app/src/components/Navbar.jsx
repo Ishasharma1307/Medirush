@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
-import { LogOut, Menu, X, Activity, Home, Pill, Stethoscope, ShoppingCart, User, AlertCircle } from 'lucide-react';
+import { LogOut, Menu, X, Activity, Home, Pill, Stethoscope, ShoppingCart, User, AlertCircle, Package } from 'lucide-react';
 import { Button } from './ui/Button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../utils/cn';
@@ -34,7 +34,7 @@ export const Navbar = () => {
       <Link 
         to={to} 
         className={cn(
-          "flex items-center px-4 py-2 rounded-xl font-bold transition-all duration-300",
+          "flex items-center px-4 py-2 rounded-xl font-bold transition-all duration-300 text-sm",
           isDanger 
             ? "text-danger bg-danger/10 hover:bg-danger/20" 
             : active 
@@ -42,7 +42,7 @@ export const Navbar = () => {
               : "text-gray-600 hover:text-primary hover:bg-gray-50/50"
         )}
       >
-        {Icon && <Icon className={cn("w-4 h-4 mr-2", active ? "text-primary" : "")} />}
+        {Icon && <Icon className={cn("w-4 h-4 mr-1.5", active ? "text-primary" : "")} />}
         {children}
       </Link>
     );
@@ -65,7 +65,7 @@ export const Navbar = () => {
     
     return (
       <Link to={to} className="relative flex flex-col items-center justify-center w-full h-full">
-        <Icon size={24} className={cn("mb-1", active ? "text-primary" : "text-gray-400")} />
+        <Icon size={22} className={cn("mb-1", active ? "text-primary" : "text-gray-400")} />
         {badge > 0 && (
           <span className="absolute top-1 right-[20%] bg-danger text-white text-[9px] font-extrabold px-1 min-w-[14px] text-center rounded-full border border-white">
             {badge}
@@ -110,6 +110,7 @@ export const Navbar = () => {
                 <>
                   <NavLink to="/home" icon={Home}>Home</NavLink>
                   <NavLink to="/medicines" icon={Pill}>Medicines</NavLink>
+                  <NavLink to="/orders" icon={Package}>My Orders</NavLink>
                   <NavLink to="/symptom-checker" icon={Stethoscope}>Symptoms</NavLink>
                   <NavLink to="/cart" icon={ShoppingCart}>
                     <div className="flex items-center">
@@ -125,18 +126,27 @@ export const Navbar = () => {
                   <div className="h-6 w-px bg-gray-200/50 mx-2"></div>
                   
                   <Link to="/emergency-request">
-                    <Button variant="danger" size="sm" className="ml-2 shadow-danger/30 animate-pulseSoft">
+                    <Button variant="danger" size="sm" className="ml-1 shadow-danger/30 animate-pulseSoft">
                       Emergency
                     </Button>
                   </Link>
                   
                   <div className="h-6 w-px bg-gray-200/50 mx-2"></div>
                   
-                  <Link to="/profile" className="ml-2">
-                    <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center hover:bg-primary hover:text-white transition-colors cursor-pointer">
+                  <Link to="/profile" className="ml-1" title="View Profile">
+                    <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center hover:bg-primary hover:text-white transition-colors cursor-pointer shadow-sm">
                       <User size={18} />
                     </div>
                   </Link>
+
+                  <button
+                    onClick={handleLogout}
+                    title="Log Out of MediRush"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-gray-500 hover:text-rose-600 hover:bg-rose-50 transition-all ml-1.5 border border-transparent hover:border-rose-200 cursor-pointer"
+                  >
+                    <LogOut size={15} />
+                    <span>Logout</span>
+                  </button>
                 </>
               ) : (
                 <div className="flex items-center space-x-3 ml-4">
@@ -153,8 +163,8 @@ export const Navbar = () => {
         </div>
       </motion.nav>
 
-      {/* Mobile Top Header (Minimal) */}
-      <div className="md:hidden fixed top-0 w-full z-40 bg-white/80 backdrop-blur-md border-b border-gray-100/50 px-4 py-3 flex justify-between items-center">
+      {/* Mobile Top Header */}
+      <div className="md:hidden fixed top-0 w-full z-40 bg-white/90 backdrop-blur-md border-b border-gray-100 px-4 py-3 flex justify-between items-center shadow-sm">
         <Link to={user ? "/home" : "/"} className="flex items-center">
           <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary-dark rounded-lg flex items-center justify-center shadow-md mr-2">
             <Activity className="text-white h-5 w-5" />
@@ -164,11 +174,23 @@ export const Navbar = () => {
           </span>
         </Link>
         {user && (
-          <Link to="/profile">
-            <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center">
-              <User size={16} />
-            </div>
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link to="/orders" className="p-1.5 rounded-xl bg-gray-100/80 text-gray-700 hover:text-primary" title="My Orders">
+              <Package size={18} />
+            </Link>
+            <Link to="/profile">
+              <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                <User size={16} />
+              </div>
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="p-1.5 rounded-xl text-gray-500 hover:text-rose-600 hover:bg-rose-50 border border-gray-200/60"
+              title="Logout"
+            >
+              <LogOut size={16} />
+            </button>
+          </div>
         )}
       </div>
 
@@ -184,8 +206,8 @@ export const Navbar = () => {
               <MobileNavItem to="/emergency-request" icon={AlertCircle} label="SOS" isCenter />
             </div>
             
+            <MobileNavItem to="/orders" icon={Package} label="Orders" />
             <MobileNavItem to="/cart" icon={ShoppingCart} label="Cart" badge={cartCount} />
-            <MobileNavItem to="/symptom-checker" icon={Stethoscope} label="Checker" />
           </div>
         </div>
       )}

@@ -159,7 +159,7 @@ const HeroMockup = () => {
              <div className="flex justify-between items-center text-white mb-6">
                 <div className="flex flex-col">
                   <span className="text-[10px] uppercase tracking-widest font-bold opacity-80">Location</span>
-                  <span className="text-sm font-extrabold flex items-center"><MapPin size={12} className="mr-1"/> Downtown Medical</span>
+                  <span className="text-sm font-extrabold flex items-center"><MapPin size={12} className="mr-1"/> Indiranagar, Bengaluru</span>
                 </div>
                 <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-md">
                    <Activity size={18} />

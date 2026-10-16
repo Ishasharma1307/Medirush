@@ -14,7 +14,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../utils/cn';
 
 export const Profile = () => {
-  const { user, checkAndCreateProfile } = useAuth();
+  const { user, checkAndCreateProfile, logout } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      if (logout) await logout();
+    } catch (e) {
+      console.warn("Logout error:", e);
+    }
+    window.location.href = '/login';
+  };
   
   // Refs for Camera and Gallery picker
   const videoRef = useRef(null);
@@ -1096,19 +1105,29 @@ export const Profile = () => {
             </div>
           </div>
 
-          {/* Progress bar */}
-          <div className="w-full md:w-64 bg-white/60 p-4 rounded-3xl border border-white/50 shadow-inner">
-            <div className="flex justify-between items-center mb-1">
-              <span className="text-[10px] uppercase tracking-widest font-extrabold text-gray-500">Profile Strength</span>
-              <span className="text-xs font-black text-primary">{completionRate}%</span>
+          {/* Progress bar and Logout */}
+          <div className="w-full md:w-64 flex flex-col gap-2">
+            <div className="bg-white/60 p-4 rounded-3xl border border-white/50 shadow-inner">
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-[10px] uppercase tracking-widest font-extrabold text-gray-500">Profile Strength</span>
+                <span className="text-xs font-black text-primary">{completionRate}%</span>
+              </div>
+              <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden flex shadow-inner">
+                <div 
+                  className="bg-gradient-to-r from-primary to-primary-light h-full rounded-full transition-all duration-500" 
+                  style={{ width: `${completionRate}%` }}
+                ></div>
+              </div>
+              <span className="text-[9px] text-gray-400 font-medium mt-1.5 block">Complete details to get faster triage & checkout</span>
             </div>
-            <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden flex shadow-inner">
-              <div 
-                className="bg-gradient-to-r from-primary to-primary-light h-full rounded-full transition-all duration-500" 
-                style={{ width: `${completionRate}%` }}
-              ></div>
-            </div>
-            <span className="text-[9px] text-gray-400 font-medium mt-1.5 block">Complete details to get faster triage & checkout</span>
+
+            <button
+              onClick={handleLogout}
+              className="w-full py-2.5 px-4 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-extrabold text-xs flex items-center justify-center gap-2 border border-rose-200 transition-all shadow-sm cursor-pointer"
+            >
+              <LogOut size={15} />
+              <span>Log Out Account</span>
+            </button>
           </div>
         </div>
 
@@ -1136,6 +1155,15 @@ export const Profile = () => {
                   </button>
                 );
               })}
+
+              {/* Sidebar Logout Button */}
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-3 px-4 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all whitespace-nowrap lg:w-full text-rose-600 hover:bg-rose-50 hover:text-rose-700 border border-transparent hover:border-rose-200"
+              >
+                <LogOut size={16} className="text-rose-500" />
+                <span>Log Out</span>
+              </button>
             </div>
             
             {/* Quick SOS Trigger Shortcut */}

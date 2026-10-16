@@ -102,15 +102,15 @@ export const Cart = () => {
                 <div className="space-y-4 mb-6">
                   <div className="flex justify-between text-gray-600 font-medium text-sm">
                     <span>Subtotal ({cartItems.length} items)</span>
-                    <span className="font-bold text-gray-900">${subtotal.toFixed(2)}</span>
+                    <span className="font-bold text-gray-900">₹{subtotal.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-gray-600 font-medium text-sm">
                     <span>Delivery Fee</span>
-                    <span className="font-bold text-gray-900">${deliveryFee.toFixed(2)}</span>
+                    <span className="font-bold text-gray-900">₹{deliveryFee.toFixed(2)}</span>
                   </div>
                   <div className="pt-4 border-t border-gray-200/50 flex justify-between items-center">
                     <span className="text-base font-extrabold text-gray-900 uppercase tracking-widest text-[11px]">Total</span>
-                    <span className="text-3xl font-extrabold text-primary drop-shadow-sm">${total.toFixed(2)}</span>
+                    <span className="text-3xl font-extrabold text-primary drop-shadow-sm">₹{total.toFixed(2)}</span>
                   </div>
                 </div>
 

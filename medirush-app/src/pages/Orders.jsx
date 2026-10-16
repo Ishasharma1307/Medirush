@@ -9,9 +9,35 @@ import { cn } from '../utils/cn';
 export const Orders = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('active');
+  const [localOrders, setLocalOrders] = useState([]);
 
-  const activeOrders = mockOrders.filter(o => o.status !== 'Delivered' && o.status !== 'Cancelled');
-  const pastOrders = mockOrders.filter(o => o.status === 'Delivered' || o.status === 'Cancelled');
+  React.useEffect(() => {
+    try {
+      let stored = JSON.parse(localStorage.getItem('medirush_orders') || '[]');
+      if (!stored || stored.length === 0) {
+        localStorage.setItem('medirush_orders', JSON.stringify(mockOrders));
+        stored = mockOrders;
+      }
+      setLocalOrders(stored);
+    } catch (e) {
+      console.warn('Failed to parse local orders', e);
+      setLocalOrders(mockOrders);
+    }
+
+    // Storage event listener for multi-tab or broadcast update sync
+    const onStorage = () => {
+      try {
+        const stored = JSON.parse(localStorage.getItem('medirush_orders') || '[]');
+        if (stored && stored.length > 0) setLocalOrders(stored);
+      } catch (e) {}
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
+
+  const allOrders = localOrders;
+  const activeOrders = allOrders.filter(o => o.status !== 'Delivered' && o.status !== 'Cancelled');
+  const pastOrders = allOrders.filter(o => o.status === 'Delivered' || o.status === 'Cancelled');
 
   const displayOrders = activeTab === 'active' ? activeOrders : pastOrders;
 
