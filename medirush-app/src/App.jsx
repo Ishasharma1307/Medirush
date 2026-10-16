@@ -35,6 +35,10 @@ import { ForgotPassword } from './pages/ForgotPassword';
 // Pharmacy Portal Pages
 import { PharmacyDashboard } from './pages/pharmacy/PharmacyDashboard';
 
+// Standalone Merchant & Delivery Partner Portals
+import { PharmacyPartnerApp } from './pages/PharmacyPartnerApp';
+import { DeliveryPartnerApp } from './pages/DeliveryPartnerApp';
+
 function NotFoundRedirect() {
   const { user, userProfile } = useAuth();
   const role = userProfile?.role || user?.user_metadata?.role || 'user';
@@ -57,6 +61,10 @@ function App() {
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/admin" element={<Admin />} />
+
+            {/* Standalone Merchant & Delivery Partner Portals (Outside customer Layout) */}
+            <Route path="/pharmacy-partner" element={<PharmacyPartnerApp />} />
+            <Route path="/delivery-partner" element={<DeliveryPartnerApp />} />
 
             {/* Dedicated Pharmacy Partner Portal Routes */}
             <Route element={<PharmacyRoute />}>

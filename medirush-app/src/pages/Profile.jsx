@@ -8,7 +8,7 @@ import {
   HelpCircle, Settings, Globe, Calendar, Plus, Trash2, 
   Download, Share2, LogOut, Sun, Moon, Eye, EyeOff, Camera, 
   Check, X, ShieldCheck, Star, Heart, FileUp, Smartphone, 
-  Users, Map, LifeBuoy, Percent
+  Users, Map, LifeBuoy, Percent, Store, Bike, ArrowUpRight
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../utils/cn';
@@ -1179,6 +1179,60 @@ export const Profile = () => {
               <AlertTriangle size={18} className="animate-bounce" />
               <span>{sosActive ? "SOS BroadCasting..." : "Trigger SOS Alert"}</span>
             </button>
+
+            {/* Zomato-style Separate Merchant & Delivery Partner Apps */}
+            <div className="bg-gradient-to-br from-gray-900 via-slate-900 to-indigo-950 p-4 rounded-[2rem] text-white shadow-xl border border-white/10 mt-2 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-[9px] font-black uppercase tracking-widest text-emerald-400 block">MediRush Partner Suite</span>
+                  <h4 className="text-xs font-extrabold text-white">Standalone Partner Apps</h4>
+                </div>
+                <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[9px] font-black border border-emerald-500/30">
+                  LIVE
+                </span>
+              </div>
+              <p className="text-[10px] text-gray-300 leading-relaxed font-medium">
+                Customer app se alag dedicated portals real-time order broadcast & routing ke liye:
+              </p>
+
+              <div className="space-y-2 pt-1">
+                <a
+                  href="/pharmacy-partner"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between p-2.5 rounded-xl bg-white/10 hover:bg-emerald-600/30 border border-white/10 hover:border-emerald-500/40 transition-all group"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
+                      <Store size={14} />
+                    </div>
+                    <div className="text-left">
+                      <div className="text-xs font-bold text-white group-hover:text-emerald-300 transition-colors">Pharmacy Merchant App</div>
+                      <div className="text-[9px] text-gray-400">Incoming Rx chime & packing terminal</div>
+                    </div>
+                  </div>
+                  <ArrowUpRight size={14} className="text-gray-400 group-hover:text-emerald-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+                </a>
+
+                <a
+                  href="/delivery-partner"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between p-2.5 rounded-xl bg-white/10 hover:bg-amber-600/30 border border-white/10 hover:border-amber-500/40 transition-all group"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold">
+                      <Bike size={14} />
+                    </div>
+                    <div className="text-left">
+                      <div className="text-xs font-bold text-white group-hover:text-amber-300 transition-colors">Delivery Fleet Partner App</div>
+                      <div className="text-[9px] text-gray-400">Rider Vikram • Multi-stop radar & OTP</div>
+                    </div>
+                  </div>
+                  <ArrowUpRight size={14} className="text-gray-400 group-hover:text-amber-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+                </a>
+              </div>
+            </div>
           </div>
 
           {/* Content Pane */}

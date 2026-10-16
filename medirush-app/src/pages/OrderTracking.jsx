@@ -9,6 +9,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../components/ui/Button';
 import { cn } from '../utils/cn';
+import { subscribeToRealtimeEvents } from '../services/realtimeNetwork';
 
 // Zomato/Blinkit Style Order Progression Stages
 const TRACKING_STAGES = [
@@ -102,6 +103,20 @@ export const OrderTracking = () => {
       console.warn('Could not load order tracking data', e);
     }
   }, [id]);
+
+  // ── Listen to real-time events from Pharmacy or Delivery Rider ────────────
+  useEffect(() => {
+    const unsubscribe = subscribeToRealtimeEvents((event) => {
+      if (event.type === 'ORDER_STATUS_CHANGED') {
+        const { orderId, status, stageNumber, extraData } = event.payload || {};
+        if (!orderInfo || orderInfo.id === orderId) {
+          if (stageNumber) setCurrentStage(stageNumber);
+          setOrderInfo(prev => prev ? ({ ...prev, status, ...extraData }) : prev);
+        }
+      }
+    });
+    return () => unsubscribe();
+  }, [orderInfo]);
 
   // ── 2. Real-time ETA Countdown & Stage Progression ────────────────────────
   useEffect(() => {

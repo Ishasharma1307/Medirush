@@ -23,6 +23,7 @@ import {
   generateSyntheticPrescriptionFile
 } from '../services/prescriptionPipelineService';
 
+import { broadcastRealtimeEvent } from '../services/realtimeNetwork';
 import { mockMedicines } from '../mockData/mockMedicines';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../utils/cn';
@@ -725,6 +726,7 @@ export const PrescriptionUpload = () => {
       const existing = JSON.parse(localStorage.getItem('medirush_orders') || '[]');
       existing.unshift(newOrder);
       localStorage.setItem('medirush_orders', JSON.stringify(existing));
+      broadcastRealtimeEvent('NEW_ORDER', { order: newOrder });
 
       const localPres = JSON.parse(localStorage.getItem('medirush_local_prescriptions') || '[]');
       localPres.unshift({
@@ -801,6 +803,7 @@ export const PrescriptionUpload = () => {
       const existing = JSON.parse(localStorage.getItem('medirush_orders') || '[]');
       existing.unshift(newOrder);
       localStorage.setItem('medirush_orders', JSON.stringify(existing));
+      broadcastRealtimeEvent('NEW_ORDER', { order: newOrder });
 
       // Also register into local prescriptions
       const localPres = JSON.parse(localStorage.getItem('medirush_local_prescriptions') || '[]');

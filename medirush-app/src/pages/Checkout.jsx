@@ -6,6 +6,7 @@ import { ArrowLeft, MapPin, CreditCard, CheckCircle2, ShieldCheck, ChevronRight,
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/forms/Input';
 import { cn } from '../utils/cn';
+import { broadcastRealtimeEvent } from '../services/realtimeNetwork';
 
 export const Checkout = () => {
   const navigate = useNavigate();
@@ -66,6 +67,7 @@ export const Checkout = () => {
         const existing = JSON.parse(localStorage.getItem('medirush_orders') || '[]');
         existing.unshift(newCheckoutOrder);
         localStorage.setItem('medirush_orders', JSON.stringify(existing));
+        broadcastRealtimeEvent('NEW_ORDER', { order: newCheckoutOrder });
       } catch (err) {
         console.warn('Could not save checkout order to local storage', err);
       }
