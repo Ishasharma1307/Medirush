@@ -39,6 +39,8 @@ import { PharmacyDashboard } from './pages/pharmacy/PharmacyDashboard';
 import { PharmacyPartnerApp } from './pages/PharmacyPartnerApp';
 import { DeliveryPartnerApp } from './pages/DeliveryPartnerApp';
 
+import { HackathonDemoBar } from './components/HackathonDemoBar';
+
 function NotFoundRedirect() {
   const { user, userProfile } = useAuth();
   const role = userProfile?.role || user?.user_metadata?.role || 'user';
@@ -102,6 +104,9 @@ function App() {
             
             <Route path="*" element={<NotFoundRedirect />} />
           </Routes>
+          
+          {/* Hackathon Demo Navigator for Judges */}
+          <HackathonDemoBar />
         </BrowserRouter>
       </CartProvider>
     </AuthProvider>

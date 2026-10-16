@@ -2449,7 +2449,7 @@ export const PrescriptionUpload = () => {
                       </h4>
                       <p className="text-xs text-gray-600 font-medium mt-1 max-w-md mx-auto">
                         {confirmedOrderData.isSplitOrder ? (
-                          <span>Your order has been split between <strong className="text-blue-700">{confirmedOrderData.pharmacy_name}</strong>. 2 delivery riders have been assigned!</span>
+                          <span>Your order has been split between <strong className="text-blue-700">{confirmedOrderData.pharmacy_name}</strong>. A <strong>single dedicated rider</strong> has been assigned to collect both packages and deliver together!</span>
                         ) : (
                           <span>Your prescription order has been accepted by <strong className="text-blue-700">{confirmedOrderData.pharmacy_name}</strong> and is currently being packed.</span>
                         )}
@@ -2472,7 +2472,7 @@ export const PrescriptionUpload = () => {
 
                       {confirmedOrderData.isSplitOrder && confirmedOrderData.packages ? (
                         <div className="space-y-2">
-                          <span className="text-[10px] uppercase font-black text-indigo-700 block">2 Live Packages in Transit:</span>
+                          <span className="text-[10px] uppercase font-black text-indigo-700 block">Single Rider Multi-Stop Route (2 Stores):</span>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                             {confirmedOrderData.packages.map((pkg, i) => (
                               <div key={i} className="p-2.5 rounded-xl bg-white border border-gray-200 space-y-1">
