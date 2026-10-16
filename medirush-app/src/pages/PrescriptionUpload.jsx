@@ -22,10 +22,7 @@ import {
   DEMO_PRESCRIPTIONS,
   generateSyntheticPrescriptionFile
 } from '../services/prescriptionPipelineService';
-import {
-  getActiveGeminiKey,
-  setStoredGeminiKey
-} from '../services/geminiService';
+
 import { mockMedicines } from '../mockData/mockMedicines';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../utils/cn';
@@ -51,12 +48,12 @@ const STATUS = {
 };
 
 const PIPELINE_STAGES = [
-  { id: 1, name: "Upload", label: "Prescription Upload", icon: FileText },
-  { id: 2, name: "PaddleOCR", label: "PaddleOCR Model", icon: Scan },
-  { id: 3, name: "Extraction", label: "Text Extraction", icon: Cpu },
-  { id: 4, name: "Gemini AI", label: "Gemini AI Analysis", icon: Sparkles },
-  { id: 5, name: "Identification", label: "Medicine Identification", icon: Pill },
-  { id: 6, name: "Pharmacy", label: "Pharmacy Matching", icon: Building2 },
+  { id: 1, name: "Upload Slip", label: "Upload Prescription", icon: FileText },
+  { id: 2, name: "Scan Slip", label: "Prescription Scan", icon: Scan },
+  { id: 3, name: "Verification", label: "Pharmacist Verification", icon: ShieldCheck },
+  { id: 4, name: "Medicine Check", label: "Medicine Identification", icon: Pill },
+  { id: 5, name: "Nearest Stores", label: "Pharmacy Matching", icon: Building2 },
+  { id: 6, name: "Ready", label: "Doorstep Delivery", icon: CheckCircle2 },
 ];
 
 export const PrescriptionUpload = () => {
@@ -84,12 +81,7 @@ export const PrescriptionUpload = () => {
     completedStages: []
   });
 
-  // Settings & raw text
-  const [geminiKey, setGeminiKey] = useState(() => getActiveGeminiKey() || '');
-  const [inlineKeyInput, setInlineKeyInput] = useState(() => getActiveGeminiKey() || '');
-  const [showKeyModal, setShowKeyModal] = useState(false);
-  const [tempKeyInput, setTempKeyInput] = useState(() => getActiveGeminiKey() || '');
-  const [showRawText, setShowRawText] = useState(false);
+
 
   // Live GPS Location State
   const [userLocation, setUserLocation] = useState({
@@ -195,18 +187,7 @@ export const PrescriptionUpload = () => {
     detectLiveLocation();
   }, [detectLiveLocation]);
 
-  const handleConnectInlineKey = (e) => {
-    if (e) e.preventDefault();
-    if (!inlineKeyInput.trim()) return;
-    setStoredGeminiKey(inlineKeyInput.trim());
-    setGeminiKey(inlineKeyInput.trim());
-  };
 
-  const handleDisconnectKey = () => {
-    setStoredGeminiKey('');
-    setGeminiKey('');
-    setInlineKeyInput('');
-  };
 
   // Manual medicine search
   const [searchQuery, setSearchQuery] = useState('');
@@ -266,7 +247,7 @@ export const PrescriptionUpload = () => {
 
       setPipelineState({
         stage: 4,
-        stageName: "Gemini AI Analysis",
+        stageName: "Medicine Verification",
         status: `Identified ${demo.medicines.length} prescribed medicines from ${demo.doctorName}...`,
         completedStages: [1, 2, 3]
       });
@@ -280,9 +261,9 @@ export const PrescriptionUpload = () => {
       );
 
       const demoAnalysis = {
-        pipeline: "Prescription Upload → PaddleOCR → Text Extraction → Gemini AI → Medicine Identification → Pharmacy Matching",
+        pipeline: "Verified Prescription Order",
         executionTimeMs: 420,
-        ocrEngine: "PaddleOCR + Gemini 3.8 Flash Engine (Demo Preset)",
+        ocrEngine: "MediRush Smart Vision",
         rawOcrText: demo.ocrTextSnippet,
         confidenceScore: 0.98,
         doctorName: demo.doctorName,
@@ -936,31 +917,21 @@ export const PrescriptionUpload = () => {
           <ArrowLeft size={20} />
         </button>
 
-        {/* Engine Switcher / Key Settings Button */}
-        <button
-          onClick={() => setShowKeyModal(true)}
-          className="absolute top-5 right-4 bg-white/15 hover:bg-white/25 backdrop-blur-md px-3 py-1.5 rounded-xl transition-all shadow-sm border border-white/20 text-white text-xs font-bold flex items-center gap-1.5"
-          title="Configure OCR Engine or Gemini Vision Key"
-        >
-          <Key size={13} className={geminiKey ? "text-amber-300" : "text-white/80"} />
-          <span>{geminiKey ? "Gemini 2.0 Active" : "PaddleOCR Pipeline"}</span>
-        </button>
-
         <motion.div 
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center relative z-10 max-w-lg mx-auto mt-2"
         >
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-cyan-200 text-[11px] font-black tracking-wide uppercase mb-3 shadow-sm">
-            <Cpu size={14} className="text-cyan-300" />
-            <span>AI Automated Prescription Flow</span>
+            <ShieldCheck size={14} className="text-cyan-300" />
+            <span>100% Genuine Medicines · 10-Min Doorstep Delivery</span>
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-tight drop-shadow-md">
-            Prescription Pipeline
+            Upload Doctor's Prescription
           </h1>
           <p className="text-blue-100 mt-2 text-xs sm:text-sm font-medium max-w-md mx-auto leading-relaxed">
-            Prescription Upload ➔ PaddleOCR ➔ Text Extraction ➔ Gemini AI ➔ Medicine Identification ➔ Pharmacy Matching
+            Upload your prescription slip to get verified medicines delivered to your doorstep from licensed pharmacies.
           </p>
         </motion.div>
       </div>
@@ -1008,69 +979,7 @@ export const PrescriptionUpload = () => {
         </div>
       </div>
 
-      {/* ── API KEY / OCR ENGINE MODAL ───────────────────────────────────── */}
-      <AnimatePresence>
-        {showKeyModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.92 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.92 }}
-              className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 border border-gray-100"
-            >
-              <div className="flex items-center justify-between pb-2 border-b border-gray-100">
-                <div className="flex items-center gap-2 text-blue-700 font-extrabold text-base">
-                  <Key size={18} />
-                  <span>Pipeline AI Vision Configuration</span>
-                </div>
-                <button onClick={() => setShowKeyModal(false)} className="text-gray-400 hover:text-gray-600">
-                  <X size={18} />
-                </button>
-              </div>
 
-              <div className="space-y-3 text-xs text-gray-600">
-                <div className="p-3 bg-blue-50 text-blue-900 rounded-2xl border border-blue-200/80">
-                  <p className="font-bold mb-1">Architecture Flow:</p>
-                  <p className="text-[11px] leading-relaxed">
-                    1. <strong>PaddleOCR:</strong> Performs text segmentation and OCR bounding-box recognition on image pixels.<br/>
-                    2. <strong>Gemini AI:</strong> Normalizes medical dosage abbreviations, rectifies OCR noise, and verifies contraindications.
-                  </p>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1.5">
-                    Google Gemini API Key (Optional)
-                  </label>
-                  <input
-                    type="password"
-                    value={tempKeyInput}
-                    onChange={(e) => setTempKeyInput(e.target.value)}
-                    placeholder="AIzaSy... (Leave empty to use On-Device Engine)"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  <p className="text-[10px] text-gray-400 mt-1">
-                    Get a free key from Google AI Studio. Saved locally in your browser.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-2">
-                {tempKeyInput && (
-                  <button
-                    onClick={() => { setTempKeyInput(''); setStoredGeminiKey(''); setGeminiKey(''); setShowKeyModal(false); }}
-                    className="px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-xl"
-                  >
-                    Clear Key
-                  </button>
-                )}
-                <Button onClick={handleSaveGeminiKey} variant="primary" size="sm" className="px-5 py-2 text-xs font-bold">
-                  Save Settings
-                </Button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
 
       {/* ── BODY ─────────────────────────────────────────────────────────── */}
       <motion.div 
@@ -1168,12 +1077,12 @@ export const PrescriptionUpload = () => {
                 <div className="absolute inset-0 bg-cyan-400/5 pointer-events-none" />
               </div>
 
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-bold mb-2">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-800 text-xs font-bold mb-2">
                 <Loader2 size={14} className="animate-spin text-blue-600" />
-                <span>Stage {pipelineState.stage}: {pipelineState.stageName}</span>
+                <span>{pipelineState.stageName}</span>
               </div>
 
-              <h3 className="text-lg font-bold text-gray-900 mb-1">Processing Prescription</h3>
+              <h3 className="text-lg font-bold text-gray-900 mb-1">Verifying Your Prescription</h3>
               <p className="text-xs text-gray-600 font-medium max-w-md mx-auto h-6 transition-all duration-300">
                 {pipelineState.status}
               </p>
@@ -1186,7 +1095,7 @@ export const PrescriptionUpload = () => {
                 />
               </div>
               <p className="text-[10px] text-gray-400 mt-2 font-bold uppercase tracking-wider">
-                Step {pipelineState.stage} of 6 in Pipeline
+                Step {pipelineState.stage} of 6 · Quick Pharmacist Verification
               </p>
             </motion.div>
           )}
@@ -1222,7 +1131,7 @@ export const PrescriptionUpload = () => {
 
                   <div className="flex items-center gap-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200 px-3 py-1 rounded-xl text-xs font-bold">
                     <CheckCircle2 size={14} className="text-emerald-600" />
-                    <span>Pipeline Verified ({analysisResult.confidenceScore}%)</span>
+                    <span>Prescription Verified ({analysisResult.confidenceScore}%)</span>
                   </div>
                 </div>
 
@@ -1289,28 +1198,6 @@ export const PrescriptionUpload = () => {
                     ))}
                   </div>
                 </div>
-
-                {/* Raw OCR Text Expandable Drawer */}
-                {analysisResult.rawOcrText && (
-                  <div className="border border-gray-200 rounded-2xl overflow-hidden text-xs">
-                    <button
-                      type="button"
-                      onClick={() => setShowRawText(!showRawText)}
-                      className="w-full px-4 py-2 bg-gray-50 hover:bg-gray-100 flex items-center justify-between text-gray-700 font-bold transition-colors"
-                    >
-                      <span className="flex items-center gap-2">
-                        <FileText size={13} className="text-blue-600" />
-                        PaddleOCR Raw Text Output
-                      </span>
-                      {showRawText ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-                    </button>
-                    {showRawText && (
-                      <div className="p-3 bg-white font-mono text-[11px] text-gray-600 whitespace-pre-wrap max-h-48 overflow-y-auto border-t border-gray-200 leading-relaxed">
-                        {analysisResult.rawOcrText}
-                      </div>
-                    )}
-                  </div>
-                )}
 
                 {/* Savings Banner */}
                 {totals.savings > 0 && (
@@ -1809,82 +1696,7 @@ export const PrescriptionUpload = () => {
               </AnimatePresence>
 
               {/* ⚡ GEMINI AI INTEGRATION CARD */}
-              <motion.div variants={itemVariants}>
-                {geminiKey ? (
-                  <div className="bg-gradient-to-r from-blue-950 via-indigo-900 to-blue-900 text-white rounded-3xl p-4 sm:p-5 border border-cyan-400/30 flex items-center justify-between shadow-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-2xl bg-cyan-400/20 text-cyan-300 flex items-center justify-center border border-cyan-400/30 flex-shrink-0">
-                        <Sparkles size={20} className="animate-pulse" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-extrabold text-sm sm:text-base">Google Gemini AI Vision Connected</span>
-                          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
-                        </div>
-                        <p className="text-xs text-blue-200 mt-0.5">Stage 4 Active · Reading handwriting & correcting OCR typos in real time</p>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleDisconnectKey}
-                      className="text-xs text-rose-300 hover:text-white bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1.5 rounded-xl font-bold transition-all ml-2"
-                    >
-                      Disconnect
-                    </button>
-                  </div>
-                ) : (
-                  <div className="bg-gradient-to-r from-indigo-50 via-blue-50 to-cyan-50 rounded-3xl p-4 sm:p-5 border border-indigo-200 shadow-sm space-y-3">
-                    <div className="flex items-start gap-3">
-                      <div className="w-9 h-9 rounded-2xl bg-indigo-600 text-white flex items-center justify-center flex-shrink-0 mt-0.5 shadow-md shadow-indigo-500/20">
-                        <Sparkles size={18} />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h4 className="text-sm font-extrabold text-indigo-950">
-                            Connect Google Gemini AI Engine
-                          </h4>
-                          <span className="text-[10px] font-black uppercase tracking-wider bg-indigo-600 text-white px-2 py-0.5 rounded-md">
-                            Recommended
-                          </span>
-                        </div>
-                        <p className="text-xs text-indigo-800 font-medium mt-0.5 leading-relaxed">
-                          Integrate Gemini 2.0 Flash Vision to read doctor's handwriting, abbreviations, and exact dosages with 98% clinical accuracy.
-                        </p>
-                      </div>
-                    </div>
 
-                    <div className="flex flex-col sm:flex-row gap-2 pt-1">
-                      <input
-                        type="password"
-                        value={inlineKeyInput}
-                        onChange={(e) => setInlineKeyInput(e.target.value)}
-                        placeholder="Paste your Gemini API key (AIzaSy...)"
-                        className="flex-1 px-4 py-2.5 rounded-2xl border border-indigo-200 bg-white text-xs font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-inner"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleConnectInlineKey}
-                        disabled={!inlineKeyInput.trim()}
-                        className="px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-bold transition-all shadow-md shadow-indigo-500/25 flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer"
-                      >
-                        <Key size={14} /> Connect Gemini
-                      </button>
-                    </div>
-
-                    <div className="flex items-center justify-between text-[11px] text-indigo-600 pt-0.5">
-                      <a
-                        href="https://aistudio.google.com/app/apikey"
-                        target="_blank"
-                        rel="noreferrer"
-                        className="underline font-bold hover:text-indigo-800 flex items-center gap-1"
-                      >
-                        <span>🔗 Get a free Gemini API key from Google AI Studio</span>
-                      </a>
-                      <span className="text-gray-400 font-medium">Free & Takes 30s</span>
-                    </div>
-                  </div>
-                )}
-              </motion.div>
 
               {/* ⚡ INSTANT DEMO PRESCRIPTIONS (1-Click Test) */}
               <motion.div variants={itemVariants} className="bg-gradient-to-br from-indigo-50/90 via-blue-50/60 to-white rounded-3xl p-5 border border-indigo-200 shadow-md space-y-3.5">
@@ -1980,12 +1792,12 @@ export const PrescriptionUpload = () => {
                       onClick={handleStartPipeline}
                       className="w-full py-4 rounded-2xl bg-gradient-to-r from-blue-700 via-indigo-600 to-cyan-600 hover:from-blue-800 hover:to-cyan-700 text-white font-extrabold text-sm shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2.5 transition-all transform hover:scale-[1.01]"
                     >
-                      <Sparkles size={18} className="text-cyan-300 animate-spin" style={{ animationDuration: '4s' }} />
-                      <span>Start Pipeline: PaddleOCR ➔ Gemini AI ➔ Pharmacy</span>
+                      <Sparkles size={18} className="text-cyan-300" />
+                      <span>Scan & Check Medicine Availability</span>
                       <ArrowRight size={16} />
                     </button>
                     <p className="text-[11px] text-center text-gray-500 font-semibold mt-2">
-                      Automatically runs OCR text extraction, Gemini clinical parsing & local pharmacy stock matching.
+                      Instant verification & live stock check across licensed pharmacies near you.
                     </p>
                   </motion.div>
                 )}

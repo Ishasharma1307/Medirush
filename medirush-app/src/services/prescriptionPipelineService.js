@@ -472,23 +472,23 @@ export const runPrescriptionPipeline = async (file, onPipelineProgress = () => {
   const startTime = Date.now();
 
   // ──────────────────────────────────────────────────────────────────────────
-  // STAGE 1: Prescription Upload & Preprocessing
+  // STAGE 1: Prescription Upload & Validation
   // ──────────────────────────────────────────────────────────────────────────
   onPipelineProgress({
     stage: 1,
-    stageName: "Prescription Upload",
-    status: "Validating file format and preparing image buffers...",
+    stageName: "Uploading Slip",
+    status: "Validating prescription image...",
     completedStages: []
   });
   await new Promise(r => setTimeout(r, 400));
 
   // ──────────────────────────────────────────────────────────────────────────
-  // STAGE 2: PaddleOCR Text Extraction
+  // STAGE 2: Scanning & Reading Prescription
   // ──────────────────────────────────────────────────────────────────────────
   onPipelineProgress({
     stage: 2,
-    stageName: "PaddleOCR Text Extraction",
-    status: "Running Optical Character Recognition on image coordinates...",
+    stageName: "Reading Prescription",
+    status: "Scanning doctor's slip and medicines...",
     completedStages: [1]
   });
 
@@ -500,8 +500,10 @@ export const runPrescriptionPipeline = async (file, onPipelineProgress = () => {
     const ocrResult = await runRealOcrOnImage(file, (p) => {
       onPipelineProgress({
         stage: 2,
-        stageName: "PaddleOCR Text Extraction",
-        status: p.status,
+        stageName: "Reading Prescription",
+        status: p.status?.includes('OCR') || p.status?.includes('Neural') || p.status?.includes('Preprocessing')
+          ? "Reading medicines from prescription..." 
+          : (p.status || "Scanning prescription..."),
         progress: p.progress,
         completedStages: [1]
       });
@@ -514,12 +516,12 @@ export const runPrescriptionPipeline = async (file, onPipelineProgress = () => {
   }
 
   // ──────────────────────────────────────────────────────────────────────────
-  // STAGE 3: Gemini AI Natural Language Processing & Vision Synthesis
+  // STAGE 3: Verifying Medicines & Dosages
   // ──────────────────────────────────────────────────────────────────────────
   onPipelineProgress({
     stage: 3,
-    stageName: "Gemini AI",
-    status: "Synthesizing raw OCR text & rectifying doctor handwriting with Gemini AI...",
+    stageName: "Verifying Medicines",
+    status: "Verifying doctor handwriting, medicines and dosages...",
     completedStages: [1, 2]
   });
 
@@ -615,12 +617,12 @@ Extract all details into pure JSON (no markdown ticks or extra text):
   }
 
   // ──────────────────────────────────────────────────────────────────────────
-  // STAGE 4: Medicine Identification & Catalog Matching
+  // STAGE 4: Medicine Identification & Stock Check
   // ──────────────────────────────────────────────────────────────────────────
   onPipelineProgress({
     stage: 4,
-    stageName: "Medicine Identification",
-    status: "Matching active salts & generic substitutes with 250k pharmacy database...",
+    stageName: "Matching Medicines",
+    status: "Checking genuine medicine stock & affordable generic substitutes...",
     completedStages: [1, 2, 3]
   });
   await new Promise(r => setTimeout(r, 450));
@@ -651,12 +653,12 @@ Extract all details into pure JSON (no markdown ticks or extra text):
   });
 
   // ──────────────────────────────────────────────────────────────────────────
-  // STAGE 5: Pharmacy Matching & Sub-10m Route Dispatch
+  // STAGE 5: Locating Nearest Verified Pharmacies
   // ──────────────────────────────────────────────────────────────────────────
   onPipelineProgress({
     stage: 5,
-    stageName: "Pharmacy Matching",
-    status: "Broadcasting inventory to nearby Apollo & partner pharmacies...",
+    stageName: "Locating Nearby Stores",
+    status: "Locating nearest verified pharmacies for 10-minute delivery...",
     completedStages: [1, 2, 3, 4]
   });
   await new Promise(r => setTimeout(r, 400));
@@ -665,8 +667,8 @@ Extract all details into pure JSON (no markdown ticks or extra text):
 
   onPipelineProgress({
     stage: 6,
-    stageName: "Complete",
-    status: "All medicines identified & matched with nearby pharmacies!",
+    stageName: "Ready to Order",
+    status: "All medicines verified and available for doorstep delivery!",
     completedStages: [1, 2, 3, 4, 5]
   });
 
@@ -677,13 +679,13 @@ Extract all details into pure JSON (no markdown ticks or extra text):
   );
 
   return {
-    pipeline: "Prescription Upload → PaddleOCR → Text Extraction → Gemini AI → Medicine Identification → Pharmacy Matching",
+    pipeline: "Verified Prescription Order",
     executionTimeMs: totalElapsedTimeMs,
-    ocrEngine: geminiKey ? "PaddleOCR + Gemini 2.0 Vision" : "PaddleOCR / Optical Character Engine",
+    ocrEngine: "MediRush Smart Vision",
     rawOcrText,
     confidenceScore: aiData.confidenceScore || ocrConfidence,
     doctorName: aiData.doctorName || "Licensed Medical Practitioner",
-    clinicHospital: aiData.clinicHospital || "Apollo Partner Healthcare Clinic",
+    clinicHospital: aiData.clinicHospital || "Partner Healthcare Clinic",
     date: aiData.date || new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
     diagnosisOrSymptoms: aiData.diagnosisOrSymptoms || "Prescription Medical Therapy",
     generalPrecautions: aiData.generalPrecautions || "Take medicines with water after food. Complete prescribed duration.",
