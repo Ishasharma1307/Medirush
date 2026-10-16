@@ -16,7 +16,7 @@ export const Cart = () => {
   };
 
   const subtotal = cartSubtotal;
-  const deliveryFee = cartItems.length > 0 ? 5.00 : 0;
+  const deliveryFee = cartItems.length > 0 ? 25.00 : 0;
   const total = subtotal + deliveryFee;
 
   const containerVariants = {

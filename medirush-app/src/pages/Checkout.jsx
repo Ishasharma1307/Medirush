@@ -22,9 +22,9 @@ export const Checkout = () => {
     }
   }, [cartItems, navigate, isProcessing, step]);
 
-  const deliveryFee = 5.00;
-  const platformFee = 1.50;
-  const taxes = cartSubtotal * 0.05;
+  const deliveryFee = 25.00;
+  const platformFee = 5.00;
+  const taxes = Math.round(cartSubtotal * 0.05);
   const total = cartSubtotal + deliveryFee + platformFee + taxes;
 
   const handleNextStep = () => setStep(s => s + 1);

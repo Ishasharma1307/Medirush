@@ -35,10 +35,10 @@ export const Home = () => {
         setProfile(user.user_metadata || { name: 'Demo User', role: 'patient' });
         setMode(user.user_metadata?.role === 'pharmacy' ? 'pharmacy' : 'patient');
         setMedicines([
-          { id: 1, name: 'Paracetamol 500mg', price: 5.99, is_available: true, images: ['https://images.unsplash.com/photo-1584308666744-24d5e478ac6c?auto=format&fit=crop&q=80&w=150&h=150'] },
-          { id: 2, name: 'Amoxicillin 250mg', price: 12.50, is_available: true, images: ['https://images.unsplash.com/photo-1626716493137-b67fe9501e76?auto=format&fit=crop&q=80&w=150&h=150'] },
-          { id: 3, name: 'Cetirizine 10mg', price: 8.00, is_available: false, images: ['https://images.unsplash.com/photo-1550572017-edb3df417409?auto=format&fit=crop&q=80&w=150&h=150'] },
-          { id: 4, name: 'Ibuprofen 400mg', price: 6.50, is_available: true, images: ['https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?auto=format&fit=crop&q=80&w=150&h=150'] }
+          { id: 1, name: 'Paracetamol 500mg', price: 32.50, is_available: true, images: ['https://images.unsplash.com/photo-1584308666744-24d5e478ac6c?auto=format&fit=crop&q=80&w=150&h=150'] },
+          { id: 2, name: 'Amoxicillin 250mg', price: 85.00, is_available: true, images: ['https://images.unsplash.com/photo-1626716493137-b67fe9501e76?auto=format&fit=crop&q=80&w=150&h=150'] },
+          { id: 3, name: 'Cetirizine 10mg', price: 42.00, is_available: false, images: ['https://images.unsplash.com/photo-1550572017-edb3df417409?auto=format&fit=crop&q=80&w=150&h=150'] },
+          { id: 4, name: 'Ibuprofen 400mg', price: 38.00, is_available: true, images: ['https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?auto=format&fit=crop&q=80&w=150&h=150'] }
         ]);
         setPharmacies([
           { id: 1, pharmacy_name: 'City Care Pharmacy', is_open: true },
@@ -121,15 +121,16 @@ export const Home = () => {
           <div className="mt-6 md:mt-0 p-1 bg-black/20 backdrop-blur-md rounded-2xl inline-flex relative z-10">
             <button 
               onClick={() => setMode('patient')}
-              className={`px-6 py-2.5 rounded-xl font-bold transition-all duration-300 flex items-center ${mode === 'patient' ? 'bg-white text-primary shadow-soft transform scale-100' : 'text-blue-900 hover:bg-white/50'}`}
+              className={`px-5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 flex items-center ${mode === 'patient' ? 'bg-white text-primary shadow-soft' : 'text-blue-100 hover:text-white'}`}
             >
-              Patient
+              Patient App
             </button>
             <button 
-              onClick={() => setMode('pharmacy')}
-              className={`px-6 py-2.5 rounded-xl font-bold transition-all duration-300 flex items-center ${mode === 'pharmacy' ? 'bg-white text-primary shadow-soft transform scale-100' : 'text-blue-900 hover:bg-white/50'}`}
+              onClick={() => navigate('/pharmacy-partner')}
+              className="px-5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 flex items-center text-blue-100 hover:text-white cursor-pointer"
+              title="Open Merchant Pharmacy Terminal"
             >
-              Pharmacy
+              Pharmacy Terminal ↗
             </button>
           </div>
         </div>
