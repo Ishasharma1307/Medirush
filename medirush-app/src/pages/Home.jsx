@@ -60,11 +60,37 @@ export const Home = () => {
         setMode(userRes.data.role === 'pharmacy' ? 'pharmacy' : 'patient');
       }
 
-      if (medRes.data) setMedicines(medRes.data);
-      if (pharmRes.data) setPharmacies(pharmRes.data);
+      if (medRes.data && medRes.data.length > 0) {
+        setMedicines(medRes.data);
+      } else {
+        setMedicines([
+          { id: 1, name: 'Paracetamol 500mg', price: 32.50, is_available: true, images: ['https://images.unsplash.com/photo-1584308666744-24d5e478ac6c?auto=format&fit=crop&q=80&w=150&h=150'] },
+          { id: 2, name: 'Amoxicillin 250mg', price: 85.00, is_available: true, images: ['https://images.unsplash.com/photo-1626716493137-b67fe9501e76?auto=format&fit=crop&q=80&w=150&h=150'] },
+          { id: 3, name: 'Cetirizine 10mg', price: 42.00, is_available: true, images: ['https://images.unsplash.com/photo-1550572017-edb3df417409?auto=format&fit=crop&q=80&w=150&h=150'] },
+          { id: 4, name: 'Dolo 650mg', price: 38.00, is_available: true, images: ['https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?auto=format&fit=crop&q=80&w=150&h=150'] }
+        ]);
+      }
+
+      if (pharmRes.data && pharmRes.data.length > 0) {
+        setPharmacies(pharmRes.data);
+      } else {
+        setPharmacies([
+          { id: 1, pharmacy_name: 'Apollo Pharmacy (Indiranagar)', is_open: true },
+          { id: 2, pharmacy_name: 'MedPlus 24/7 (Connaught Place)', is_open: true },
+          { id: 3, pharmacy_name: 'Wellness Forever (Bandra)', is_open: true }
+        ]);
+      }
 
     } catch (error) {
       console.error('Error fetching dashboard:', error);
+      setMedicines([
+        { id: 1, name: 'Paracetamol 500mg', price: 32.50, is_available: true, images: ['https://images.unsplash.com/photo-1584308666744-24d5e478ac6c?auto=format&fit=crop&q=80&w=150&h=150'] },
+        { id: 2, name: 'Amoxicillin 250mg', price: 85.00, is_available: true, images: ['https://images.unsplash.com/photo-1626716493137-b67fe9501e76?auto=format&fit=crop&q=80&w=150&h=150'] }
+      ]);
+      setPharmacies([
+        { id: 1, pharmacy_name: 'Apollo Pharmacy', is_open: true },
+        { id: 2, pharmacy_name: 'MedPlus 24/7', is_open: true }
+      ]);
     } finally {
       setLoading(false);
     }
@@ -95,7 +121,7 @@ export const Home = () => {
     <motion.div 
       initial="hidden" 
       animate="visible" 
-      variants={containerVariants}
+      variants={containerVariants} 
       className="min-h-screen bg-background pb-20 font-sans overflow-x-hidden"
     >
       
@@ -104,7 +130,7 @@ export const Home = () => {
         {/* Clean Header Pattern */}
         <div className="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCI+CgkJPHBhdGggZD0iTTAgMjBMMjAgMEMxMCAwIDAgMTAgMCAyMHoiIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMSIvPjwvc3ZnPg==')] bg-repeat" style={{backgroundSize: '40px 40px'}}></div>
         
-        <div className="max-w-7xl mx-auto relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center">
+        <div className="max-w-7xl mx-auto relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <div className="inline-flex items-center bg-white/20 backdrop-blur-glass border border-white/30 text-blue-50 text-xs font-semibold px-4 py-1.5 rounded-full mb-4 uppercase tracking-wider shadow-glass">
               <ShieldCheck size={14} className="mr-1.5" /> Your Health, Our Priority
@@ -117,20 +143,27 @@ export const Home = () => {
             </p>
           </div>
           
-          {/* User Mode Toggle */}
-          <div className="mt-6 md:mt-0 p-1 bg-black/20 backdrop-blur-md rounded-2xl inline-flex relative z-10">
+          {/* User Mode & Ecosystem Quick Switcher */}
+          <div className="mt-4 md:mt-0 p-1.5 bg-black/25 backdrop-blur-md rounded-2xl inline-flex flex-wrap items-center gap-1.5 border border-white/10 relative z-10 shadow-lg">
             <button 
               onClick={() => setMode('patient')}
-              className={`px-5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 flex items-center ${mode === 'patient' ? 'bg-white text-primary shadow-soft' : 'text-blue-100 hover:text-white'}`}
+              className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center gap-1.5 ${mode === 'patient' ? 'bg-white text-primary shadow-soft' : 'text-blue-100 hover:text-white'}`}
             >
-              Patient App
+              <span>👤 Patient App</span>
             </button>
             <button 
               onClick={() => navigate('/pharmacy-partner')}
-              className="px-5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 flex items-center text-blue-100 hover:text-white cursor-pointer"
+              className="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold text-blue-100 hover:text-white hover:bg-white/10 transition-all flex items-center gap-1.5 cursor-pointer"
               title="Open Merchant Pharmacy Terminal"
             >
-              Pharmacy Terminal ↗
+              <span>🏪 Pharmacy Terminal ↗</span>
+            </button>
+            <button 
+              onClick={() => navigate('/delivery-partner')}
+              className="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold text-amber-300 hover:text-amber-100 hover:bg-white/10 transition-all flex items-center gap-1.5 cursor-pointer"
+              title="Open Delivery Fleet Rider App"
+            >
+              <span>🛵 Rider App ↗</span>
             </button>
           </div>
         </div>
