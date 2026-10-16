@@ -33,6 +33,8 @@ export const OrderTracking = () => {
   const [riderDistance, setRiderDistance] = useState('1.1 km away');
   const [secondsRemaining, setSecondsRemaining] = useState(480); // 8 mins countdown
   const [showCallModal, setShowCallModal] = useState(false);
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [showHelpModal, setShowHelpModal] = useState(false);
   const [deliveryInstruction, setDeliveryInstruction] = useState('Ring doorbell');
 
   // ── 1. Hydrate Order from LocalStorage or Fallback ─────────────────────────
@@ -572,7 +574,7 @@ export const OrderTracking = () => {
               </button>
 
               <button 
-                onClick={() => alert(`Rider message (${riderInfo.name}): "I am carrying your medicine package and arriving in 4-6 minutes. Please keep OTP ${deliveryOtp} ready."`)}
+                onClick={() => setShowMessageModal(true)}
                 className="w-10 h-10 rounded-2xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 flex items-center justify-center transition-all shadow-sm cursor-pointer"
                 title="Message Partner"
               >
@@ -777,8 +779,8 @@ export const OrderTracking = () => {
           </Button>
 
           <button
-            onClick={() => alert("MediRush Emergency Helpline: +91 1800 200 4911 (24x7 Active)")}
-            className="w-full py-2.5 text-[11px] font-extrabold text-gray-500 hover:text-rose-600 transition-colors uppercase tracking-wider flex items-center justify-center gap-1.5"
+            onClick={() => setShowHelpModal(true)}
+            className="w-full py-2.5 text-[11px] font-extrabold text-gray-500 hover:text-rose-600 transition-colors uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer"
           >
             <ShieldAlert size={14} className="text-rose-500" />
             <span>Need Help? Contact 24/7 Pharmacy Emergency Desk</span>
@@ -802,24 +804,117 @@ export const OrderTracking = () => {
               </div>
               <div>
                 <h3 className="text-lg font-black text-gray-900">Calling Delivery Partner</h3>
-                <p className="text-xs text-gray-500 font-medium mt-1">Vikram Rathore • Ather EV</p>
-                <p className="text-base font-black text-blue-700 font-mono mt-2">+91 98765 43210</p>
+                <p className="text-xs text-gray-500 font-medium mt-1">{riderInfo.name} • {riderInfo.vehicle}</p>
+                <p className="text-base font-black text-blue-700 font-mono mt-2">+91 98450 19283</p>
               </div>
 
               <div className="grid grid-cols-2 gap-2 pt-2">
                 <button
                   onClick={() => setShowCallModal(false)}
-                  className="py-3 rounded-2xl bg-gray-100 text-gray-700 text-xs font-extrabold hover:bg-gray-200 transition-all"
+                  className="py-3 rounded-2xl bg-gray-100 text-gray-700 text-xs font-extrabold hover:bg-gray-200 transition-all cursor-pointer"
                 >
                   Cancel
                 </button>
                 <a
-                  href="tel:+919876543210"
+                  href="tel:+919845019283"
                   onClick={() => setShowCallModal(false)}
                   className="py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold shadow-md shadow-emerald-500/25 flex items-center justify-center gap-1.5"
                 >
                   <Phone size={14} />
                   <span>Call Now</span>
+                </a>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ── MESSAGE RIDER MODAL ──────────────────────────────────────────── */}
+      <AnimatePresence>
+        {showMessageModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4 text-left"
+            >
+              <div className="flex items-center justify-between pb-2 border-b border-gray-100">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center font-bold">
+                    <MessageSquare size={16} />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black text-gray-900">Chat with {riderInfo.name}</h3>
+                    <p className="text-[10px] text-emerald-600 font-bold">● Active on trip</p>
+                  </div>
+                </div>
+                <button onClick={() => setShowMessageModal(false)} className="text-gray-400 hover:text-gray-600 p-1">
+                  ✕
+                </button>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-blue-50/80 border border-blue-150 space-y-1.5">
+                <span className="text-[10px] font-bold text-blue-700 uppercase">Latest Message from Rider:</span>
+                <p className="text-xs text-gray-800 font-medium leading-relaxed">
+                  "Namaste! I am carrying your medicine package in an insulated thermal box and arriving in 4-6 minutes. Please keep your 4-digit OTP <strong className="text-blue-900 font-black">{deliveryOtp}</strong> ready."
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <input
+                  type="text"
+                  placeholder="Quick reply (e.g. Leave with security / Ring bell)"
+                  className="w-full text-xs px-3.5 py-2.5 rounded-xl bg-gray-50 border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <Button
+                  onClick={() => setShowMessageModal(false)}
+                  variant="primary"
+                  size="sm"
+                  className="w-full py-2.5 text-xs font-bold rounded-xl"
+                >
+                  Send Instruction
+                </Button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ── 24/7 PHARMACY EMERGENCY DESK MODAL ───────────────────────────── */}
+      <AnimatePresence>
+        {showHelpModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl text-center space-y-4"
+            >
+              <div className="w-16 h-16 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto shadow-inner">
+                <ShieldAlert size={32} className="animate-pulse" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-gray-900">24/7 Emergency Pharmacy Desk</h3>
+                <p className="text-xs text-gray-500 font-medium mt-1">Priority Medical Triage & Support Helpline</p>
+                <p className="text-lg font-black text-rose-700 font-mono mt-2">1800 200 4911</p>
+                <p className="text-[10px] text-gray-400 mt-0.5">Toll-free across all Indian states</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 pt-2">
+                <button
+                  onClick={() => setShowHelpModal(false)}
+                  className="py-3 rounded-2xl bg-gray-100 text-gray-700 text-xs font-extrabold hover:bg-gray-200 transition-all cursor-pointer"
+                >
+                  Close
+                </button>
+                <a
+                  href="tel:18002004911"
+                  onClick={() => setShowHelpModal(false)}
+                  className="py-3 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-extrabold shadow-md shadow-rose-500/25 flex items-center justify-center gap-1.5"
+                >
+                  <Phone size={14} />
+                  <span>Call 24/7 Desk</span>
                 </a>
               </div>
             </motion.div>
