@@ -5,6 +5,7 @@ import { OrderCard } from '../components/OrderCard';
 import { mockOrders } from '../data/mockOrders';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../utils/cn';
+import { subscribeToRealtimeEvents } from '../services/realtimeNetwork';
 
 export const Orders = () => {
   const navigate = useNavigate();
@@ -24,15 +25,23 @@ export const Orders = () => {
       setLocalOrders(mockOrders);
     }
 
-    // Storage event listener for multi-tab or broadcast update sync
-    const onStorage = () => {
+    const reloadOrders = () => {
       try {
         const stored = JSON.parse(localStorage.getItem('medirush_orders') || '[]');
         if (stored && stored.length > 0) setLocalOrders(stored);
       } catch (e) {}
     };
-    window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
+
+    // Listen to real-time events across portals
+    const unsubscribe = subscribeToRealtimeEvents(() => {
+      reloadOrders();
+    });
+
+    window.addEventListener('storage', reloadOrders);
+    return () => {
+      unsubscribe();
+      window.removeEventListener('storage', reloadOrders);
+    };
   }, []);
 
   const allOrders = localOrders;

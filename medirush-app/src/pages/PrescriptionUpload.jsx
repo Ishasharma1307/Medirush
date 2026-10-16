@@ -946,7 +946,7 @@ export const PrescriptionUpload = () => {
       {/* ── VISUAL PIPELINE FLOW BAR ────────────────────────────────────── */}
       <div className="max-w-2xl mx-auto px-4 -mt-7 relative z-20">
         <div className="bg-white rounded-2xl p-3 shadow-lg border border-gray-150 overflow-x-auto no-scrollbar">
-          <div className="flex items-center justify-between min-w-[540px] gap-2">
+          <div className="flex items-center justify-between min-w-[380px] sm:min-w-full gap-1.5 sm:gap-2">
             {PIPELINE_STAGES.map((st, idx) => {
               const isCompleted = pipelineState.completedStages.includes(st.id);
               const isCurrent = pipelineState.stage === st.id;

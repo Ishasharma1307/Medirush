@@ -214,7 +214,7 @@ export const DeliveryPartnerApp = () => {
       </header>
 
       {/* ── EARNINGS DASHBOARD CARD ───────────────────────────────────────── */}
-      <div className="max-w-md mx-auto px-4 pt-4">
+      <div className="max-w-md sm:max-w-lg lg:max-w-2xl mx-auto px-4 pt-4">
         <div className="bg-gradient-to-br from-indigo-950 via-slate-900 to-blue-950 rounded-3xl p-5 border border-indigo-800/50 shadow-xl space-y-3 relative overflow-hidden">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-black uppercase tracking-widest text-indigo-300 flex items-center gap-1">
@@ -240,7 +240,7 @@ export const DeliveryPartnerApp = () => {
           <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-xs">
             <button
               onClick={handleSimulateGig}
-              className="w-full py-2 rounded-xl bg-blue-600/30 hover:bg-blue-600/50 border border-blue-500/40 text-blue-200 font-extrabold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer transition-all"
+              className="w-full py-2.5 rounded-xl bg-blue-600/30 hover:bg-blue-600/50 border border-blue-500/40 text-blue-200 font-extrabold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer transition-all"
             >
               <Radio size={13} className="text-cyan-400 animate-pulse" />
               <span>Simulate Real-Time Delivery Request</span>
@@ -250,7 +250,7 @@ export const DeliveryPartnerApp = () => {
       </div>
 
       {/* ── MAIN TASK / INCOMING GIG AREA ─────────────────────────────────── */}
-      <main className="max-w-md mx-auto px-4 pt-4 space-y-4">
+      <main className="max-w-md sm:max-w-lg lg:max-w-2xl mx-auto px-4 pt-4 space-y-4">
 
         {/* 1. INCOMING GIG ALERT MODAL / CARD */}
         <AnimatePresence>

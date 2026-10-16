@@ -193,7 +193,7 @@ export const PharmacyPartnerApp = () => {
           </div>
 
           {/* Right Controls: Online Status, Sound Chime, Simulate Button */}
-          <div className="flex items-center gap-2.5 self-end md:self-auto flex-wrap">
+          <div className="flex items-center gap-2 w-full md:w-auto justify-between md:justify-end flex-wrap pt-1 md:pt-0">
             
             {/* Audio chime toggle */}
             <button
