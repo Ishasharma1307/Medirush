@@ -54,7 +54,7 @@ export const startMedicalChat = () => {
   }
   try {
     const model = genAI.getGenerativeModel({
-      model: "gemini-3.8-flash",
+      model: "gemini-1.5-flash",
       systemInstruction: SYSTEM_PROMPT,
     });
     chatSession = model.startChat({
@@ -238,9 +238,18 @@ export const analyzePrescriptionWithAI = async (file, onProgress = () => {}) => 
       const mimeType = file.type || "image/jpeg";
       const base64Data = await fileToBase64(file);
 
-      const model = currentGenAI.getGenerativeModel({
-        model: "gemini-3.8-flash",
-      });
+      // Try standard valid models
+      const visionModels = ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-pro"];
+      let model = null;
+      for (const m of visionModels) {
+        try {
+          model = currentGenAI.getGenerativeModel({ model: m });
+          break;
+        } catch (e) {
+          console.warn(`Model ${m} load error:`, e);
+        }
+      }
+      if (!model) model = currentGenAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
       const prompt = `You are MediRush AI, an expert clinical pharmacologist and medical vision specialist.
 Analyze this doctor's prescription slip (handwritten or printed).

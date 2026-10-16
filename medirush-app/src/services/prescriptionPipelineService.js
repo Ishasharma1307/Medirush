@@ -581,8 +581,8 @@ Extract all details into pure JSON (no markdown ticks or extra text):
         }
       };
 
-      // Try models in order: gemini-3.8-flash, gemini-2.5-flash, gemini-flash-latest
-      const candidateModels = ["gemini-3.8-flash", "gemini-2.5-flash", "gemini-flash-latest"];
+      // Try models in order: gemini-1.5-flash, gemini-2.0-flash, gemini-1.5-pro
+      const candidateModels = ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-pro", "gemini-flash-latest"];
       let result = null;
       let lastErr = null;
 

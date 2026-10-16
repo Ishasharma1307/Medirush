@@ -736,10 +736,10 @@ export const Login = () => {
                 className="w-full py-3.5 text-emerald-800 bg-emerald-50/80 hover:bg-emerald-100/80 border-emerald-300 flex items-center justify-center rounded-2xl font-bold text-xs shadow-sm" 
                 onClick={() => {
                   loginAsDemoPharmacy();
-                  navigate('/pharmacy/dashboard');
+                  navigate('/pharmacy-partner');
                 }}
               >
-                ⚡ Quick Demo Pharmacy
+                ⚡ Quick Demo Pharmacy Terminal
               </Button>
             </div>
           )}

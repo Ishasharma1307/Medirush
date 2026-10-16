@@ -154,23 +154,29 @@ export const PharmacyDashboard = () => {
             </div>
           </motion.div>
 
-          {/* Card 3: Next Phase */}
+          {/* Card 3: Live Order Terminal Launcher */}
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="bg-gradient-to-br from-gray-900 to-indigo-950 text-white p-6 rounded-3xl border border-white/10 shadow-xl space-y-3"
+            className="bg-gradient-to-br from-emerald-950 via-slate-900 to-indigo-950 text-white p-6 rounded-3xl border border-emerald-500/30 shadow-xl space-y-3 flex flex-col justify-between"
           >
-            <div className="w-12 h-12 bg-white/10 text-amber-300 rounded-2xl flex items-center justify-center border border-white/20 shadow-glass">
-              <Sparkles size={24} />
+            <div>
+              <div className="w-12 h-12 bg-emerald-500/20 text-emerald-300 rounded-2xl flex items-center justify-center border border-emerald-400/30 shadow-glass mb-3">
+                <Sparkles size={24} />
+              </div>
+              <h3 className="text-lg font-extrabold text-white">Live Merchant Terminal</h3>
+              <p className="text-xs text-gray-300 font-medium leading-relaxed">
+                Accept real-time incoming prescription orders, hear audio ring alerts, pack medicine bags, and call delivery riders.
+              </p>
             </div>
-            <h3 className="text-lg font-extrabold">Ready for Part 2</h3>
-            <p className="text-xs text-gray-300 font-medium leading-relaxed">
-              Foundation complete! In Part 2, we will build the Inventory Manager, Live Prescription Request Terminal, and Order Dispatch Dashboard.
-            </p>
-            <div className="pt-2 border-t border-white/10 text-[10px] uppercase tracking-wider font-extrabold text-amber-300 flex items-center gap-1">
-              <ArrowRight size={12} /> Part 1 Foundation Verified
-            </div>
+            <a
+              href="/pharmacy-partner"
+              className="mt-2 w-full py-2.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer"
+            >
+              <span>Launch Live Terminal ↗</span>
+              <ArrowRight size={14} />
+            </a>
           </motion.div>
 
         </div>
