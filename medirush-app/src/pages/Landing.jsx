@@ -88,45 +88,37 @@ const Navbar = () => {
               ))}
             </div>
 
-            {/* Standalone Partner Portals & Auth */}
-            <div className="hidden md:flex items-center space-x-2.5">
+            {/* Desktop Auth & Actions */}
+            <div className="hidden md:flex items-center space-x-3">
               <Link
-                to="/pharmacy-partner"
+                to="/login"
                 className={cn(
-                  "font-bold text-xs px-2.5 py-1.5 rounded-xl transition-all flex items-center gap-1.5 border shadow-xs",
-                  scrolled
-                    ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
-                    : "bg-white/15 text-white border-white/25 hover:bg-white/25"
+                  "font-bold text-sm transition-colors duration-300",
+                  scrolled ? "text-gray-600 hover:text-primary" : "text-white hover:text-white/80 drop-shadow-sm"
                 )}
-                title="Open Pharmacy Terminal"
               >
-                <Building2 size={13} className="text-emerald-300" />
-                <span>Pharmacy Terminal</span>
-              </Link>
-
-              <Link
-                to="/delivery-partner"
-                className={cn(
-                  "font-bold text-xs px-2.5 py-1.5 rounded-xl transition-all flex items-center gap-1.5 border shadow-xs",
-                  scrolled
-                    ? "bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100"
-                    : "bg-amber-400/20 text-amber-300 border-amber-400/30 hover:bg-amber-400/30"
-                )}
-                title="Open Delivery Fleet Console"
-              >
-                <Bike size={13} className="text-amber-400" />
-                <span>Rider Fleet</span>
+                Log In
               </Link>
 
               <button
                 type="button"
                 onClick={() => handleLaunchApp('/home')}
-                className="px-3.5 py-2 rounded-xl text-xs font-black bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-md flex items-center gap-1.5 cursor-pointer transition-transform hover:scale-105 ml-2"
-                title="Instant 1-Click App Demo"
+                className="px-4 py-2.5 rounded-xl text-xs font-black bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-md flex items-center gap-1.5 cursor-pointer transition-transform hover:scale-105"
+                title="Explore Customer App"
               >
-                <Zap size={13} className="text-amber-300" />
+                <Zap size={14} className="text-amber-300" />
                 <span>Explore App</span>
               </button>
+
+              <Link to="/emergency-request">
+                <Button 
+                  variant="danger" 
+                  size="sm" 
+                  className="rounded-xl shadow-danger/30 font-extrabold text-xs"
+                >
+                  <PhoneCall size={13} className="mr-1" /> Emergency
+                </Button>
+              </Link>
             </div>
 
             {/* Mobile Menu Toggle */}
@@ -173,26 +165,6 @@ const Navbar = () => {
                   {item.name}
                 </a>
               ))}
-
-              <div className="pt-4 border-t border-gray-150 flex flex-col gap-2.5">
-                <span className="text-[10px] font-black uppercase tracking-wider text-gray-400">Partner Portals</span>
-                <Link 
-                  to="/pharmacy-partner" 
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="text-sm font-bold text-emerald-800 bg-emerald-50 p-3.5 rounded-2xl flex items-center gap-2.5 border border-emerald-200"
-                >
-                  <Building2 size={18} className="text-emerald-600" />
-                  <span>Pharmacy Merchant Terminal ↗</span>
-                </Link>
-                <Link 
-                  to="/delivery-partner" 
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="text-sm font-bold text-amber-800 bg-amber-50 p-3.5 rounded-2xl flex items-center gap-2.5 border border-amber-200"
-                >
-                  <Bike size={18} className="text-amber-600" />
-                  <span>Delivery Fleet Rider App ↗</span>
-                </Link>
-              </div>
             </div>
             
             <div className="mt-auto pt-6 space-y-3">
@@ -520,15 +492,22 @@ export const Landing = () => {
                 </Link>
               </div>
 
-              {/* Quick Partner Switcher Banner in Hero */}
-              <div className="mt-8 pt-6 border-t border-white/10 flex flex-wrap items-center justify-center lg:justify-start gap-3 text-xs text-blue-200">
-                <span className="font-bold uppercase tracking-wider text-white/70">Partner Portals:</span>
-                <Link to="/pharmacy-partner" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold transition-all">
-                  <Building2 size={13} className="text-emerald-400" /> Pharmacy Terminal
-                </Link>
-                <Link to="/delivery-partner" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold transition-all">
-                  <Bike size={13} className="text-amber-400" /> Delivery Fleet
-                </Link>
+              {/* Customer Guarantee Points */}
+              <div className="mt-8 pt-6 border-t border-white/10 flex flex-wrap items-center justify-center lg:justify-start gap-4 text-xs text-blue-200">
+                <div className="flex items-center gap-1.5 font-bold">
+                  <CheckCircle2 size={15} className="text-emerald-400" />
+                  <span>10-Minute Rapid Delivery</span>
+                </div>
+                <span className="opacity-40 hidden sm:inline">•</span>
+                <div className="flex items-center gap-1.5 font-bold">
+                  <ShieldCheck size={15} className="text-yellow-400" />
+                  <span>CDSCO Licensed Pharmacies</span>
+                </div>
+                <span className="opacity-40 hidden sm:inline">•</span>
+                <div className="flex items-center gap-1.5 font-bold">
+                  <Zap size={15} className="text-cyan-300" />
+                  <span>Single-Rider Split Pickup</span>
+                </div>
               </div>
             </motion.div>
 

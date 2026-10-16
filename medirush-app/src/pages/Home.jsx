@@ -143,28 +143,10 @@ export const Home = () => {
             </p>
           </div>
           
-          {/* User Mode & Ecosystem Quick Switcher */}
-          <div className="mt-4 md:mt-0 p-1.5 bg-black/25 backdrop-blur-md rounded-2xl inline-flex flex-wrap items-center gap-1.5 border border-white/10 relative z-10 shadow-lg">
-            <button 
-              onClick={() => setMode('patient')}
-              className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center gap-1.5 ${mode === 'patient' ? 'bg-white text-primary shadow-soft' : 'text-blue-100 hover:text-white'}`}
-            >
-              <span>👤 Patient App</span>
-            </button>
-            <button 
-              onClick={() => navigate('/pharmacy-partner')}
-              className="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold text-blue-100 hover:text-white hover:bg-white/10 transition-all flex items-center gap-1.5 cursor-pointer"
-              title="Open Merchant Pharmacy Terminal"
-            >
-              <span>🏪 Pharmacy Terminal ↗</span>
-            </button>
-            <button 
-              onClick={() => navigate('/delivery-partner')}
-              className="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold text-amber-300 hover:text-amber-100 hover:bg-white/10 transition-all flex items-center gap-1.5 cursor-pointer"
-              title="Open Delivery Fleet Rider App"
-            >
-              <span>🛵 Rider App ↗</span>
-            </button>
+          {/* Realtime Network Status */}
+          <div className="mt-4 md:mt-0 px-4 py-2 bg-white/15 backdrop-blur-md rounded-2xl border border-white/20 text-white text-xs font-bold flex items-center gap-2 shadow-lg">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>10-Minute Rapid Delivery Active</span>
           </div>
         </div>
       </motion.div>
