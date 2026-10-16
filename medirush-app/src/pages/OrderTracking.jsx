@@ -169,12 +169,12 @@ export const OrderTracking = () => {
   const packages = orderInfo?.packages || [];
   const activePkg = isSplit ? packages[selectedPackageIndex] || packages[0] : null;
 
-  const deliveryOtp = activePkg ? activePkg.otp : (orderInfo?.otp || '5821');
+  const deliveryOtp = orderInfo?.otp || activePkg?.otp || '5821';
   const pharmacyName = activePkg ? activePkg.pharmacy_name : (orderInfo?.pharmacy_name || 'Apollo Pharmacy 24/7 Express');
   const deliveryAddress = orderInfo?.delivery_address || 'Indiranagar, Bengaluru';
   const orderTotal = Number(orderInfo?.total || 285.00).toFixed(2);
 
-  const riderInfo = activePkg?.rider || {
+  const riderInfo = orderInfo?.rider || activePkg?.rider || {
     name: 'Vikram Rathore',
     vehicle: 'Ather 450X EV • DL-08-EV-4912',
     rating: '★ 4.9 (1,420+)',
@@ -236,15 +236,15 @@ export const OrderTracking = () => {
           >
             <div className="flex items-center justify-between flex-wrap gap-2">
               <span className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider bg-amber-400 text-slate-900 px-3 py-1 rounded-full shadow-sm">
-                ⚡ Multi-Pharmacy Split Order Active
+                ⚡ Single Dedicated Rider • Multi-Stop Route Active
               </span>
               <span className="text-xs text-emerald-400 font-extrabold flex items-center gap-1">
-                <CheckCircle2 size={13} /> 100% Prescription In Transit
+                <CheckCircle2 size={13} /> Sourcing All Items
               </span>
             </div>
 
             <p className="text-xs text-indigo-100/90 font-medium leading-relaxed">
-              Because all medicines were not in stock at a single store, MediRush split your order into <strong>{packages.length} simultaneous deliveries</strong> with 2 separate riders!
+              Because medicines were split across 2 partner stores, <strong>{riderInfo.name}</strong> is collecting all packages across both pharmacies and delivering everything together to your doorstep!
             </p>
 
             {/* Package Selector Pills */}
@@ -268,7 +268,7 @@ export const OrderTracking = () => {
                         "text-[10px] font-black uppercase tracking-wider",
                         isSelected ? "text-blue-700" : "text-indigo-300"
                       )}>
-                        📦 Package {idx + 1}
+                        📦 Stop {idx + 1}: Package {idx + 1}
                       </span>
                       <span className={cn(
                         "text-[10px] font-black",
@@ -280,7 +280,7 @@ export const OrderTracking = () => {
 
                     <h5 className="text-xs font-black truncate">{pkg.pharmacy_name.split(' ')[0]} Store</h5>
                     <p className={cn("text-[10px] mt-0.5 font-medium truncate", isSelected ? "text-gray-500" : "text-gray-300")}>
-                      Rider: {pkg.rider?.name.split(' ')[0]} • OTP: <strong className={isSelected ? "text-amber-800" : "text-amber-300"}>{pkg.otp}</strong>
+                      Same Rider: <strong className={isSelected ? "text-blue-700 font-bold" : "text-cyan-300"}>{riderInfo.name.split(' ')[0]}</strong>
                     </p>
                   </button>
                 );
@@ -478,85 +478,32 @@ export const OrderTracking = () => {
             </div>
             <div>
               <span className="text-[10px] font-black uppercase tracking-wider text-amber-800 bg-amber-100/90 px-2 py-0.5 rounded-md border border-amber-200">
-                {isSplit ? "Dual-Package Security Codes" : "Delivery Security Code"}
+                {isSplit ? "Unified Doorstep Security OTP" : "Delivery Security Code"}
               </span>
               <h3 className="text-sm font-extrabold text-gray-900 mt-1">Delivery Verification OTP</h3>
               <p className="text-xs text-gray-600 font-medium">
                 {isSplit 
-                  ? "Share each OTP only with its respective delivery rider upon package handover."
+                  ? `Share this OTP with ${riderInfo.name} when all packages are handed over at your doorstep.`
                   : "Share this OTP with the delivery partner only when medicine bag is handed over."}
               </p>
             </div>
           </div>
 
-          {/* OTP display: Single or Dual Split Packages */}
-          {isSplit ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-              {packages.map((pkg, idx) => {
-                const isSelected = selectedPackageIndex === idx;
-                const isCopied = idx === 0 ? copiedOtp1 : copiedOtp2;
-                return (
-                  <div 
-                    key={idx}
-                    onClick={() => setSelectedPackageIndex(idx)}
-                    className={cn(
-                      "p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between",
-                      isSelected 
-                        ? "bg-white border-amber-400 shadow-md ring-2 ring-amber-400/40" 
-                        : "bg-white/80 border-gray-200"
-                    )}
-                  >
-                    <div>
-                      <span className="text-[9px] font-black uppercase tracking-wider text-amber-800 block">
-                        📦 Pkg {idx + 1}: {pkg.pharmacy_name.split(' ')[0]}
-                      </span>
-                      <span className="text-xl font-black text-amber-950 font-mono tracking-widest block mt-0.5">
-                        {pkg.otp}
-                      </span>
-                      <span className="text-[10px] text-gray-500 font-semibold">
-                        Rider: {pkg.rider?.name.split(' ')[0]}
-                      </span>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigator.clipboard.writeText(pkg.otp);
-                        if (idx === 0) {
-                          setCopiedOtp1(true);
-                          setTimeout(() => setCopiedOtp1(false), 2000);
-                        } else {
-                          setCopiedOtp2(true);
-                          setTimeout(() => setCopiedOtp2(false), 2000);
-                        }
-                      }}
-                      className="p-2.5 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-900 transition-colors"
-                      title="Copy OTP"
-                    >
-                      {isCopied ? <Check size={16} className="text-emerald-600" /> : <Copy size={16} />}
-                    </button>
-                  </div>
-                );
-              })}
+          <div className="flex items-center gap-2 self-end sm:self-auto">
+            <div className="px-5 py-2.5 rounded-2xl bg-white border border-amber-300 shadow-inner text-center">
+              <span className="text-2xl font-black text-amber-950 tracking-[0.25em] font-mono">
+                {deliveryOtp}
+              </span>
             </div>
-          ) : (
-            <div className="flex items-center gap-2 self-end sm:self-auto">
-              <div className="px-5 py-2.5 rounded-2xl bg-white border border-amber-300 shadow-inner text-center">
-                <span className="text-2xl font-black text-amber-950 tracking-[0.25em] font-mono">
-                  {deliveryOtp}
-                </span>
-              </div>
 
-              <button
-                onClick={handleCopyOtp}
-                className="p-3 rounded-2xl bg-amber-100 hover:bg-amber-200 text-amber-900 transition-colors cursor-pointer border border-amber-300 shadow-sm"
-                title="Copy OTP"
-              >
-                {copiedOtp ? <Check size={18} className="text-emerald-600" /> : <Copy size={18} />}
-              </button>
-            </div>
-          )}
+            <button
+              onClick={handleCopyOtp}
+              className="p-3 rounded-2xl bg-amber-100 hover:bg-amber-200 text-amber-900 transition-colors cursor-pointer border border-amber-300 shadow-sm"
+              title="Copy OTP"
+            >
+              {copiedOtp ? <Check size={18} className="text-emerald-600" /> : <Copy size={18} />}
+            </button>
+          </div>
         </motion.div>
 
         {/* ── DELIVERY PARTNER (RIDER) CARD ──────────────────────────────── */}
@@ -583,8 +530,8 @@ export const OrderTracking = () => {
                 <div className="flex items-center gap-2 flex-wrap">
                   <h4 className="font-black text-sm text-gray-900">{riderInfo.name}</h4>
                   {isSplit && (
-                    <span className="text-[9px] font-black uppercase text-blue-700 bg-blue-100 px-1.5 py-0.2 rounded">
-                      Package {selectedPackageIndex + 1}
+                    <span className="text-[9px] font-black uppercase text-blue-700 bg-blue-100 px-2 py-0.5 rounded-md">
+                      Single Dedicated Rider
                     </span>
                   )}
                   <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 flex items-center gap-0.5">
@@ -595,7 +542,7 @@ export const OrderTracking = () => {
                   {riderInfo.vehicle}
                 </p>
                 <p className="text-[10px] text-blue-700 font-semibold mt-0.5">
-                  Vaccinated • Thermal Cold-Chain Box Certified
+                  {isSplit ? "Collecting all partial packages & delivering together" : "Vaccinated • Thermal Cold-Chain Box Certified"}
                 </p>
               </div>
             </div>

@@ -45,7 +45,7 @@ export const OrderCard = ({ order }) => {
                 <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{order.id}</p>
                 {order.isSplitOrder && (
                   <span className="text-[9px] font-black text-indigo-700 bg-indigo-50 border border-indigo-200 px-1.5 py-0.2 rounded-md">
-                    ⚡ Split Order (2 Pkgs)
+                    ⚡ Multi-Store (1 Dedicated Rider)
                   </span>
                 )}
                 {order.isPartialOrder && !order.isSplitOrder && (

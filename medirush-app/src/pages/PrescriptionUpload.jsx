@@ -506,10 +506,21 @@ export const PrescriptionUpload = () => {
     const store1Total = calcTotal(store1Meds);
     const store2Total = calcTotal(store2Meds);
 
+    const dedicatedRider = {
+      name: 'Vikram Rathore',
+      vehicle: 'Ather 450X EV • DL-08-EV-4912',
+      phone: '+91 98450 19283',
+      rating: '4.9 ★ (1,420+ trips)',
+      photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=160&auto=format&fit=crop&q=80',
+      badge: 'Dedicated Multi-Stop Partner'
+    };
+
     return {
       canSplit: true,
       total: store1Total + store2Total,
       activeCount: activeMeds.length,
+      rider: dedicatedRider,
+      totalEta: '10-12 mins (Combined Route)',
       store1: {
         pharmacy: store1,
         items: store1Meds.map(m => {
@@ -521,14 +532,8 @@ export const PrescriptionUpload = () => {
           };
         }),
         total: store1Total,
-        eta: store1.deliveryEta || '8 mins',
-        rider: {
-          name: 'Vikram Rathore',
-          vehicle: 'Ather 450X EV • DL-08-EV-4912',
-          phone: '+91 98450 19283',
-          rating: '4.9 ★ (1,420+ trips)',
-          photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=160&auto=format&fit=crop&q=80'
-        }
+        eta: 'Stop 1 (Apollo)',
+        rider: dedicatedRider
       },
       store2: {
         pharmacy: store2,
@@ -541,14 +546,8 @@ export const PrescriptionUpload = () => {
           };
         }),
         total: store2Total,
-        eta: store2.deliveryEta || '14 mins',
-        rider: {
-          name: 'Amit Kumar',
-          vehicle: 'Hero Electric Nyx • KA-04-EV-8472',
-          phone: '+91 98112 55431',
-          rating: '4.8 ★ (890+ trips)',
-          photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=160&auto=format&fit=crop&q=80'
-        }
+        eta: 'Stop 2 (MedPlus)',
+        rider: dedicatedRider
       }
     };
   }, [analysisResult, selectedMedicines, selectedGenerics, nearbyPharmacies]);
@@ -660,8 +659,8 @@ export const PrescriptionUpload = () => {
   const handleConfirmSplitOrder = () => {
     if (!splitPlan) return;
     const orderId = `ORD-SPLIT-${Math.floor(10000 + Math.random() * 90000)}`;
-    const otp1 = `${Math.floor(1000 + Math.random() * 9000)}`;
-    const otp2 = `${Math.floor(1000 + Math.random() * 9000)}`;
+    const deliveryOtp = `${Math.floor(1000 + Math.random() * 9000)}`;
+    const assignedRider = splitPlan.rider || splitPlan.store1.rider;
 
     const pkg1 = {
       packageId: `${orderId}-PKG1`,
@@ -670,10 +669,11 @@ export const PrescriptionUpload = () => {
       pharmacy_name: splitPlan.store1.pharmacy.name,
       pharmacy_address: splitPlan.store1.pharmacy.address || `Partner Store 1, ${userLocation.locality}`,
       deliveryEta: splitPlan.store1.eta,
-      otp: otp1,
-      rider: splitPlan.store1.rider,
+      otp: deliveryOtp,
+      rider: assignedRider,
       items: splitPlan.store1.items,
       total: splitPlan.store1.total,
+      stopTitle: "Stop 1: Apollo Store",
       status: 'Out for Delivery'
     };
 
@@ -684,36 +684,40 @@ export const PrescriptionUpload = () => {
       pharmacy_name: splitPlan.store2.pharmacy.name,
       pharmacy_address: splitPlan.store2.pharmacy.address || `Partner Store 2, ${userLocation.locality}`,
       deliveryEta: splitPlan.store2.eta,
-      otp: otp2,
-      rider: splitPlan.store2.rider,
+      otp: deliveryOtp,
+      rider: assignedRider,
       items: splitPlan.store2.items,
       total: splitPlan.store2.total,
-      status: 'Packed & Dispatched'
+      stopTitle: "Stop 2: MedPlus Store",
+      status: 'Out for Delivery'
     };
 
     const newOrder = {
       id: orderId,
       isSplitOrder: true,
+      singleRiderMultiStop: true,
       isPartialOrder: totals.selectedCount < totals.totalCount,
       partialCount: totals.selectedCount,
       totalPrescriptionCount: totals.totalCount,
+      rider: assignedRider,
       status: 'Out for Delivery',
       date: new Date().toISOString(),
       total: splitPlan.total,
       pharmacy_name: `${splitPlan.store1.pharmacy.name} + ${splitPlan.store2.pharmacy.name}`,
-      pharmacy_address: `Multi-store Split: ${splitPlan.store1.pharmacy.name} & ${splitPlan.store2.pharmacy.name}`,
+      pharmacy_address: `Multi-store Route: ${splitPlan.store1.pharmacy.name} & ${splitPlan.store2.pharmacy.name}`,
       pharmacist_name: 'Dr. Arvind S. & Dr. Neha V. (Registered Pharmacists)',
-      delivery_address: `${userLocation.locality} (Split Multi-Store Fast Track)`,
-      deliveryEta: `${splitPlan.store1.eta} & ${splitPlan.store2.eta}`,
-      otp: `${otp1} (Pkg 1) · ${otp2} (Pkg 2)`,
+      delivery_address: `${userLocation.locality} (Single Rider Multi-Stop Fast Track)`,
+      deliveryEta: splitPlan.totalEta || '10-12 mins',
+      otp: deliveryOtp,
       packages: [pkg1, pkg2],
       items: [...splitPlan.store1.items, ...splitPlan.store2.items],
       timeline: [
-        { status: 'Pending', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), completed: true },
-        { status: 'Split into 2 Store Packages', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), completed: true },
-        { status: 'Package 1 Out for Delivery', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), completed: true },
-        { status: 'Package 2 Packed & Dispatched', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), completed: true },
-        { status: 'All Packages Delivered', time: null, completed: false }
+        { status: 'Order Placed', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), completed: true },
+        { status: `Rider Assigned: ${assignedRider.name}`, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), completed: true },
+        { status: `Stop 1 Picked Up (${splitPlan.store1.pharmacy.name})`, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), completed: true },
+        { status: `Stop 2 Picked Up (${splitPlan.store2.pharmacy.name})`, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), completed: true },
+        { status: 'Out for Delivery (Consolidated Doorstep Drop)', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), completed: true },
+        { status: 'Delivered', time: null, completed: false }
       ]
     };
 
@@ -2106,15 +2110,15 @@ export const PrescriptionUpload = () => {
                         <div className="bg-gradient-to-br from-indigo-900 via-blue-900 to-slate-900 text-white p-4 rounded-3xl shadow-lg border border-indigo-700/50 space-y-2">
                           <div className="flex items-center justify-between">
                             <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider bg-amber-400 text-slate-900 px-2.5 py-0.5 rounded-full shadow-sm">
-                              ⚡ MediRush Multi-Pharmacy Split Sourcing
+                              ⚡ Single Rider Multi-Stop Sourcing
                             </span>
-                            <span className="text-xs text-indigo-200 font-bold">2 Parallel Deliveries</span>
+                            <span className="text-xs text-indigo-200 font-bold">1 Dedicated Delivery Partner</span>
                           </div>
                           <h4 className="text-sm font-black text-white">
-                            Can't get all medicines at one pharmacy?
+                            Can't find all medicines in one store?
                           </h4>
                           <p className="text-xs text-indigo-200 leading-relaxed font-medium">
-                            MediRush divides your prescription between 2 nearest pharmacies so nothing is out of stock. 2 dedicated riders dispatch at the exact same time!
+                            Our dedicated rider (<strong className="text-amber-300">{splitPlan.rider?.name || 'Vikram Rathore'}</strong>) picks up package 1 from Apollo and package 2 from MedPlus, then delivers your complete order together in one trip!
                           </p>
                         </div>
 
@@ -2124,7 +2128,7 @@ export const PrescriptionUpload = () => {
                           <div className="p-4 rounded-2xl border-2 border-blue-400/60 bg-gradient-to-br from-blue-50/70 to-white shadow-sm space-y-2.5">
                             <div className="flex items-center justify-between">
                               <span className="text-[10px] font-black uppercase tracking-wider text-blue-700 bg-blue-100 px-2 py-0.5 rounded-md">
-                                📦 Package 1 of 2
+                                📦 Stop 1 (Apollo Store)
                               </span>
                               <span className="text-xs font-black text-emerald-700 flex items-center gap-1">
                                 <Clock size={12} /> {splitPlan.store1.eta}
@@ -2147,7 +2151,7 @@ export const PrescriptionUpload = () => {
                             </div>
 
                             <div className="flex items-center justify-between text-xs pt-1 border-t border-gray-150">
-                              <span className="text-[10px] text-gray-500 font-bold">Rider: {splitPlan.store1.rider.name}</span>
+                              <span className="text-[10px] text-gray-700 font-bold">Rider: {splitPlan.rider?.name || 'Vikram Rathore'}</span>
                               <span className="font-black text-gray-900">₹{splitPlan.store1.total.toFixed(2)}</span>
                             </div>
                           </div>
@@ -2156,7 +2160,7 @@ export const PrescriptionUpload = () => {
                           <div className="p-4 rounded-2xl border-2 border-indigo-400/60 bg-gradient-to-br from-indigo-50/70 to-white shadow-sm space-y-2.5">
                             <div className="flex items-center justify-between">
                               <span className="text-[10px] font-black uppercase tracking-wider text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-md">
-                                📦 Package 2 of 2
+                                📦 Stop 2 (MedPlus Store)
                               </span>
                               <span className="text-xs font-black text-emerald-700 flex items-center gap-1">
                                 <Clock size={12} /> {splitPlan.store2.eta}
@@ -2179,7 +2183,7 @@ export const PrescriptionUpload = () => {
                             </div>
 
                             <div className="flex items-center justify-between text-xs pt-1 border-t border-gray-150">
-                              <span className="text-[10px] text-gray-500 font-bold">Rider: {splitPlan.store2.rider.name}</span>
+                              <span className="text-[10px] text-gray-700 font-bold">Rider: {splitPlan.rider?.name || 'Vikram Rathore'}</span>
                               <span className="font-black text-gray-900">₹{splitPlan.store2.total.toFixed(2)}</span>
                             </div>
                           </div>
@@ -2193,10 +2197,10 @@ export const PrescriptionUpload = () => {
                             className="w-full py-4 text-sm font-extrabold shadow-lg shadow-indigo-500/30 flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-700 hover:from-indigo-700 hover:to-blue-700 text-white cursor-pointer"
                           >
                             <ShieldCheck size={18} />
-                            <span>Confirm ⚡ Split Delivery (All {splitPlan.activeCount} Meds via 2 Stores) · ₹{splitPlan.total.toFixed(2)}</span>
+                            <span>Confirm ⚡ Split Delivery (All {splitPlan.activeCount} Meds via 1 Rider) · ₹{splitPlan.total.toFixed(2)}</span>
                           </Button>
                           <p className="text-[10px] text-center text-gray-400 font-medium mt-1.5">
-                            2 Separate Delivery Partners • Live Multi-Package Tracking • Pay on Delivery
+                            1 Dedicated Delivery Partner • Multi-Stop Pickup • Single Doorstep Delivery
                           </p>
                         </div>
                       </div>
