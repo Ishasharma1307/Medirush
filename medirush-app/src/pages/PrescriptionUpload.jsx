@@ -927,26 +927,26 @@ export const PrescriptionUpload = () => {
         <motion.div 
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center relative z-10 max-w-lg mx-auto mt-2"
+          className="text-center relative z-10 max-w-2xl lg:max-w-3xl mx-auto mt-2"
         >
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-cyan-200 text-[11px] font-black tracking-wide uppercase mb-3 shadow-sm">
             <ShieldCheck size={14} className="text-cyan-300" />
             <span>100% Genuine Medicines · 10-Min Doorstep Delivery</span>
           </div>
 
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-tight drop-shadow-md">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight leading-tight drop-shadow-md">
             Upload Doctor's Prescription
           </h1>
-          <p className="text-blue-100 mt-2 text-xs sm:text-sm font-medium max-w-md mx-auto leading-relaxed">
+          <p className="text-blue-100 mt-2 text-xs sm:text-sm lg:text-base font-medium max-w-xl mx-auto leading-relaxed">
             Upload your prescription slip to get verified medicines delivered to your doorstep from licensed pharmacies.
           </p>
         </motion.div>
       </div>
 
       {/* ── VISUAL PIPELINE FLOW BAR ────────────────────────────────────── */}
-      <div className="max-w-2xl mx-auto px-4 -mt-7 relative z-20">
-        <div className="bg-white rounded-2xl p-3 shadow-lg border border-gray-150 overflow-x-auto no-scrollbar">
-          <div className="flex items-center justify-between min-w-[380px] sm:min-w-full gap-1.5 sm:gap-2">
+      <div className="max-w-5xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-7 relative z-20">
+        <div className="bg-white rounded-2xl p-3.5 sm:p-4 shadow-lg border border-gray-150 overflow-x-auto no-scrollbar">
+          <div className="flex items-center justify-between min-w-[420px] sm:min-w-full gap-2 sm:gap-3">
             {PIPELINE_STAGES.map((st, idx) => {
               const isCompleted = pipelineState.completedStages.includes(st.id);
               const isCurrent = pipelineState.stage === st.id;
@@ -956,17 +956,17 @@ export const PrescriptionUpload = () => {
                 <React.Fragment key={st.id}>
                   <div className="flex flex-col items-center flex-1">
                     <div className={cn(
-                      "w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-300 text-xs font-bold shadow-sm",
+                      "w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center transition-all duration-300 text-xs font-bold shadow-sm",
                       isCompleted 
                         ? "bg-emerald-600 text-white shadow-emerald-500/20"
                         : isCurrent
                         ? "bg-blue-600 text-white animate-pulse shadow-blue-500/30 scale-105"
                         : "bg-gray-100 text-gray-400"
                     )}>
-                      {isCompleted ? <Check size={14} /> : <Icon size={14} />}
+                      {isCompleted ? <Check size={15} /> : <Icon size={15} />}
                     </div>
                     <span className={cn(
-                      "text-[10px] mt-1.5 font-bold tracking-tight text-center whitespace-nowrap",
+                      "text-[10px] sm:text-[11px] mt-1.5 font-bold tracking-tight text-center whitespace-nowrap",
                       isCompleted ? "text-emerald-700" : isCurrent ? "text-blue-700" : "text-gray-400"
                     )}>
                       {st.name}
@@ -975,7 +975,7 @@ export const PrescriptionUpload = () => {
 
                   {idx < PIPELINE_STAGES.length - 1 && (
                     <div className={cn(
-                      "h-0.5 w-6 rounded-full -mt-4 transition-all duration-300",
+                      "h-0.5 w-6 sm:w-12 lg:w-16 rounded-full -mt-4 transition-all duration-300",
                       pipelineState.completedStages.includes(st.id) ? "bg-emerald-500" : "bg-gray-200"
                     )} />
                   )}
@@ -993,7 +993,7 @@ export const PrescriptionUpload = () => {
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="max-w-2xl mx-auto px-4 mt-6 space-y-6 relative z-10"
+        className="max-w-5xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 space-y-6 relative z-10"
       >
 
         {/* ── LIVE GPS DELIVERY LOCATION BAR ───────────────────────────── */}
@@ -1115,63 +1115,349 @@ export const PrescriptionUpload = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="space-y-6"
+              className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start"
             >
-              {/* Doctor, Clinic & Pipeline Verification Card */}
-              <div className="bg-white rounded-3xl p-6 border border-blue-100 shadow-xl space-y-4">
-                <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-gray-100">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold border border-blue-100 shadow-sm">
-                      <Building2 size={24} />
+              {/* ── LEFT COLUMN: Doctor, Clinic & Medicines List (8 cols) ── */}
+              <div className="lg:col-span-7 xl:col-span-8 space-y-6">
+                {/* Doctor, Clinic & Pipeline Verification Card */}
+                <div className="bg-white rounded-3xl p-6 border border-blue-100 shadow-xl space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-gray-100">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold border border-blue-100 shadow-sm">
+                        <Building2 size={24} />
+                      </div>
+                      <div>
+                        <h3 className="text-base font-extrabold text-gray-900 leading-tight">
+                          {analysisResult.doctorName || 'Doctor Prescription'}
+                        </h3>
+                        <p className="text-xs font-semibold text-gray-500 flex items-center gap-1.5 mt-0.5">
+                          <span>{analysisResult.clinicHospital || 'Partner Healthcare Clinic'}</span>
+                          <span className="text-gray-300">•</span>
+                          <span className="text-blue-600 font-bold">{analysisResult.date}</span>
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="text-base font-extrabold text-gray-900 leading-tight">
-                        {analysisResult.doctorName || 'Doctor Prescription'}
-                      </h3>
-                      <p className="text-xs font-semibold text-gray-500 flex items-center gap-1.5 mt-0.5">
-                        <span>{analysisResult.clinicHospital || 'Partner Healthcare Clinic'}</span>
-                        <span className="text-gray-300">•</span>
-                        <span className="text-blue-600 font-bold">{analysisResult.date}</span>
-                      </p>
+
+                    <div className="flex items-center gap-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200 px-3 py-1 rounded-xl text-xs font-bold">
+                      <CheckCircle2 size={14} className="text-emerald-600" />
+                      <span>Prescription Verified ({analysisResult.confidenceScore}%)</span>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200 px-3 py-1 rounded-xl text-xs font-bold">
-                    <CheckCircle2 size={14} className="text-emerald-600" />
-                    <span>Prescription Verified ({analysisResult.confidenceScore}%)</span>
-                  </div>
+                  {/* Detected Diagnosis */}
+                  {analysisResult.diagnosisOrSymptoms && (
+                    <div className="bg-slate-50 rounded-2xl p-3 border border-slate-200/80 flex items-start gap-2.5">
+                      <HeartPulse size={16} className="text-rose-500 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block">Identified Diagnosis</span>
+                        <p className="text-xs font-bold text-gray-800">{analysisResult.diagnosisOrSymptoms}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                {/* Detected Diagnosis */}
-                {analysisResult.diagnosisOrSymptoms && (
-                  <div className="bg-slate-50 rounded-2xl p-3 border border-slate-200/80 flex items-start gap-2.5">
-                    <HeartPulse size={16} className="text-rose-500 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block">Identified Diagnosis</span>
-                      <p className="text-xs font-bold text-gray-800">{analysisResult.diagnosisOrSymptoms}</p>
+                {/* Extracted Medicines List */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between px-1">
+                    <h4 className="text-sm font-extrabold uppercase tracking-wider text-gray-700 flex items-center gap-2">
+                      <Pill size={16} className="text-blue-600" />
+                      Identified Medicines ({analysisResult.medicines?.length || 0})
+                    </h4>
+                    <span className="text-[11px] font-bold text-gray-500">
+                      Verified with Pharmacy Catalog
+                    </span>
+                  </div>
+
+                  {(!analysisResult.medicines || analysisResult.medicines.length === 0) && (
+                    <div className="bg-amber-50 border border-amber-200 rounded-3xl p-5 text-center space-y-2">
+                      <AlertTriangle size={28} className="text-amber-600 mx-auto" />
+                      <h5 className="text-sm font-bold text-amber-900">No clear medicines matched in OCR</h5>
+                      <p className="text-xs text-amber-700 max-w-md mx-auto">
+                        Search & add the prescribed medicines using the bar below.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* ── PARTIAL PRESCRIPTION SELECTION CONTROLS ── */}
+                  <div className="bg-gradient-to-r from-blue-50/90 via-indigo-50/70 to-slate-50 rounded-2xl p-3.5 border border-blue-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold shadow-md shadow-blue-500/25 flex-shrink-0">
+                        <CheckCheck size={18} />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h4 className="text-xs font-black uppercase tracking-wider text-gray-900">
+                            Prescription Items: {totals.selectedCount} of {totals.totalCount} Selected
+                          </h4>
+                          {totals.selectedCount < totals.totalCount && (
+                            <span className="text-[10px] font-black bg-amber-100 text-amber-800 px-2 py-0.5 rounded-md border border-amber-300">
+                              Partial Prescription Mode
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-gray-600 font-medium mt-0.5">
+                          {totals.selectedCount < totals.totalCount 
+                            ? `Ordering only ${totals.selectedCount} selected medicines. Unchecked medicines excluded.`
+                            : "Uncheck any medicine you already have or wish to purchase separately."}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 self-end sm:self-auto">
+                      <button
+                        type="button"
+                        onClick={selectAllMedicines}
+                        className="text-xs font-bold text-blue-700 hover:text-blue-800 px-3 py-1.5 rounded-xl bg-white border border-blue-200 shadow-xs hover:bg-blue-50 transition-all cursor-pointer"
+                      >
+                        Select All
+                      </button>
+                      <button
+                        type="button"
+                        onClick={deselectAllMedicines}
+                        className="text-xs font-bold text-gray-600 hover:text-gray-800 px-3 py-1.5 rounded-xl bg-white border border-gray-200 shadow-xs hover:bg-gray-50 transition-all cursor-pointer"
+                      >
+                        Deselect All
+                      </button>
                     </div>
                   </div>
-                )}
 
+                  {analysisResult.medicines?.map((med, index) => {
+                    const isSelected = selectedMedicines[med.id] !== false;
+                    const isGeneric = selectedGenerics[med.id] && med.genericAlternative;
+                    const currentPrice = isGeneric ? med.genericAlternative.price : med.estimatedPrice;
+                    const isAdded = addedMeds[med.id] || allAddedToCart;
+
+                    return (
+                      <motion.div
+                        key={med.id || index}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        className={cn(
+                          "rounded-3xl p-5 border transition-all space-y-3.5 relative",
+                          isSelected
+                            ? "bg-white border-gray-200/90 shadow-sm hover:shadow-md"
+                            : "bg-slate-50/70 border-dashed border-gray-300 opacity-65 hover:opacity-95"
+                        )}
+                      >
+                        {/* Medicine Selection Checkbox Toggle */}
+                        <div className="flex items-center justify-between pb-2 border-b border-gray-100">
+                          <div 
+                            onClick={() => toggleMedicineSelection(med.id)}
+                            className="flex items-center gap-2.5 cursor-pointer select-none group"
+                          >
+                            <div className={cn(
+                              "w-5 h-5 rounded-lg border-2 flex items-center justify-center transition-all",
+                              isSelected 
+                                ? "bg-blue-600 border-blue-600 text-white shadow-sm shadow-blue-500/30" 
+                                : "border-gray-300 bg-white group-hover:border-blue-400"
+                            )}>
+                              {isSelected && <Check size={13} strokeWidth={3} />}
+                            </div>
+                            <span className={cn(
+                              "text-xs font-bold transition-colors",
+                              isSelected ? "text-gray-900" : "text-gray-500 line-through"
+                            )}>
+                              {isSelected ? "Selected for Delivery" : "Excluded from Order (Click to Include)"}
+                            </span>
+                          </div>
+
+                          <button
+                            onClick={() => handleRemoveMedicine(med.id)}
+                            className="text-gray-300 hover:text-rose-500 p-1 rounded-lg transition-colors cursor-pointer"
+                            title="Remove medicine"
+                          >
+                            <X size={15} />
+                          </button>
+                        </div>
+
+                        <div className="flex items-start justify-between gap-3 pr-6">
+                          <div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h5 className="text-base font-extrabold text-gray-900">
+                                {isGeneric ? med.genericAlternative.name : med.name}
+                              </h5>
+                              <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200">
+                                {med.form || 'Tablet'}
+                              </span>
+                              {isGeneric && (
+                                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                  Quality Generic
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs font-semibold text-gray-500 mt-0.5">
+                              Active Salt: <span className="text-gray-700 font-bold">{med.activeIngredient}</span>
+                            </p>
+                          </div>
+
+                          <div className="text-right flex-shrink-0">
+                            <span className="text-base font-black text-gray-900">₹{Number(currentPrice).toFixed(2)}</span>
+                            {isGeneric && (
+                              <p className="text-[10px] text-gray-400 line-through">₹{Number(med.estimatedPrice).toFixed(2)}</p>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                          <div>
+                            <span className="text-[10px] uppercase tracking-wider text-gray-400 font-bold block">Dosage & Frequency</span>
+                            <p className="font-bold text-gray-800">{med.dosage} · {med.timing}</p>
+                            <p className="text-[11px] text-gray-500 font-medium">Duration: {med.duration || 'As advised'}</p>
+                          </div>
+                          <div>
+                            <span className="text-[10px] uppercase tracking-wider text-gray-400 font-bold block">Medical Indication</span>
+                            <p className="font-bold text-gray-800">{med.indication}</p>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2 pt-1">
+                          {med.pregnancySafety && (
+                            <div className={cn(
+                              "inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-bold border",
+                              med.pregnancySafety.toLowerCase().includes('safe') 
+                                ? "bg-green-50 text-green-700 border-green-200"
+                                : med.pregnancySafety.toLowerCase().includes('avoid')
+                                ? "bg-rose-50 text-rose-700 border-rose-200"
+                                : "bg-amber-50 text-amber-700 border-amber-200"
+                            )}>
+                              <span>🤰 Pregnancy: {med.pregnancySafety}</span>
+                            </div>
+                          )}
+
+                          {med.sideEffects && (
+                            <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-bold bg-gray-100 text-gray-700">
+                              <Info size={11} className="text-gray-500" />
+                              <span className="truncate max-w-xs">{med.sideEffects}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {med.genericAlternative && (
+                          <div className="flex items-center justify-between p-3 bg-indigo-50/60 rounded-2xl border border-indigo-100 text-xs">
+                            <div>
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-700 block">
+                                Generic Substitute Available
+                              </span>
+                              <p className="font-bold text-gray-800">
+                                {med.genericAlternative.name} ({med.genericAlternative.brand})
+                              </p>
+                              <p className="text-[11px] text-emerald-700 font-bold">
+                                Save {med.genericAlternative.savingsPercent}% (₹{med.genericAlternative.price})
+                              </p>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => toggleGeneric(med.id)}
+                              className={cn(
+                                "px-3 py-1.5 rounded-xl font-bold text-xs transition-all flex items-center gap-1.5",
+                                isGeneric
+                                  ? "bg-emerald-600 text-white shadow-sm"
+                                  : "bg-white text-indigo-700 border border-indigo-200 hover:bg-indigo-50"
+                              )}
+                            >
+                              {isGeneric ? (
+                                <>
+                                  <Check size={13} /> Using Generic
+                                </>
+                              ) : (
+                                "Switch & Save"
+                              )}
+                            </button>
+                          </div>
+                        )}
+
+                        <div className="flex justify-end pt-1">
+                          <button
+                            type="button"
+                            onClick={() => handleAddSingleToCart(med)}
+                            disabled={isAdded}
+                            className={cn(
+                              "px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5",
+                              isAdded
+                                ? "bg-green-100 text-green-700 cursor-default"
+                                : "bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
+                            )}
+                          >
+                            {isAdded ? (
+                              <>
+                                <CheckCircle2 size={14} /> Added to Cart
+                              </>
+                            ) : (
+                              <>
+                                <ShoppingBag size={14} /> Add Medicine
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+
+                  {/* ── Add Medicine Manually Bar ────────────────────────────── */}
+                  <div className="bg-white rounded-3xl p-4 border border-dashed border-gray-300 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Search size={15} className="text-gray-400" />
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={handleSearchChange}
+                        placeholder="Add medicine manually (e.g. Paracetamol, Azithromycin, Dolo 650)..."
+                        className="w-full text-xs font-medium text-gray-800 placeholder:text-gray-400 focus:outline-none"
+                      />
+                      {searchQuery && (
+                        <button onClick={() => { setSearchQuery(''); setSearchResults([]); }} className="text-gray-400 hover:text-gray-600">
+                          <X size={14} />
+                        </button>
+                      )}
+                    </div>
+
+                    {searchResults.length > 0 && (
+                      <div className="border-t border-gray-100 pt-2 space-y-1.5">
+                        {searchResults.map(item => (
+                          <div
+                            key={item.id}
+                            onClick={() => handleAddCustomMedicine(item)}
+                            className="flex items-center justify-between p-2 rounded-xl hover:bg-blue-50 cursor-pointer text-xs transition-colors"
+                          >
+                            <div>
+                              <span className="font-extrabold text-gray-800 block">{item.name}</span>
+                              <span className="text-[10px] text-gray-500">{item.genericName || item.brand}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-black text-gray-900">₹{item.price}</span>
+                              <span className="p-1 rounded-lg bg-blue-600 text-white"><Plus size={12} /></span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* ── RIGHT COLUMN: Sticky Order Summary & Direct Actions (4 cols) ── */}
+              <div className="lg:col-span-5 xl:col-span-4 space-y-5 lg:sticky lg:top-24">
                 {/* Connected Partner Pharmacies Network */}
-                <div className="pt-2 space-y-2.5">
+                <div className="bg-white rounded-3xl p-5 border border-blue-100 shadow-lg space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
                       <span className="text-[11px] font-extrabold uppercase tracking-wider text-gray-800 flex items-center gap-1.5">
                         <Radio size={14} className="text-blue-600 animate-pulse" />
-                        Connected Partner Pharmacies ({PARTNER_PHARMACIES.length} Active in Your Radius)
+                        Connected Partner Pharmacies
                       </span>
                       <p className="text-[10px] text-gray-500 font-medium">
-                        Ordering broadcasts prescription to all 3 stores for instant pharmacist approval & fastest delivery
+                        Ordering broadcasts prescription to 3 stores for immediate approval
                       </p>
                     </div>
-                    <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 flex items-center gap-1">
+                    <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
                       3 Online
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  <div className="space-y-2">
                     {(nearbyPharmacies || PARTNER_PHARMACIES).map(pharm => (
                       <div
                         key={pharm.id}
@@ -1208,14 +1494,14 @@ export const PrescriptionUpload = () => {
 
                 {/* Savings Banner */}
                 {totals.savings > 0 && (
-                  <div className="bg-gradient-to-r from-emerald-500 to-teal-600 rounded-2xl p-3.5 text-white flex items-center justify-between shadow-md">
+                  <div className="bg-gradient-to-r from-emerald-500 to-teal-600 rounded-3xl p-4 text-white flex items-center justify-between shadow-md">
                     <div className="flex items-center gap-2.5">
                       <div className="bg-white/20 p-2 rounded-xl">
                         <BadgePercent size={20} className="text-white" />
                       </div>
                       <div>
-                        <p className="text-xs font-black uppercase tracking-wider text-emerald-100">Generic Substitute Savings</p>
-                        <p className="text-sm font-extrabold">You are saving ₹{totals.savings.toFixed(2)} on this prescription!</p>
+                        <p className="text-[11px] font-black uppercase tracking-wider text-emerald-100">Generic Substitute Savings</p>
+                        <p className="text-sm font-extrabold">You are saving ₹{totals.savings.toFixed(2)}!</p>
                       </div>
                     </div>
                     <span className="text-xs bg-white text-emerald-800 font-black px-2.5 py-1 rounded-lg shadow-sm">
@@ -1223,363 +1509,94 @@ export const PrescriptionUpload = () => {
                     </span>
                   </div>
                 )}
-              </div>
 
-              {/* Extracted Medicines List */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between px-1">
-                  <h4 className="text-sm font-extrabold uppercase tracking-wider text-gray-700 flex items-center gap-2">
-                    <Pill size={16} className="text-blue-600" />
-                    Identified Medicines ({analysisResult.medicines?.length || 0})
-                  </h4>
-                  <span className="text-[11px] font-bold text-gray-500">
-                    Verified with Pharmacy Catalog
-                  </span>
-                </div>
-
-                {(!analysisResult.medicines || analysisResult.medicines.length === 0) && (
-                  <div className="bg-amber-50 border border-amber-200 rounded-3xl p-5 text-center space-y-2">
-                    <AlertTriangle size={28} className="text-amber-600 mx-auto" />
-                    <h5 className="text-sm font-bold text-amber-900">No clear medicines matched in OCR</h5>
-                    <p className="text-xs text-amber-700 max-w-md mx-auto">
-                      Search & add the prescribed medicines using the bar below.
-                    </p>
-                  </div>
-                )}
-
-                {/* ── PARTIAL PRESCRIPTION SELECTION CONTROLS ── */}
-                <div className="bg-gradient-to-r from-blue-50/90 via-indigo-50/70 to-slate-50 rounded-2xl p-3.5 border border-blue-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold shadow-md shadow-blue-500/25 flex-shrink-0">
-                      <CheckCheck size={18} />
+                {/* Checkout / Order & Broadcast Bar */}
+                <div className="bg-white rounded-3xl p-5 border border-gray-200 shadow-xl space-y-4">
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <Sparkles size={13} className="text-blue-600" />
+                        <span className="text-[10px] uppercase tracking-wider text-gray-500 font-extrabold block">
+                          Package Total
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1 text-[10px] text-green-700 font-extrabold bg-green-50 px-2 py-0.5 rounded-lg border border-green-200">
+                        <Clock size={11} /> Sub-10m Express
+                      </div>
                     </div>
-                    <div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h4 className="text-xs font-black uppercase tracking-wider text-gray-900">
-                          Prescription Items: {totals.selectedCount} of {totals.totalCount} Selected
-                        </h4>
-                        {totals.selectedCount < totals.totalCount && (
-                          <span className="text-[10px] font-black bg-amber-100 text-amber-800 px-2 py-0.5 rounded-md border border-amber-300">
-                            Partial Prescription Mode
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-[11px] text-gray-600 font-medium mt-0.5">
-                        {totals.selectedCount < totals.totalCount 
-                          ? `Ordering only ${totals.selectedCount} selected medicines. Unchecked medicines excluded.`
-                          : "Uncheck any medicine you already have or wish to purchase separately."}
-                      </p>
-                    </div>
-                  </div>
 
-                  <div className="flex items-center gap-2 self-end sm:self-auto">
-                    <button
-                      type="button"
-                      onClick={selectAllMedicines}
-                      className="text-xs font-bold text-blue-700 hover:text-blue-800 px-3 py-1.5 rounded-xl bg-white border border-blue-200 shadow-xs hover:bg-blue-50 transition-all cursor-pointer"
-                    >
-                      Select All
-                    </button>
-                    <button
-                      type="button"
-                      onClick={deselectAllMedicines}
-                      className="text-xs font-bold text-gray-600 hover:text-gray-800 px-3 py-1.5 rounded-xl bg-white border border-gray-200 shadow-xs hover:bg-gray-50 transition-all cursor-pointer"
-                    >
-                      Deselect All
-                    </button>
-                  </div>
-                </div>
-
-                {analysisResult.medicines?.map((med, index) => {
-                  const isSelected = selectedMedicines[med.id] !== false;
-                  const isGeneric = selectedGenerics[med.id] && med.genericAlternative;
-                  const currentPrice = isGeneric ? med.genericAlternative.price : med.estimatedPrice;
-                  const isAdded = addedMeds[med.id] || allAddedToCart;
-
-                  return (
-                    <motion.div
-                      key={med.id || index}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      className={cn(
-                        "rounded-3xl p-5 border transition-all space-y-3.5 relative",
-                        isSelected
-                          ? "bg-white border-gray-200/90 shadow-sm hover:shadow-md"
-                          : "bg-slate-50/70 border-dashed border-gray-300 opacity-65 hover:opacity-95"
-                      )}
-                    >
-                      {/* Medicine Selection Checkbox Toggle */}
-                      <div className="flex items-center justify-between pb-2 border-b border-gray-100">
-                        <div 
-                          onClick={() => toggleMedicineSelection(med.id)}
-                          className="flex items-center gap-2.5 cursor-pointer select-none group"
-                        >
-                          <div className={cn(
-                            "w-5 h-5 rounded-lg border-2 flex items-center justify-center transition-all",
-                            isSelected 
-                              ? "bg-blue-600 border-blue-600 text-white shadow-sm shadow-blue-500/30" 
-                              : "border-gray-300 bg-white group-hover:border-blue-400"
-                          )}>
-                            {isSelected && <Check size={13} strokeWidth={3} />}
-                          </div>
-                          <span className={cn(
-                            "text-xs font-bold transition-colors",
-                            isSelected ? "text-gray-900" : "text-gray-500 line-through"
-                          )}>
-                            {isSelected ? "Selected for Delivery" : "Excluded from Order (Click to Include)"}
-                          </span>
-                        </div>
-
-                        <button
-                          onClick={() => handleRemoveMedicine(med.id)}
-                          className="text-gray-300 hover:text-rose-500 p-1 rounded-lg transition-colors cursor-pointer"
-                          title="Remove medicine"
-                        >
-                          <X size={15} />
-                        </button>
-                      </div>
-
-                      <div className="flex items-start justify-between gap-3 pr-6">
-                        <div>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <h5 className="text-base font-extrabold text-gray-900">
-                              {isGeneric ? med.genericAlternative.name : med.name}
-                            </h5>
-                            <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200">
-                              {med.form || 'Tablet'}
-                            </span>
-                            {isGeneric && (
-                              <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                Quality Generic
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-xs font-semibold text-gray-500 mt-0.5">
-                            Active Salt: <span className="text-gray-700 font-bold">{med.activeIngredient}</span>
-                          </p>
-                        </div>
-
-                        <div className="text-right flex-shrink-0">
-                          <span className="text-base font-black text-gray-900">₹{Number(currentPrice).toFixed(2)}</span>
-                          {isGeneric && (
-                            <p className="text-[10px] text-gray-400 line-through">₹{Number(med.estimatedPrice).toFixed(2)}</p>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs bg-slate-50 p-3 rounded-2xl border border-slate-100">
-                        <div>
-                          <span className="text-[10px] uppercase tracking-wider text-gray-400 font-bold block">Dosage & Frequency</span>
-                          <p className="font-bold text-gray-800">{med.dosage} · {med.timing}</p>
-                          <p className="text-[11px] text-gray-500 font-medium">Duration: {med.duration || 'As advised'}</p>
-                        </div>
-                        <div>
-                          <span className="text-[10px] uppercase tracking-wider text-gray-400 font-bold block">Medical Indication</span>
-                          <p className="font-bold text-gray-800">{med.indication}</p>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-wrap items-center gap-2 pt-1">
-                        {med.pregnancySafety && (
-                          <div className={cn(
-                            "inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-bold border",
-                            med.pregnancySafety.toLowerCase().includes('safe') 
-                              ? "bg-green-50 text-green-700 border-green-200"
-                              : med.pregnancySafety.toLowerCase().includes('avoid')
-                              ? "bg-rose-50 text-rose-700 border-rose-200"
-                              : "bg-amber-50 text-amber-700 border-amber-200"
-                          )}>
-                            <span>🤰 Pregnancy: {med.pregnancySafety}</span>
-                          </div>
-                        )}
-
-                        {med.sideEffects && (
-                          <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-bold bg-gray-100 text-gray-700">
-                            <Info size={11} className="text-gray-500" />
-                            <span className="truncate max-w-xs">{med.sideEffects}</span>
-                          </div>
-                        )}
-                      </div>
-
-                      {med.genericAlternative && (
-                        <div className="flex items-center justify-between p-3 bg-indigo-50/60 rounded-2xl border border-indigo-100 text-xs">
-                          <div>
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-700 block">
-                              Generic Substitute Available
-                            </span>
-                            <p className="font-bold text-gray-800">
-                              {med.genericAlternative.name} ({med.genericAlternative.brand})
-                            </p>
-                            <p className="text-[11px] text-emerald-700 font-bold">
-                              Save {med.genericAlternative.savingsPercent}% (₹{med.genericAlternative.price})
-                            </p>
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={() => toggleGeneric(med.id)}
-                            className={cn(
-                              "px-3 py-1.5 rounded-xl font-bold text-xs transition-all flex items-center gap-1.5",
-                              isGeneric
-                                ? "bg-emerald-600 text-white shadow-sm"
-                                : "bg-white text-indigo-700 border border-indigo-200 hover:bg-indigo-50"
-                            )}
-                          >
-                            {isGeneric ? (
-                              <>
-                                <Check size={13} /> Using Generic
-                              </>
-                            ) : (
-                              "Switch & Save"
-                            )}
-                          </button>
-                        </div>
-                      )}
-
-                      <div className="flex justify-end pt-1">
-                        <button
-                          type="button"
-                          onClick={() => handleAddSingleToCart(med)}
-                          disabled={isAdded}
-                          className={cn(
-                            "px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5",
-                            isAdded
-                              ? "bg-green-100 text-green-700 cursor-default"
-                              : "bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
-                          )}
-                        >
-                          {isAdded ? (
-                            <>
-                              <CheckCircle2 size={14} /> Added to Cart
-                            </>
-                          ) : (
-                            <>
-                              <ShoppingBag size={14} /> Add Medicine
-                            </>
-                          )}
-                        </button>
-                      </div>
-                    </motion.div>
-                  );
-                })}
-
-                {/* ── Add Medicine Manually Bar ────────────────────────────── */}
-                <div className="bg-white rounded-3xl p-4 border border-dashed border-gray-300 space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Search size={15} className="text-gray-400" />
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={handleSearchChange}
-                      placeholder="Add medicine manually (e.g. Paracetamol, Azithromycin, Dolo 650)..."
-                      className="w-full text-xs font-medium text-gray-800 placeholder:text-gray-400 focus:outline-none"
-                    />
-                    {searchQuery && (
-                      <button onClick={() => { setSearchQuery(''); setSearchResults([]); }} className="text-gray-400 hover:text-gray-600">
-                        <X size={14} />
-                      </button>
-                    )}
-                  </div>
-
-                  {searchResults.length > 0 && (
-                    <div className="border-t border-gray-100 pt-2 space-y-1.5">
-                      {searchResults.map(item => (
-                        <div
-                          key={item.id}
-                          onClick={() => handleAddCustomMedicine(item)}
-                          className="flex items-center justify-between p-2 rounded-xl hover:bg-blue-50 cursor-pointer text-xs transition-colors"
-                        >
-                          <div>
-                            <span className="font-extrabold text-gray-800 block">{item.name}</span>
-                            <span className="text-[10px] text-gray-500">{item.genericName || item.brand}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-black text-gray-900">₹{item.price}</span>
-                            <span className="p-1 rounded-lg bg-blue-600 text-white"><Plus size={12} /></span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-              </div>
-
-              {/* Checkout / Order & Broadcast Bar */}
-              <div className="bg-white rounded-3xl p-5 border border-gray-200 shadow-xl space-y-4 sticky bottom-4 z-20">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div>
-                    <div className="flex items-center gap-1.5 mb-0.5">
-                      <Sparkles size={13} className="text-blue-600" />
-                      <span className="text-[10px] uppercase tracking-wider text-gray-500 font-extrabold block">
-                        Prescription Package Total
-                      </span>
-                    </div>
                     <div className="flex items-baseline gap-2">
                       <span className="text-2xl font-black text-gray-900">₹{totals.total.toFixed(2)}</span>
                       {totals.savings > 0 && (
-                        <span className="text-xs text-emerald-600 font-bold">(Saved ₹{totals.savings.toFixed(2)} with Generics)</span>
+                        <span className="text-xs text-emerald-600 font-bold">(Saved ₹{totals.savings.toFixed(2)})</span>
                       )}
                     </div>
-                    <p className="text-[10px] text-gray-500 font-medium mt-0.5">
-                      Pings 3 nearest connected pharmacies simultaneously for immediate approval & sub-10m dispatch
+                    <p className="text-[11px] text-gray-500 font-medium">
+                      Store Selected: <strong className="text-blue-700">{selectedPharmacy.name}</strong>
                     </p>
                   </div>
 
-                  <div className="flex items-center sm:flex-col sm:items-end justify-between sm:justify-center">
-                    <div className="flex items-center gap-1 text-[11px] text-green-700 font-extrabold bg-green-50 px-2.5 py-1 rounded-xl border border-green-200">
-                      <Clock size={12} />
-                      <span>Sub-10m Express Dispatch</span>
-                    </div>
-                    <span className="text-[10px] text-blue-600 font-extrabold mt-1">
-                      Selected: {selectedPharmacy.name}
-                    </span>
+                  <div className="space-y-2.5 pt-1">
+                    <Button
+                      onClick={startBroadcastFlow}
+                      variant="primary"
+                      disabled={!analysisResult.medicines || totals.selectedCount === 0}
+                      className="w-full py-4 text-xs font-black shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-800 text-white cursor-pointer"
+                    >
+                      <Radio size={16} className="animate-pulse text-amber-300" />
+                      {totals.selectedCount < totals.totalCount
+                        ? `Broadcast Partial (${totals.selectedCount}/${totals.totalCount} Meds)`
+                        : `Broadcast Order (${totals.selectedCount} Meds)`}
+                    </Button>
+
+                    <Button
+                      onClick={handleAddAllToCart}
+                      variant="outline"
+                      disabled={!analysisResult.medicines || totals.selectedCount === 0}
+                      className="w-full py-3.5 text-xs font-extrabold flex items-center justify-center gap-2 border-gray-300 hover:bg-gray-50 text-gray-800 cursor-pointer"
+                    >
+                      {allAddedToCart ? (
+                        <>
+                          <CheckCircle2 size={16} className="text-green-600" />
+                          Redirecting to Cart...
+                        </>
+                      ) : (
+                        <>
+                          <ShoppingBag size={16} className="text-blue-600" />
+                          Order Directly from {selectedPharmacy.name.split(' ')[0]}
+                        </>
+                      )}
+                    </Button>
                   </div>
+
+                  <button
+                    type="button"
+                    onClick={handleReset}
+                    className="w-full py-1 text-center text-xs font-bold text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                  >
+                    Scan a different prescription
+                  </button>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <Button
-                    onClick={startBroadcastFlow}
-                    variant="primary"
-                    disabled={!analysisResult.medicines || totals.selectedCount === 0}
-                    className="w-full py-4 text-sm font-extrabold shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-800 text-white cursor-pointer"
-                  >
-                    <Radio size={18} className="animate-pulse text-amber-300" />
-                    {totals.selectedCount < totals.totalCount
-                      ? `Broadcast Partial Order (${totals.selectedCount} of ${totals.totalCount} Meds)`
-                      : `Broadcast Order (${totals.selectedCount} Meds) to Pharmacies`}
-                  </Button>
-
-                  <Button
-                    onClick={handleAddAllToCart}
-                    variant="outline"
-                    disabled={!analysisResult.medicines || totals.selectedCount === 0}
-                    className="w-full py-4 text-sm font-extrabold flex items-center justify-center gap-2 border-gray-300 hover:bg-gray-50 text-gray-800 cursor-pointer"
-                  >
-                    {allAddedToCart ? (
-                      <>
-                        <CheckCircle2 size={18} className="text-green-600" />
-                        Redirecting to Cart...
-                      </>
-                    ) : (
-                      <>
-                        <ShoppingBag size={18} className="text-blue-600" />
-                        {totals.selectedCount < totals.totalCount 
-                          ? `Order Selected (${totals.selectedCount}) from ${selectedPharmacy.name.split(' ')[0]}`
-                          : `Order Directly from ${selectedPharmacy.name}`}
-                      </>
-                    )}
-                  </Button>
+                {/* Assurance Card */}
+                <div className="bg-gradient-to-br from-indigo-50/80 to-blue-50/50 rounded-3xl p-4 border border-indigo-100 text-xs space-y-2">
+                  <div className="flex items-center gap-2 text-indigo-900 font-extrabold">
+                    <Zap size={14} className="text-amber-500" />
+                    <span>Single-Rider Split Sourcing Guarantee</span>
+                  </div>
+                  <p className="text-[11px] text-gray-600 leading-relaxed font-medium">
+                    If any medicine is out of stock in one pharmacy, our dedicated rider will pick up from 2 stores and deliver together in one trip at no extra delivery fee.
+                  </p>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={handleReset}
-                  className="w-full py-1 text-center text-xs font-bold text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  Scan a different prescription
-                </button>
+                {/* CDSCO Guarantee */}
+                <div className="flex items-start gap-3 bg-emerald-50 border border-emerald-200/80 rounded-2xl p-3.5 shadow-sm">
+                  <ShieldCheck size={18} className="text-emerald-600 flex-shrink-0 mt-0.5" />
+                  <p className="text-[11px] text-emerald-900 font-medium leading-relaxed">
+                    <strong className="font-extrabold text-emerald-950 block">Registered Pharmacist Verified</strong>
+                    100% CDSCO compliant. Packed in tamper-evident safety seals.
+                  </p>
+                </div>
               </div>
             </motion.div>
           )}
@@ -1683,253 +1700,349 @@ export const PrescriptionUpload = () => {
               initial="hidden" 
               animate="visible" 
               onSubmit={handleSubmit} 
-              className="space-y-6"
+              className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start"
             >
-              {/* Urgent Emergency Badge */}
-              <AnimatePresence>
-                {isUrgent && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: -10, height: 0 }}
-                    animate={{ opacity: 1, y: 0, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-                    className="flex items-center gap-2.5 bg-rose-50 border border-rose-200 text-rose-700 text-sm font-bold px-4 py-3 rounded-2xl shadow-sm mb-4"
-                  >
-                    <div className="bg-white p-1.5 rounded-lg shadow-sm">
-                      <Zap size={16} className="text-rose-600 animate-pulse" />
-                    </div>
-                    Emergency mode — prioritized for immediate courier dispatch
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* ⚡ GEMINI AI INTEGRATION CARD */}
-
-
-              {/* ⚡ INSTANT DEMO PRESCRIPTIONS (1-Click Test) */}
-              <motion.div variants={itemVariants} className="bg-gradient-to-br from-indigo-50/90 via-blue-50/60 to-white rounded-3xl p-5 border border-indigo-200 shadow-md space-y-3.5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <div className="p-2 rounded-2xl bg-indigo-600 text-white shadow-md shadow-indigo-500/20">
-                      <Zap size={18} className="text-amber-300" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="text-sm font-black uppercase tracking-wider text-indigo-950">
-                          Instant Demo Prescriptions
-                        </h4>
-                        <span className="text-[10px] font-black text-indigo-700 bg-indigo-100/90 px-2 py-0.5 rounded-full">
-                          1-Click Live Test
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-gray-600 font-medium mt-0.5">
-                        Test the multi-pharmacy broadcast & live customer approval flow instantly without uploading
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  {DEMO_PRESCRIPTIONS.map(demo => (
-                    <div
-                      key={demo.id}
-                      className="bg-white rounded-2xl p-4 border border-gray-200/90 hover:border-indigo-300 shadow-sm transition-all flex flex-col justify-between space-y-3 hover:shadow-md"
+              {/* ── LEFT COLUMN: Demos, File Uploader, Notes & Submit (8 cols) ── */}
+              <div className="lg:col-span-7 xl:col-span-8 space-y-6">
+                {/* Urgent Emergency Badge */}
+                <AnimatePresence>
+                  {isUrgent && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: -10, height: 0 }}
+                      animate={{ opacity: 1, y: 0, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                      className="flex items-center gap-2.5 bg-rose-50 border border-rose-200 text-rose-700 text-sm font-bold px-4 py-3 rounded-2xl shadow-sm mb-4"
                     >
+                      <div className="bg-white p-1.5 rounded-lg shadow-sm">
+                        <Zap size={16} className="text-rose-600 animate-pulse" />
+                      </div>
+                      Emergency mode — prioritized for immediate courier dispatch
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* ⚡ INSTANT DEMO PRESCRIPTIONS (1-Click Test) */}
+                <motion.div variants={itemVariants} className="bg-gradient-to-br from-indigo-50/90 via-blue-50/60 to-white rounded-3xl p-5 border border-indigo-200 shadow-md space-y-3.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-2 rounded-2xl bg-indigo-600 text-white shadow-md shadow-indigo-500/20">
+                        <Zap size={18} className="text-amber-300" />
+                      </div>
                       <div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200">
-                            {demo.badge}
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-sm font-black uppercase tracking-wider text-indigo-950">
+                            Instant Demo Prescriptions
+                          </h4>
+                          <span className="text-[10px] font-black text-indigo-700 bg-indigo-100/90 px-2 py-0.5 rounded-full">
+                            1-Click Live Test
                           </span>
-                          <span className="text-[10px] text-gray-400 font-extrabold">{demo.medicines.length} Medicines</span>
                         </div>
-                        <h5 className="font-extrabold text-xs text-gray-900 mt-2 leading-snug">{demo.title}</h5>
-                        <p className="text-[10px] text-gray-500 font-medium mt-0.5">{demo.doctorName.split(',')[0]}</p>
-                        <p className="text-[10px] text-blue-700 font-bold mt-1.5 truncate">
-                          💊 {demo.medicines.map(m => m.name.split(' ')[0]).join(' + ')}
+                        <p className="text-[11px] text-gray-600 font-medium mt-0.5">
+                          Test the multi-pharmacy broadcast & live customer approval flow instantly without uploading
                         </p>
                       </div>
+                    </div>
+                  </div>
 
-                      <div className="grid grid-cols-2 gap-2 pt-1 border-t border-gray-100">
-                        <button
-                          type="button"
-                          onClick={() => handleRunInstantDemo(demo)}
-                          className="py-2 px-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-[10px] font-black flex items-center justify-center gap-1 shadow-sm transition-all"
-                        >
-                          <Zap size={12} className="text-amber-300" />
-                          <span>Fast Demo</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleRunPipelineDemo(demo)}
-                          className="py-2 px-2.5 bg-slate-100 hover:bg-slate-200 text-gray-800 rounded-xl text-[10px] font-extrabold flex items-center justify-center gap-1 transition-all"
-                        >
-                          <Play size={11} className="text-blue-600" />
-                          <span>Run OCR</span>
-                        </button>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {DEMO_PRESCRIPTIONS.map(demo => (
+                      <div
+                        key={demo.id}
+                        className="bg-white rounded-2xl p-4 border border-gray-200/90 hover:border-indigo-300 shadow-sm transition-all flex flex-col justify-between space-y-3 hover:shadow-md"
+                      >
+                        <div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200">
+                              {demo.badge}
+                            </span>
+                            <span className="text-[10px] text-gray-400 font-extrabold">{demo.medicines.length} Medicines</span>
+                          </div>
+                          <h5 className="font-extrabold text-xs text-gray-900 mt-2 leading-snug">{demo.title}</h5>
+                          <p className="text-[10px] text-gray-500 font-medium mt-0.5">{demo.doctorName.split(',')[0]}</p>
+                          <p className="text-[10px] text-blue-700 font-bold mt-1.5 truncate">
+                            💊 {demo.medicines.map(m => m.name.split(' ')[0]).join(' + ')}
+                          </p>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 pt-1 border-t border-gray-100">
+                          <button
+                            type="button"
+                            onClick={() => handleRunInstantDemo(demo)}
+                            className="py-2 px-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-[10px] font-black flex items-center justify-center gap-1 shadow-sm transition-all"
+                          >
+                            <Zap size={12} className="text-amber-300" />
+                            <span>Fast Demo</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleRunPipelineDemo(demo)}
+                            className="py-2 px-2.5 bg-slate-100 hover:bg-slate-200 text-gray-800 rounded-xl text-[10px] font-extrabold flex items-center justify-center gap-1 transition-all"
+                          >
+                            <Play size={11} className="text-blue-600" />
+                            <span>Run OCR</span>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+
+                {/* 1. Prescription File Uploader */}
+                <motion.div variants={itemVariants} className="bg-white rounded-3xl p-5 sm:p-6 border border-gray-200/90 shadow-sm">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest flex items-center">
+                      <FileText size={14} className="mr-1.5 text-blue-600" /> Prescription Slip / Doctor Rx
+                    </p>
+                    <span className="text-[10px] font-extrabold text-cyan-700 bg-cyan-50 px-2 py-0.5 rounded-md border border-cyan-200">
+                      JPG, PNG, PDF
+                    </span>
+                  </div>
+                  
+                  <div className="bg-slate-50/70 rounded-2xl border border-dashed border-gray-300 p-1">
+                    <PrescriptionUploader file={file} onChange={setFile} />
+                  </div>
+
+                  {/* Pipeline Trigger Button */}
+                  {file && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mt-4 pt-3 border-t border-gray-100"
+                    >
+                      <button
+                        type="button"
+                        id="btn-run-pipeline"
+                        onClick={handleStartPipeline}
+                        className="w-full py-4 rounded-2xl bg-gradient-to-r from-blue-700 via-indigo-600 to-cyan-600 hover:from-blue-800 hover:to-cyan-700 text-white font-extrabold text-sm shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2.5 transition-all transform hover:scale-[1.01] cursor-pointer"
+                      >
+                        <Sparkles size={18} className="text-cyan-300" />
+                        <span>Scan & Check Medicine Availability</span>
+                        <ArrowRight size={16} />
+                      </button>
+                      <p className="text-[11px] text-center text-gray-500 font-semibold mt-2">
+                        Instant verification & live stock check across licensed pharmacies near you.
+                      </p>
+                    </motion.div>
+                  )}
+                </motion.div>
+
+                {/* 2. Optional Notes */}
+                <motion.div variants={itemVariants} className="bg-white rounded-3xl p-5 border border-gray-200/90 shadow-sm">
+                  <label
+                    htmlFor="note"
+                    className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-3"
+                  >
+                    Patient Notes & Instructions <span className="normal-case font-medium text-gray-400 ml-1">(optional)</span>
+                  </label>
+                  <textarea
+                    id="note"
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                    placeholder="e.g. Need sugar-free syrup, doctor mentioned substitute is allowed"
+                    rows={3}
+                    maxLength={300}
+                    className="w-full resize-none rounded-2xl border border-gray-200 bg-slate-50 px-4 py-3 text-sm font-medium text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all leading-relaxed"
+                  />
+                  <p className="text-right text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-2">{note.length}/300</p>
+                </motion.div>
+
+                {/* 3. Urgent Checkbox */}
+                <motion.div variants={itemVariants} className="bg-white rounded-3xl p-5 border border-gray-200/90 shadow-sm">
+                  <label
+                    htmlFor="urgent"
+                    className="flex items-center gap-4 cursor-pointer select-none"
+                  >
+                    <div className="relative flex-shrink-0">
+                      <input
+                        id="urgent"
+                        type="checkbox"
+                        checked={isUrgent}
+                        onChange={(e) => setIsUrgent(e.target.checked)}
+                        className="sr-only"
+                      />
+                      <div
+                        onClick={() => setIsUrgent(v => !v)}
+                        className={cn(
+                          "w-7 h-7 rounded-xl border-2 flex items-center justify-center transition-all shadow-sm",
+                          isUrgent ? "bg-rose-600 border-rose-600 shadow-rose-600/20" : "border-gray-300 bg-white"
+                        )}
+                      >
+                        {isUrgent && (
+                          <svg width="14" height="14" viewBox="0 0 12 12" fill="none">
+                            <path d="M2 6l3 3 5-5" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        )}
                       </div>
                     </div>
-                  ))}
-                </div>
-              </motion.div>
 
-              {/* 1. Prescription File Uploader */}
-              <motion.div variants={itemVariants} className="bg-white rounded-3xl p-5 border border-gray-200/90 shadow-sm">
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest flex items-center">
-                    <FileText size={14} className="mr-1.5 text-blue-600" /> Prescription Slip / Doctor Rx
-                  </p>
-                  <span className="text-[10px] font-extrabold text-cyan-700 bg-cyan-50 px-2 py-0.5 rounded-md border border-cyan-200">
-                    JPG, PNG, PDF
-                  </span>
-                </div>
-                
-                <div className="bg-slate-50/70 rounded-2xl border border-dashed border-gray-300 p-1">
-                  <PrescriptionUploader file={file} onChange={setFile} />
-                </div>
+                    <div>
+                      <p className="font-extrabold text-gray-800 text-sm flex items-center gap-2">
+                        Mark as Emergency / Urgent
+                        {isUrgent && (
+                          <span className="bg-rose-100 text-rose-700 text-[10px] font-bold px-2 py-0.5 rounded-lg uppercase tracking-widest shadow-sm flex items-center">
+                            <Zap size={10} className="mr-1" /> Priority
+                          </span>
+                        )}
+                      </p>
+                      <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-1">
+                        Pharmacy will dispatch in express sub-10 minute slot
+                      </p>
+                    </div>
+                  </label>
+                </motion.div>
 
-                {/* Pipeline Trigger Button */}
-                {file && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mt-4 pt-3 border-t border-gray-100"
+                {/* Error Message Display */}
+                <AnimatePresence>
+                  {errMsg && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      className="flex items-start gap-3 bg-rose-50 border border-rose-200 text-rose-700 text-sm font-bold px-4 py-3.5 rounded-2xl shadow-sm"
+                    >
+                      <AlertTriangle size={16} className="text-rose-600 flex-shrink-0 mt-0.5" />
+                      <span>{errMsg}</span>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Direct Submit to Pharmacist button */}
+                <motion.div variants={itemVariants}>
+                  <Button
+                    id="btn-submit-prescription"
+                    type="submit"
+                    disabled={!file || status === STATUS.UPLOADING}
+                    className="w-full py-5 rounded-2xl font-extrabold text-base shadow-lg transition-all cursor-pointer"
+                    size="lg"
+                    variant={(!file || status === STATUS.UPLOADING) ? "outline" : "primary"}
                   >
-                    <button
-                      type="button"
-                      id="btn-run-pipeline"
-                      onClick={handleStartPipeline}
-                      className="w-full py-4 rounded-2xl bg-gradient-to-r from-blue-700 via-indigo-600 to-cyan-600 hover:from-blue-800 hover:to-cyan-700 text-white font-extrabold text-sm shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2.5 transition-all transform hover:scale-[1.01]"
-                    >
-                      <Sparkles size={18} className="text-cyan-300" />
-                      <span>Scan & Check Medicine Availability</span>
-                      <ArrowRight size={16} />
-                    </button>
-                    <p className="text-[11px] text-center text-gray-500 font-semibold mt-2">
-                      Instant verification & live stock check across licensed pharmacies near you.
-                    </p>
-                  </motion.div>
-                )}
-              </motion.div>
+                    {status === STATUS.UPLOADING ? (
+                      <>
+                        <Loader2 size={20} className="animate-spin mr-2" />
+                        Broadcasting to Pharmacy…
+                      </>
+                    ) : (
+                      <>
+                        <Send size={20} className="mr-2" />
+                        Submit to Pharmacy Directly
+                      </>
+                    )}
+                  </Button>
+                </motion.div>
+              </div>
 
-              {/* 2. Optional Notes */}
-              <motion.div variants={itemVariants} className="bg-white rounded-3xl p-5 border border-gray-200/90 shadow-sm">
-                <label
-                  htmlFor="note"
-                  className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-3"
-                >
-                  Patient Notes & Instructions <span className="normal-case font-medium text-gray-400 ml-1">(optional)</span>
-                </label>
-                <textarea
-                  id="note"
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  placeholder="e.g. Need sugar-free syrup, doctor mentioned substitute is allowed"
-                  rows={3}
-                  maxLength={300}
-                  className="w-full resize-none rounded-2xl border border-gray-200 bg-slate-50 px-4 py-3 text-sm font-medium text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all leading-relaxed"
-                />
-                <p className="text-right text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-2">{note.length}/300</p>
-              </motion.div>
+              {/* ── RIGHT COLUMN: Trust, Speed & Pharmacy Network Sidecard (4 cols) ── */}
+              <div className="lg:col-span-5 xl:col-span-4 space-y-5 lg:sticky lg:top-24">
+                {/* Live Nearby Connected Pharmacies Card */}
+                <div className="bg-white rounded-3xl p-5 border border-blue-100 shadow-lg space-y-3.5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-[11px] font-extrabold uppercase tracking-wider text-gray-800 flex items-center gap-1.5">
+                        <Radio size={14} className="text-blue-600 animate-pulse" />
+                        Live Connected Pharmacies
+                      </span>
+                      <p className="text-[10px] text-gray-500 font-medium">
+                        Stores ready to receive and dispatch orders
+                      </p>
+                    </div>
+                    <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                      3 Online
+                    </span>
+                  </div>
 
-              {/* 3. Urgent Checkbox */}
-              <motion.div variants={itemVariants} className="bg-white rounded-3xl p-5 border border-gray-200/90 shadow-sm">
-                <label
-                  htmlFor="urgent"
-                  className="flex items-center gap-4 cursor-pointer select-none"
-                >
-                  <div className="relative flex-shrink-0">
-                    <input
-                      id="urgent"
-                      type="checkbox"
-                      checked={isUrgent}
-                      onChange={(e) => setIsUrgent(e.target.checked)}
-                      className="sr-only"
-                    />
-                    <div
-                      onClick={() => setIsUrgent(v => !v)}
-                      className={cn(
-                        "w-7 h-7 rounded-xl border-2 flex items-center justify-center transition-all shadow-sm",
-                        isUrgent ? "bg-rose-600 border-rose-600 shadow-rose-600/20" : "border-gray-300 bg-white"
-                      )}
-                    >
-                      {isUrgent && (
-                        <svg width="14" height="14" viewBox="0 0 12 12" fill="none">
-                          <path d="M2 6l3 3 5-5" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      )}
+                  <div className="space-y-2">
+                    {(nearbyPharmacies || PARTNER_PHARMACIES).map(pharm => (
+                      <div
+                        key={pharm.id}
+                        className="p-3 rounded-2xl border border-gray-150 hover:border-blue-300 bg-white transition-all shadow-xs"
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-extrabold text-xs text-gray-900">{pharm.name}</span>
+                          <span className="flex items-center text-[10px] text-amber-600 font-bold">
+                            <Star size={10} className="fill-amber-400 text-amber-400 mr-0.5" /> {pharm.rating}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-[10px] text-gray-500 font-medium">
+                          <span>{pharm.distance} away</span>
+                          <span className="font-bold text-gray-700">{pharm.deliveryEta}</span>
+                        </div>
+                        <div className="mt-2 pt-2 border-t border-gray-100 flex items-center justify-between text-[10px]">
+                          <span className="text-emerald-700 font-extrabold flex items-center gap-1">
+                            <CheckCircle2 size={11} /> Ready to Dispatch
+                          </span>
+                          <span className="font-extrabold text-[9px] text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded">
+                            {pharm.badge}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* How MediRush Prescription Works */}
+                <div className="bg-gradient-to-br from-blue-900 via-indigo-900 to-slate-900 text-white rounded-3xl p-5 shadow-xl space-y-3.5">
+                  <div className="flex items-center gap-2 text-cyan-300 text-xs font-black uppercase tracking-wider">
+                    <Sparkles size={14} />
+                    <span>How Prescription Delivery Works</span>
+                  </div>
+
+                  <div className="space-y-3 text-xs">
+                    <div className="flex items-start gap-3">
+                      <div className="w-6 h-6 rounded-full bg-blue-500/30 border border-blue-400/40 text-blue-200 flex items-center justify-center font-black text-[11px] flex-shrink-0 mt-0.5">
+                        1
+                      </div>
+                      <div>
+                        <strong className="text-white block font-extrabold">Upload or Choose Demo</strong>
+                        <p className="text-blue-100/75 text-[11px] font-medium leading-relaxed">
+                          AI reads handwritten prescriptions, verifies salt names, and flags precautions.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3">
+                      <div className="w-6 h-6 rounded-full bg-indigo-500/30 border border-indigo-400/40 text-indigo-200 flex items-center justify-center font-black text-[11px] flex-shrink-0 mt-0.5">
+                        2
+                      </div>
+                      <div>
+                        <strong className="text-white block font-extrabold">Multi-Store Stock Match</strong>
+                        <p className="text-blue-100/75 text-[11px] font-medium leading-relaxed">
+                          We check stock across Apollo, MedPlus & local pharmacies to ensure 100% item fulfillment.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3">
+                      <div className="w-6 h-6 rounded-full bg-emerald-500/30 border border-emerald-400/40 text-emerald-200 flex items-center justify-center font-black text-[11px] flex-shrink-0 mt-0.5">
+                        3
+                      </div>
+                      <div>
+                        <strong className="text-white block font-extrabold">10-Minute Doorstep Delivery</strong>
+                        <p className="text-blue-100/75 text-[11px] font-medium leading-relaxed">
+                          Single dedicated rider picks and brings your medicines in temperature-controlled bags.
+                        </p>
+                      </div>
                     </div>
                   </div>
+                </div>
 
-                  <div>
-                    <p className="font-extrabold text-gray-800 text-sm flex items-center gap-2">
-                      Mark as Emergency / Urgent
-                      {isUrgent && (
-                        <span className="bg-rose-100 text-rose-700 text-[10px] font-bold px-2 py-0.5 rounded-lg uppercase tracking-widest shadow-sm flex items-center">
-                          <Zap size={10} className="mr-1" /> Priority
-                        </span>
-                      )}
-                    </p>
-                    <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-1">
-                      Pharmacy will dispatch in express sub-10 minute slot
-                    </p>
+                {/* Safety & CDSCO Guarantee */}
+                <div className="flex items-start gap-3.5 bg-emerald-50 border border-emerald-200/80 rounded-3xl p-4 shadow-sm">
+                  <div className="bg-white p-2 rounded-xl shadow-sm flex-shrink-0 border border-emerald-100">
+                    <ShieldCheck size={20} className="text-emerald-600" />
                   </div>
-                </label>
-              </motion.div>
-
-              {/* Error Message Display */}
-              <AnimatePresence>
-                {errMsg && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: -5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                    className="flex items-start gap-3 bg-rose-50 border border-rose-200 text-rose-700 text-sm font-bold px-4 py-3.5 rounded-2xl shadow-sm"
-                  >
-                    <AlertTriangle size={16} className="text-rose-600 flex-shrink-0 mt-0.5" />
-                    <span>{errMsg}</span>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* Direct Submit to Pharmacist button */}
-              <motion.div variants={itemVariants}>
-                <Button
-                  id="btn-submit-prescription"
-                  type="submit"
-                  disabled={!file || status === STATUS.UPLOADING}
-                  className="w-full py-5 rounded-2xl font-extrabold text-base shadow-lg transition-all"
-                  size="lg"
-                  variant={(!file || status === STATUS.UPLOADING) ? "outline" : "primary"}
-                >
-                  {status === STATUS.UPLOADING ? (
-                    <>
-                      <Loader2 size={20} className="animate-spin mr-2" />
-                      Broadcasting to Pharmacy…
-                    </>
-                  ) : (
-                    <>
-                      <Send size={20} className="mr-2" />
-                      Submit to Pharmacy Directly
-                    </>
-                  )}
-                </Button>
-              </motion.div>
+                  <div className="text-xs text-emerald-900 leading-relaxed">
+                    <span className="font-extrabold block text-[11px] uppercase tracking-wider text-emerald-800">
+                      CDSCO Compliant & Registered Pharmacist Verification
+                    </span>
+                    All medicines verified by a registered licensed pharmacist before dispensing.
+                  </div>
+                </div>
+              </div>
 
             </motion.form>
           )}
         </AnimatePresence>
-
-        {/* ── SAFETY & LICENSING GUARANTEE ───────────────────────────── */}
-        <motion.div variants={itemVariants} className="flex items-start gap-3.5 bg-emerald-50 border border-emerald-200/80 rounded-3xl p-5 shadow-sm">
-          <div className="bg-white p-2.5 rounded-2xl shadow-sm flex-shrink-0 border border-emerald-100">
-            <ShieldCheck size={22} className="text-emerald-600" />
-          </div>
-          <div className="text-xs text-emerald-900 leading-relaxed">
-            <span className="font-extrabold block mb-0.5 text-[11px] uppercase tracking-widest text-emerald-800">
-              CDSCO Compliant & Registered Pharmacist Verification
-            </span>
-            All extracted medicines and dosages are cross-verified by a registered licensed pharmacist before dispensing and final invoice generation.
-          </div>
-        </motion.div>
 
       </motion.div>
 
@@ -1941,7 +2054,7 @@ export const PrescriptionUpload = () => {
               initial={{ opacity: 0, scale: 0.92, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 15 }}
-              className="bg-white rounded-3xl shadow-2xl border border-gray-100 max-w-2xl w-full overflow-hidden my-8"
+              className="bg-white rounded-3xl shadow-2xl border border-gray-100 max-w-3xl lg:max-w-4xl w-full overflow-hidden my-8"
             >
               {/* Modal Header */}
               <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 p-5 text-white flex items-center justify-between relative overflow-hidden">
