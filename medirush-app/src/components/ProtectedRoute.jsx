@@ -31,6 +31,15 @@ export const ProtectedRoute = () => {
     // Redirect unauthenticated users to the login page
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
+
+  // Prevent pharmacy and rider users from accessing patient routes
+  const userRole = user?.user_metadata?.role;
+  if (userRole === 'pharmacy') {
+    return <Navigate to="/pharmacy-partner" replace />;
+  }
+  if (userRole === 'rider') {
+    return <Navigate to="/delivery-partner" replace />;
+  }
   
   // Render the child components if the user is authenticated (or guest)
   return <Outlet />;
