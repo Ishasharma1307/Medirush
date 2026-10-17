@@ -4,6 +4,8 @@
 const CHANNEL_NAME = 'medirush_realtime_network';
 const STORAGE_EVENT_KEY = 'medirush_live_bus_event';
 
+const localListeners = new Set();
+
 let channel = null;
 try {
   if (typeof window !== 'undefined' && window.BroadcastChannel) {
@@ -14,7 +16,7 @@ try {
 }
 
 /**
- * Broadcast an event to all open tabs (Pharmacy, Rider, Customer)
+ * Broadcast an event to all open tabs and current window (Pharmacy, Rider, Customer)
  */
 export const broadcastRealtimeEvent = (type, payload = {}) => {
   const eventData = {
@@ -24,7 +26,16 @@ export const broadcastRealtimeEvent = (type, payload = {}) => {
     id: `ev-${Math.random().toString(36).substring(2, 9)}`
   };
 
-  // 1. BroadcastChannel (same browser instances)
+  // 1. Same-window listeners
+  localListeners.forEach(cb => {
+    try {
+      cb(eventData);
+    } catch (err) {
+      console.warn("Local bus listener error:", err);
+    }
+  });
+
+  // 2. BroadcastChannel (same browser instances)
   if (channel) {
     try {
       channel.postMessage(eventData);
@@ -33,7 +44,7 @@ export const broadcastRealtimeEvent = (type, payload = {}) => {
     }
   }
 
-  // 2. LocalStorage event (triggers storage event on other open tabs)
+  // 3. LocalStorage event (triggers storage event on other open tabs)
   try {
     localStorage.setItem(STORAGE_EVENT_KEY, JSON.stringify(eventData));
   } catch (err) {
@@ -44,9 +55,14 @@ export const broadcastRealtimeEvent = (type, payload = {}) => {
 };
 
 /**
- * Subscribe to realtime events across all open portal tabs
+ * Subscribe to realtime events across all open portal tabs and current tab
  */
 export const subscribeToRealtimeEvents = (callback) => {
+  if (!callback) return () => {};
+
+  // Register in local listeners
+  localListeners.add(callback);
+
   // Listen on BroadcastChannel
   const handleBcMessage = (event) => {
     if (event?.data && callback) {
@@ -76,6 +92,7 @@ export const subscribeToRealtimeEvents = (callback) => {
 
   // Return unsubscribe cleanup function
   return () => {
+    localListeners.delete(callback);
     if (channel) {
       channel.removeEventListener('message', handleBcMessage);
     }

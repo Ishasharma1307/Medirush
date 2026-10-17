@@ -14,16 +14,23 @@ import {
   X,
   ArrowRight,
   Smartphone,
-  Phone
+  Phone,
+  User,
+  Store,
+  Bike,
+  Sparkles,
+  Building2
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from '../utils/cn';
 
 export const Login = () => {
   const navigate = useNavigate();
   const { 
     loginAsDemo,
     loginAsDemoPharmacy, 
+    loginAsDemoRider,
     loginWithGoogle, 
     loginWithApple, 
     sendPhoneOtp, 
@@ -32,6 +39,9 @@ export const Login = () => {
     verifySignupOtp
   } = useAuth();
 
+  // Role Portal State: 'patient' | 'pharmacy' | 'rider'
+  const [portalRole, setPortalRole] = useState('patient');
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [successMsg, setSuccessMsg] = useState(null);
@@ -39,12 +49,14 @@ export const Login = () => {
   // Redirect user based on their role
   const handleRoleRedirect = async (sessionUser) => {
     if (!sessionUser) {
-      navigate('/home');
+      if (portalRole === 'pharmacy') navigate('/pharmacy-partner');
+      else if (portalRole === 'rider') navigate('/delivery-partner');
+      else navigate('/home');
       return;
     }
 
     try {
-      // Check user role from metadata first
+      // Check user role from metadata or fallback to selected portal
       let role = sessionUser.user_metadata?.role;
       if (!role) {
         const { data: profile } = await supabase
@@ -52,11 +64,13 @@ export const Login = () => {
           .select('role')
           .eq('id', sessionUser.id)
           .maybeSingle();
-        role = profile?.role || 'user';
+        role = profile?.role || portalRole || 'user';
       }
 
-      if (role === 'pharmacy') {
-        navigate('/pharmacy/dashboard');
+      if (role === 'pharmacy' || portalRole === 'pharmacy') {
+        navigate('/pharmacy-partner');
+      } else if (role === 'rider' || role === 'driver' || portalRole === 'rider') {
+        navigate('/delivery-partner');
       } else if (role === 'admin') {
         navigate('/admin');
       } else {
@@ -64,7 +78,9 @@ export const Login = () => {
       }
     } catch (err) {
       console.error('Error during role redirect:', err);
-      navigate('/home');
+      if (portalRole === 'pharmacy') navigate('/pharmacy-partner');
+      else if (portalRole === 'rider') navigate('/delivery-partner');
+      else navigate('/home');
     }
   };
   
@@ -442,19 +458,114 @@ export const Login = () => {
             <h2 className="text-3xl font-extrabold text-gray-900 drop-shadow-sm">MediRush</h2>
           </div>
 
-          <div className="mb-8">
-            <h2 className="text-3xl font-extrabold text-gray-900 mb-2 tracking-tight drop-shadow-sm">Log In</h2>
+          {/* ── 3-WAY ROLE SELECTION AT VERY TOP ─────────────────── */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] uppercase tracking-wider font-extrabold text-gray-500">
+                Select Login Portal:
+              </span>
+              <span className={cn(
+                "text-[9px] uppercase font-black px-2 py-0.5 rounded-full border",
+                portalRole === 'patient' && "bg-blue-50 text-blue-700 border-blue-200",
+                portalRole === 'pharmacy' && "bg-emerald-50 text-emerald-700 border-emerald-200",
+                portalRole === 'rider' && "bg-amber-50 text-amber-700 border-amber-200"
+              )}>
+                {portalRole === 'patient' && '👤 Customer / Patient'}
+                {portalRole === 'pharmacy' && '🏪 Pharmacy Merchant'}
+                {portalRole === 'rider' && '🛵 Fleet Rider'}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-3 gap-1.5 p-1.5 bg-gray-100 rounded-2xl border border-gray-200/80">
+              <button
+                type="button"
+                onClick={() => setPortalRole('patient')}
+                className={cn(
+                  "flex flex-col items-center justify-center py-2.5 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer",
+                  portalRole === 'patient'
+                    ? "bg-white text-primary shadow-sm border border-primary/20 scale-[1.02]"
+                    : "text-gray-500 hover:text-gray-900"
+                )}
+              >
+                <User size={18} className="mb-1 text-primary" />
+                <span className="text-[11px] font-black">Patient</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setPortalRole('pharmacy')}
+                className={cn(
+                  "flex flex-col items-center justify-center py-2.5 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer",
+                  portalRole === 'pharmacy'
+                    ? "bg-emerald-600 text-white shadow-sm scale-[1.02]"
+                    : "text-gray-500 hover:text-gray-900"
+                )}
+              >
+                <Store size={18} className="mb-1" />
+                <span className="text-[11px] font-black">Pharmacy</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setPortalRole('rider')}
+                className={cn(
+                  "flex flex-col items-center justify-center py-2.5 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer",
+                  portalRole === 'rider'
+                    ? "bg-amber-600 text-white shadow-sm scale-[1.02]"
+                    : "text-gray-500 hover:text-gray-900"
+                )}
+              >
+                <Bike size={18} className="mb-1" />
+                <span className="text-[11px] font-black">Rider</span>
+              </button>
+            </div>
+
+            {/* Portal Role Info Callout */}
+            <div className={cn(
+              "mt-3 p-3 rounded-2xl border text-xs transition-all",
+              portalRole === 'patient' && "bg-blue-50/70 border-blue-200/70 text-blue-900",
+              portalRole === 'pharmacy' && "bg-emerald-50/70 border-emerald-200/70 text-emerald-950",
+              portalRole === 'rider' && "bg-amber-50/70 border-amber-200/70 text-amber-950"
+            )}>
+              <div className="flex items-center gap-1.5 font-black text-[11px] uppercase tracking-wide mb-0.5">
+                {portalRole === 'patient' && <Sparkles size={14} className="text-primary" />}
+                {portalRole === 'pharmacy' && <Store size={14} className="text-emerald-700" />}
+                {portalRole === 'rider' && <Bike size={14} className="text-amber-700" />}
+                <span>
+                  {portalRole === 'patient' && "Patient & Emergency Medicine Portal"}
+                  {portalRole === 'pharmacy' && "Licensed Pharmacy Merchant Terminal"}
+                  {portalRole === 'rider' && "10-Minute Rapid Delivery Fleet"}
+                </span>
+              </div>
+              <p className="text-[11px] leading-relaxed text-gray-600 font-medium">
+                {portalRole === 'patient' && "Order medicines in 10 minutes, upload prescriptions, consult doctors & track delivery in real time."}
+                {portalRole === 'pharmacy' && "Listen for live prescription requests, verify medicine dosage, pack thermal pouches & hand over to riders."}
+                {portalRole === 'rider' && "Receive instant dispatch gigs, navigate GPS turn-by-turn routes & verify OTPs for medicine delivery."}
+              </p>
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-1.5 tracking-tight drop-shadow-sm">
+              {portalRole === 'patient' && "Patient Login"}
+              {portalRole === 'pharmacy' && "Pharmacy Terminal Login"}
+              {portalRole === 'rider' && "Fleet Rider Login"}
+            </h2>
             <p className="text-[11px] uppercase tracking-widest text-gray-500 font-bold">
-              {loginMode === 'otp' ? 'Verify OTP to sign in' : 'Please enter your details to access your account.'}
+              {loginMode === 'otp' 
+                ? 'Verify OTP to sign in' 
+                : `Enter your credentials to access the ${portalRole} terminal.`}
             </p>
           </div>
 
           {loginMode === 'email' && (
             /* ================= EMAIL LOGIN FORM ================= */
-            <form className="space-y-5" onSubmit={handleEmailLogin}>
+            <form className="space-y-4" onSubmit={handleEmailLogin}>
               {/* Email Address */}
               <div>
-                <label className="block text-[11px] uppercase tracking-widest font-extrabold text-gray-700 mb-2 ml-1">Email Address</label>
+                <label className="block text-[11px] uppercase tracking-widest font-extrabold text-gray-700 mb-1.5 ml-1">
+                  {portalRole === 'pharmacy' ? 'Pharmacy Registered Email' : portalRole === 'rider' ? 'Rider Registered Email' : 'Email Address'}
+                </label>
                 <div className="relative">
                   <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                   <input
@@ -463,8 +574,14 @@ export const Login = () => {
                     required
                     value={formData.email}
                     onChange={handleChange}
-                    className="w-full pl-12 pr-5 py-4 bg-white/60 backdrop-blur-sm border border-white/60 rounded-2xl focus:bg-white focus:ring-2 focus:ring-primary/35 focus:border-primary outline-none transition-all font-bold text-gray-900 shadow-inner placeholder:text-gray-400 placeholder:font-medium text-sm"
-                    placeholder="you@example.com"
+                    className="w-full pl-12 pr-5 py-3.5 bg-white/60 backdrop-blur-sm border border-white/60 rounded-2xl focus:bg-white focus:ring-2 focus:ring-primary/35 focus:border-primary outline-none transition-all font-bold text-gray-900 shadow-inner placeholder:text-gray-400 placeholder:font-medium text-sm"
+                    placeholder={
+                      portalRole === 'pharmacy' 
+                        ? 'store@apollo-pharmacy.com' 
+                        : portalRole === 'rider' 
+                          ? 'rider@medirush.app' 
+                          : 'you@example.com'
+                    }
                   />
                 </div>
               </div>
@@ -716,31 +833,96 @@ export const Login = () => {
             </div>
           )}
 
-          {/* Quick Demo Logins */}
+          {/* Role-Specific Quick Demo Logins */}
           {loginMode === 'email' && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
-              <Button 
-                type="button" 
-                variant="glass"
-                className="w-full py-3.5 text-primary border-primary/20 hover:bg-primary/5 flex items-center justify-center rounded-2xl font-bold text-xs" 
-                onClick={() => {
-                  loginAsDemo();
-                  navigate('/home');
-                }}
-              >
-                Quick Demo Customer
-              </Button>
-              <Button 
-                type="button" 
-                variant="glass"
-                className="w-full py-3.5 text-emerald-800 bg-emerald-50/80 hover:bg-emerald-100/80 border-emerald-300 flex items-center justify-center rounded-2xl font-bold text-xs shadow-sm" 
-                onClick={() => {
-                  loginAsDemoPharmacy();
-                  navigate('/pharmacy-partner');
-                }}
-              >
-                ⚡ Quick Demo Pharmacy Terminal
-              </Button>
+            <div className="mt-5 space-y-3">
+              {/* Primary Demo Button for Active Role */}
+              {portalRole === 'patient' && (
+                <Button 
+                  type="button" 
+                  variant="glass"
+                  className="w-full py-4 text-primary bg-primary/5 hover:bg-primary/10 border-primary/30 flex items-center justify-center rounded-2xl font-black text-xs shadow-sm gap-2" 
+                  onClick={() => {
+                    loginAsDemo();
+                    navigate('/home');
+                  }}
+                >
+                  <Sparkles size={16} className="text-primary" />
+                  <span>⚡ 1-Click Patient Demo Login</span>
+                </Button>
+              )}
+
+              {portalRole === 'pharmacy' && (
+                <Button 
+                  type="button" 
+                  variant="glass"
+                  className="w-full py-4 text-emerald-900 bg-emerald-50 hover:bg-emerald-100 border-emerald-300 flex items-center justify-center rounded-2xl font-black text-xs shadow-sm gap-2" 
+                  onClick={() => {
+                    loginAsDemoPharmacy();
+                    navigate('/pharmacy-partner');
+                  }}
+                >
+                  <Store size={16} className="text-emerald-700" />
+                  <span>🏪 1-Click Pharmacy Terminal Demo</span>
+                </Button>
+              )}
+
+              {portalRole === 'rider' && (
+                <Button 
+                  type="button" 
+                  variant="glass"
+                  className="w-full py-4 text-amber-950 bg-amber-50 hover:bg-amber-100 border-amber-300 flex items-center justify-center rounded-2xl font-black text-xs shadow-sm gap-2" 
+                  onClick={() => {
+                    loginAsDemoRider();
+                    navigate('/delivery-partner');
+                  }}
+                >
+                  <Bike size={16} className="text-amber-700" />
+                  <span>🛵 1-Click Rider Fleet Demo</span>
+                </Button>
+              )}
+
+              {/* Quick Switch for Judges / Evaluators */}
+              <div className="pt-2 border-t border-gray-100">
+                <span className="text-[10px] uppercase font-bold text-gray-400 block text-center mb-1.5">
+                  Hackathon Quick Test Access:
+                </span>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPortalRole('patient');
+                      loginAsDemo();
+                      navigate('/home');
+                    }}
+                    className="py-2 px-1 text-center bg-gray-50 hover:bg-blue-50 hover:text-primary rounded-xl text-[10px] font-bold text-gray-600 border border-gray-200 transition-colors"
+                  >
+                    👤 Patient App
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPortalRole('pharmacy');
+                      loginAsDemoPharmacy();
+                      navigate('/pharmacy-partner');
+                    }}
+                    className="py-2 px-1 text-center bg-gray-50 hover:bg-emerald-50 hover:text-emerald-700 rounded-xl text-[10px] font-bold text-gray-600 border border-gray-200 transition-colors"
+                  >
+                    🏪 Pharmacy App
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPortalRole('rider');
+                      loginAsDemoRider();
+                      navigate('/delivery-partner');
+                    }}
+                    className="py-2 px-1 text-center bg-gray-50 hover:bg-amber-50 hover:text-amber-700 rounded-xl text-[10px] font-bold text-gray-600 border border-gray-200 transition-colors"
+                  >
+                    🛵 Rider Fleet
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 

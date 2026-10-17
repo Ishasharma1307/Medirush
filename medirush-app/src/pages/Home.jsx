@@ -5,13 +5,15 @@ import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
 import { 
   Pill, Leaf, MapPin, Stethoscope, FileText, Bell, Activity, 
-  Store, ArrowRight, AlertTriangle, ShieldCheck, Zap, Package
+  Store, ArrowRight, AlertTriangle, ShieldCheck, Zap, Package,
+  Sparkles, Bot
 } from 'lucide-react';
 
 import { ActionCard } from '../components/cards/ActionCard';
 import { MedicineCard } from '../components/cards/MedicineCard';
 import { PharmacyCard } from '../components/cards/PharmacyCard';
 import { Button } from '../components/ui/Button';
+import { AISymptomRemedyModal } from '../components/AISymptomRemedyModal';
 
 export const Home = () => {
   const { user } = useAuth();
@@ -21,8 +23,17 @@ export const Home = () => {
   const [pharmacies, setPharmacies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [mode, setMode] = useState('patient');
+  const [isAiRemedyModalOpen, setIsAiRemedyModalOpen] = useState(false);
 
   useEffect(() => {
+    if (user?.user_metadata?.role === 'pharmacy') {
+      navigate('/pharmacy-partner');
+      return;
+    }
+    if (user?.user_metadata?.role === 'rider') {
+      navigate('/delivery-partner');
+      return;
+    }
     fetchDashboardData();
   }, [user]);
 
@@ -174,6 +185,37 @@ export const Home = () => {
           </Link>
         </motion.div>
 
+        {/* ── AI SYMPTOM CHECKER & DESI REMEDIES HERO BANNER ────────────── */}
+        <motion.div variants={itemVariants} className="bg-gradient-to-r from-emerald-700 via-teal-700 to-blue-800 p-6 md:p-7 shadow-lg rounded-3xl text-white flex flex-col md:flex-row items-center justify-between gap-4 border border-emerald-500/30">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center border border-white/30 flex-shrink-0 shadow-inner">
+              <Sparkles size={28} className="text-amber-300 animate-pulse" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-xl md:text-2xl font-black tracking-tight text-white">
+                  AI Symptom Checker & Desi Nuskhe
+                </h3>
+                <span className="text-[10px] font-black uppercase bg-emerald-400 text-emerald-950 px-2 py-0.5 rounded-full">
+                  AI Model
+                </span>
+              </div>
+              <p className="text-emerald-100 text-sm font-medium mt-0.5">
+                Describe how you feel in English or Hindi. Get verified Ayurvedic remedies + 10-minute medicine delivery.
+              </p>
+            </div>
+          </div>
+
+          <Button
+            size="lg"
+            onClick={() => setIsAiRemedyModalOpen(true)}
+            className="w-full md:w-auto bg-white text-emerald-900 hover:bg-emerald-50 font-black text-xs py-3.5 px-6 rounded-2xl shadow-md border-none cursor-pointer flex items-center justify-center gap-2 whitespace-nowrap"
+          >
+            <Bot size={16} className="text-emerald-700" />
+            <span>Check Symptoms with AI</span>
+          </Button>
+        </motion.div>
+
         {/* 2. Quick Actions Grid (Premium Glass Cards) */}
         <motion.div variants={itemVariants}>
           <div className="flex justify-between items-center mb-6">
@@ -184,8 +226,8 @@ export const Home = () => {
             <ActionCard title="Upload Rx" icon={FileText} onClick={() => navigate('/prescription-upload')} colorClass="text-orange-600 bg-orange-600/10" className="col-span-1" />
             <ActionCard title="Track Orders" icon={Package} onClick={() => navigate('/orders')} colorClass="text-blue-600 bg-blue-600/10" className="col-span-1" />
             <ActionCard title="Nearby Pharmacy" icon={MapPin} onClick={() => navigate('/nearby')} colorClass="text-purple-600 bg-purple-600/10" className="col-span-1" />
-            <ActionCard title="Symptom Checker" icon={Stethoscope} onClick={() => navigate('/symptom-checker')} colorClass="text-teal-600 bg-teal-600/10" className="col-span-1" />
-            <ActionCard title="Home Remedies" icon={Leaf} onClick={() => navigate('/home-remedies')} colorClass="text-secondary bg-secondary/10" className="col-span-1" />
+            <ActionCard title="AI Symptom Checker" icon={Sparkles} onClick={() => setIsAiRemedyModalOpen(true)} colorClass="text-teal-700 bg-teal-50 border border-teal-200" className="col-span-1" />
+            <ActionCard title="Desi Home Remedies" icon={Leaf} onClick={() => setIsAiRemedyModalOpen(true)} colorClass="text-emerald-700 bg-emerald-50 border border-emerald-200" className="col-span-1" />
             <ActionCard title="Medicine Reminder" icon={Bell} onClick={() => navigate('/medicine-reminder')} colorClass="text-yellow-600 bg-yellow-600/10" className="col-span-1" />
             <ActionCard title="Report Simplifier" icon={Activity} onClick={() => navigate('/report-simplifier')} colorClass="text-pink-600 bg-pink-600/10" className="col-span-1" />
           </div>
@@ -272,6 +314,13 @@ export const Home = () => {
         </div>
 
       </div>
+
+      {/* ── AI SYMPTOM CHECKER & HOME REMEDIES MODAL ── */}
+      <AISymptomRemedyModal
+        isOpen={isAiRemedyModalOpen}
+        onClose={() => setIsAiRemedyModalOpen(false)}
+      />
+
     </motion.div>
   );
 };

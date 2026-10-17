@@ -1,16 +1,19 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate, Link } from 'react-router-dom';
 import { 
   Store, ShieldCheck, Clock, AlertTriangle, 
   Package, CheckCircle2, Phone, MapPin, 
   Check, Volume2, VolumeX, Eye, 
   Send, RefreshCw, Radio, Sparkles,
   ArrowRight, Search, FileText, ChevronRight,
-  ExternalLink, Bell, X, Pill, Zap
+  ExternalLink, Bell, X, Pill, Zap, LogOut,
+  UserCheck, ShieldAlert
 } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { Button } from '../components/ui/Button';
 import { soundEffects } from '../utils/soundEffects';
+import { useAuth } from '../context/AuthContext';
 import { 
   broadcastRealtimeEvent, 
   subscribeToRealtimeEvents, 
@@ -25,14 +28,18 @@ const PARTNER_STORES = [
 ];
 
 export const PharmacyPartnerApp = () => {
+  const { user, loginAsDemoPharmacy, logout } = useAuth();
+  const navigate = useNavigate();
+
   const [activeStore, setActiveStore] = useState(PARTNER_STORES[0]);
   const [isOnline, setIsOnline] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [activeTab, setActiveTab] = useState('incoming'); // 'incoming' | 'packing' | 'ready' | 'completed'
   const [orders, setOrders] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
-  const [previewPrescriptionUrl, setPreviewPrescriptionUrl] = useState(null);
   const [urgentAlert, setUrgentAlert] = useState(null);
+
+  const isPharmacyRole = user?.user_metadata?.role === 'pharmacy';
 
   // Sync orders from storage & realtime events
   const loadOrders = useCallback(() => {
@@ -79,22 +86,104 @@ export const PharmacyPartnerApp = () => {
   );
   const completedOrders = orders.filter(o => o.status === 'Delivered');
 
-  // Actions
+  // Actions & Inventory Manipulation
+  const handleToggleItemAvailability = (orderId, itemIdx) => {
+    setOrders(prev => prev.map(ord => {
+      if (ord.id !== orderId) return ord;
+      const currentItems = (ord.items || ord.medicines || []).map((it, i) => {
+        if (i !== itemIdx) return it;
+        return { ...it, available: it.available === false ? true : false };
+      });
+
+      const newTotal = currentItems.reduce((acc, it) => {
+        if (it.available !== false) return acc + (Number(it.price || 0) * (Number(it.quantity) || 1));
+        if (it.substitute && it.substitutePrice) return acc + (Number(it.substitutePrice) * (Number(it.quantity) || 1));
+        return acc;
+      }, 0);
+
+      const updated = { ...ord, items: currentItems, total: newTotal };
+      if (selectedOrder && selectedOrder.id === orderId) {
+        setSelectedOrder(updated);
+      }
+      return updated;
+    }));
+  };
+
+  const handleUpdateItemPrice = (orderId, itemIdx, newPrice) => {
+    const p = parseFloat(newPrice) || 0;
+    setOrders(prev => prev.map(ord => {
+      if (ord.id !== orderId) return ord;
+      const currentItems = (ord.items || ord.medicines || []).map((it, i) => {
+        if (i !== itemIdx) return it;
+        return { ...it, price: p };
+      });
+
+      const newTotal = currentItems.reduce((acc, it) => {
+        if (it.available !== false) return acc + (Number(it.price || 0) * (Number(it.quantity) || 1));
+        if (it.substitute && it.substitutePrice) return acc + (Number(it.substitutePrice) * (Number(it.quantity) || 1));
+        return acc;
+      }, 0);
+
+      const updated = { ...ord, items: currentItems, total: newTotal };
+      if (selectedOrder && selectedOrder.id === orderId) {
+        setSelectedOrder(updated);
+      }
+      return updated;
+    }));
+  };
+
+  const handleAddSubstitute = (orderId, itemIdx, subName, subPrice) => {
+    setOrders(prev => prev.map(ord => {
+      if (ord.id !== orderId) return ord;
+      const currentItems = (ord.items || ord.medicines || []).map((it, i) => {
+        if (i !== itemIdx) return it;
+        return { 
+          ...it, 
+          available: false, 
+          substitute: subName, 
+          substitutePrice: parseFloat(subPrice) || 0 
+        };
+      });
+
+      const newTotal = currentItems.reduce((acc, it) => {
+        if (it.available !== false) return acc + (Number(it.price || 0) * (Number(it.quantity) || 1));
+        if (it.substitute && it.substitutePrice) return acc + (Number(it.substitutePrice) * (Number(it.quantity) || 1));
+        return acc;
+      }, 0);
+
+      const updated = { ...ord, items: currentItems, total: newTotal };
+      if (selectedOrder && selectedOrder.id === orderId) {
+        setSelectedOrder(updated);
+      }
+      return updated;
+    }));
+  };
+
   const handleAcceptOrder = (order) => {
+    const finalItems = order.items || order.medicines || [];
+    const finalTotal = order.total !== undefined ? order.total : finalItems.reduce((acc, it) => acc + (it.price * (it.quantity || 1)), 0);
+
     updateOrderStatus(order.id, 'Packing', {
       accepted_by_store: activeStore.name,
-      accepted_time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      accepted_time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      items: finalItems,
+      total: finalTotal,
+      verified_pharmacist: activeStore.pharmacist
     });
     setUrgentAlert(null);
     soundEffects.playSuccessFanfare();
     loadOrders();
     setActiveTab('packing');
 
-    // Notify Rider Fleet that order is being packed
+    // Notify Rider Fleet and Customer that order is verified & packing
     broadcastRealtimeEvent('PHARMACY_ACCEPTED', {
       orderId: order.id,
       store: activeStore,
-      order
+      order: {
+        ...order,
+        items: finalItems,
+        total: finalTotal
+      }
     });
   };
 
@@ -153,23 +242,49 @@ export const PharmacyPartnerApp = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-emerald-500 selection:text-white">
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-emerald-500 selection:text-white">
 
-      {/* ── TOP NAV BAR (STANDALONE PHARMACY PARTNER APP) ────────────────── */}
-      <header className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 px-4 py-3 shadow-xl">
+      {/* ── ROLE ISOLATION ACCESS GATE BANNER ────────────────────────────── */}
+      {user && !isPharmacyRole && (
+        <div className="bg-amber-500 text-slate-950 px-4 py-2.5 border-b border-amber-600/30 text-xs font-bold flex flex-col sm:flex-row items-center justify-between gap-2 shadow-sm">
+          <div className="flex items-center gap-2">
+            <ShieldAlert size={16} className="text-slate-950 flex-shrink-0 animate-bounce" />
+            <span>
+              <strong>Customer Profile Active ({user.email || 'Patient'})</strong>: Customer and Pharmacy portals are segregated.
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => loginAsDemoPharmacy()}
+              className="px-3 py-1 bg-slate-950 hover:bg-slate-900 text-white rounded-lg text-[11px] font-black transition-colors cursor-pointer"
+            >
+              ⚡ Switch to Pharmacy Session
+            </button>
+            <Link
+              to="/home"
+              className="px-2.5 py-1 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-lg text-[11px] font-extrabold transition-colors"
+            >
+              Return to Patient App
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* ── TOP NAV BAR (LIGHT THEME TERMINAL) ────────────────── */}
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 py-3 shadow-sm">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-3">
           
           {/* Brand & Store Selector */}
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-bold shadow-lg shadow-emerald-500/20 flex-shrink-0">
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-bold shadow-md shadow-emerald-500/20 flex-shrink-0">
               <Store size={22} />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-sm sm:text-base font-black tracking-tight text-white">
+                <h1 className="text-sm sm:text-base font-black tracking-tight text-slate-900">
                   MediRush Pharmacy Merchant Portal
                 </h1>
-                <span className="text-[10px] font-black uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-md">
+                <span className="text-[10px] font-black uppercase bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-md">
                   Live Terminal
                 </span>
               </div>
@@ -179,13 +294,13 @@ export const PharmacyPartnerApp = () => {
                 <select
                   value={activeStore.id}
                   onChange={(e) => setActiveStore(PARTNER_STORES.find(s => s.id === e.target.value) || PARTNER_STORES[0])}
-                  className="bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold rounded-lg px-2 py-0.5 focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer"
+                  className="bg-slate-100 hover:bg-slate-200/80 border border-slate-200 text-slate-800 text-xs font-bold rounded-lg px-2 py-0.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer transition-colors"
                 >
                   {PARTNER_STORES.map(s => (
                     <option key={s.id} value={s.id}>{s.name} ({s.branch})</option>
                   ))}
                 </select>
-                <span className="text-[10px] text-slate-400 font-medium hidden sm:inline">
+                <span className="text-[10px] text-slate-500 font-medium hidden sm:inline">
                   Reg: {activeStore.regNo}
                 </span>
               </div>
@@ -201,19 +316,19 @@ export const PharmacyPartnerApp = () => {
               className={cn(
                 "p-2 rounded-xl text-xs font-bold flex items-center gap-1.5 border transition-all cursor-pointer",
                 soundEnabled 
-                  ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/20"
-                  : "bg-slate-800 text-slate-400 border-slate-700 hover:text-white"
+                  ? "bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100"
+                  : "bg-slate-100 text-slate-600 border-slate-200 hover:text-slate-900"
               )}
               title={soundEnabled ? "Order Ring Sound ON" : "Order Ring Sound Muted"}
             >
-              {soundEnabled ? <Volume2 size={16} className="text-emerald-400 animate-pulse" /> : <VolumeX size={16} />}
+              {soundEnabled ? <Volume2 size={16} className="text-emerald-600 animate-pulse" /> : <VolumeX size={16} />}
               <span className="hidden sm:inline">{soundEnabled ? "Audio Alert ON" : "Muted"}</span>
             </button>
 
             {/* Test Simulation Button */}
             <button
               onClick={handleSimulateIncomingOrder}
-              className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold flex items-center gap-1.5 shadow-md shadow-blue-600/25 transition-all cursor-pointer"
+              className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
               title="Simulate incoming real-time customer prescription order"
             >
               <Zap size={14} className="text-amber-300" />
@@ -221,26 +336,29 @@ export const PharmacyPartnerApp = () => {
             </button>
 
             {/* Duty Toggle (Online / Busy) */}
-            <div className="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-700">
-              <span className={cn("w-2.5 h-2.5 rounded-full transition-all", isOnline ? "bg-emerald-400 animate-ping" : "bg-rose-500")} />
+            <div className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
+              <span className={cn("w-2.5 h-2.5 rounded-full transition-all", isOnline ? "bg-emerald-500 animate-ping" : "bg-rose-500")} />
               <button
                 onClick={() => setIsOnline(!isOnline)}
-                className="text-xs font-black cursor-pointer text-white hover:text-emerald-300"
+                className="text-xs font-black cursor-pointer text-slate-800 hover:text-emerald-700"
               >
                 {isOnline ? "STORE ONLINE" : "STORE BUSY"}
               </button>
             </div>
 
-            <a
-              href="/home"
-              target="_blank"
-              rel="noreferrer"
-              className="text-xs text-slate-400 hover:text-white p-2 rounded-xl bg-slate-800/80 hover:bg-slate-800 transition-colors flex items-center gap-1"
-              title="Open Customer App in new tab"
+            {/* Logout / Switch Role */}
+            <button
+              onClick={() => {
+                logout();
+                navigate('/login');
+              }}
+              className="text-xs text-slate-600 hover:text-rose-600 p-2 rounded-xl bg-slate-100 hover:bg-rose-50 border border-slate-200 transition-colors flex items-center gap-1 cursor-pointer"
+              title="Log out from Pharmacy Terminal"
             >
-              <span>Customer App</span>
-              <ExternalLink size={13} />
-            </a>
+              <LogOut size={13} />
+              <span className="hidden sm:inline">Exit</span>
+            </button>
+
           </div>
 
         </div>
@@ -253,7 +371,7 @@ export const PharmacyPartnerApp = () => {
             initial={{ opacity: 0, y: -30, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -30, scale: 0.95 }}
-            className="fixed top-18 left-4 right-4 z-50 max-w-2xl mx-auto bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 text-white rounded-3xl p-4 sm:p-5 shadow-2xl border-2 border-emerald-300 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+            className="fixed top-18 left-4 right-4 z-50 max-w-2xl mx-auto bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-700 text-white rounded-3xl p-4 sm:p-5 shadow-2xl border-2 border-emerald-300 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
           >
             <div className="flex items-start gap-3">
               <div className="w-12 h-12 rounded-2xl bg-white text-emerald-800 flex items-center justify-center font-black shadow-md flex-shrink-0 animate-bounce">
@@ -296,35 +414,35 @@ export const PharmacyPartnerApp = () => {
       {/* ── METRICS DASHBOARD STRIP ───────────────────────────────────────── */}
       <div className="max-w-7xl mx-auto px-4 pt-6">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 shadow-sm space-y-1">
-            <span className="text-[10px] uppercase font-bold text-slate-400">Incoming Unverified</span>
+          <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-1">
+            <span className="text-[10px] uppercase font-bold text-slate-500">Incoming Requests</span>
             <div className="flex items-baseline justify-between">
-              <span className="text-2xl font-black text-amber-400">{incomingOrders.length}</span>
-              <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded">Action Req.</span>
+              <span className="text-2xl font-black text-amber-600">{incomingOrders.length}</span>
+              <span className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded">Action Req.</span>
             </div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 shadow-sm space-y-1">
-            <span className="text-[10px] uppercase font-bold text-slate-400">Currently Packing</span>
+          <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-1">
+            <span className="text-[10px] uppercase font-bold text-slate-500">Currently Packing</span>
             <div className="flex items-baseline justify-between">
-              <span className="text-2xl font-black text-blue-400">{packingOrders.length}</span>
-              <span className="text-[10px] font-bold text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded">In Prep</span>
+              <span className="text-2xl font-black text-blue-600">{packingOrders.length}</span>
+              <span className="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded">In Prep</span>
             </div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 shadow-sm space-y-1">
-            <span className="text-[10px] uppercase font-bold text-slate-400">Ready for Rider</span>
+          <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-1">
+            <span className="text-[10px] uppercase font-bold text-slate-500">Ready for Rider</span>
             <div className="flex items-baseline justify-between">
-              <span className="text-2xl font-black text-purple-400">{readyOrders.length}</span>
-              <span className="text-[10px] font-bold text-purple-400 bg-purple-500/10 px-1.5 py-0.5 rounded">Dispatched</span>
+              <span className="text-2xl font-black text-purple-600">{readyOrders.length}</span>
+              <span className="text-[10px] font-bold text-purple-700 bg-purple-50 border border-purple-200 px-1.5 py-0.5 rounded">Handover</span>
             </div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 shadow-sm space-y-1">
-            <span className="text-[10px] uppercase font-bold text-slate-400">Today's Revenue</span>
+          <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-1">
+            <span className="text-[10px] uppercase font-bold text-slate-500">Today's Revenue</span>
             <div className="flex items-baseline justify-between">
-              <span className="text-2xl font-black text-emerald-400">₹{orders.reduce((acc, o) => acc + (Number(o.total) || 0), 0).toFixed(0)}</span>
-              <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded">Gross</span>
+              <span className="text-2xl font-black text-emerald-600">₹{orders.reduce((acc, o) => acc + (Number(o.total) || 0), 0).toFixed(0)}</span>
+              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded">Live Gross</span>
             </div>
           </div>
         </div>
@@ -332,14 +450,14 @@ export const PharmacyPartnerApp = () => {
 
       {/* ── WORKFLOW TABS ─────────────────────────────────────────────────── */}
       <div className="max-w-7xl mx-auto px-4 pt-6">
-        <div className="flex rounded-2xl bg-slate-900 p-1.5 border border-slate-800 overflow-x-auto no-scrollbar gap-1">
+        <div className="flex rounded-2xl bg-white p-1.5 border border-slate-200 shadow-sm overflow-x-auto no-scrollbar gap-1.5">
           <button
             onClick={() => setActiveTab('incoming')}
             className={cn(
               "flex-1 py-2.5 px-4 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer",
               activeTab === 'incoming' 
-                ? "bg-amber-500 text-slate-950 shadow-md" 
-                : "text-slate-400 hover:text-white"
+                ? "bg-amber-500 text-white shadow-sm" 
+                : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
             )}
           >
             <Radio size={14} className={incomingOrders.length ? "animate-pulse" : ""} />
@@ -351,8 +469,8 @@ export const PharmacyPartnerApp = () => {
             className={cn(
               "flex-1 py-2.5 px-4 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer",
               activeTab === 'packing' 
-                ? "bg-blue-600 text-white shadow-md" 
-                : "text-slate-400 hover:text-white"
+                ? "bg-blue-600 text-white shadow-sm" 
+                : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
             )}
           >
             <Package size={14} />
@@ -364,8 +482,8 @@ export const PharmacyPartnerApp = () => {
             className={cn(
               "flex-1 py-2.5 px-4 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer",
               activeTab === 'ready' 
-                ? "bg-purple-600 text-white shadow-md" 
-                : "text-slate-400 hover:text-white"
+                ? "bg-purple-600 text-white shadow-sm" 
+                : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
             )}
           >
             <Send size={14} />
@@ -377,8 +495,8 @@ export const PharmacyPartnerApp = () => {
             className={cn(
               "flex-1 py-2.5 px-4 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer",
               activeTab === 'completed' 
-                ? "bg-emerald-600 text-white shadow-md" 
-                : "text-slate-400 hover:text-white"
+                ? "bg-emerald-600 text-white shadow-sm" 
+                : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
             )}
           >
             <CheckCircle2 size={14} />
@@ -394,19 +512,19 @@ export const PharmacyPartnerApp = () => {
         {activeTab === 'incoming' && (
           <div className="space-y-4">
             {incomingOrders.length === 0 ? (
-              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-12 text-center space-y-3">
-                <div className="w-16 h-16 rounded-full bg-slate-800 text-slate-500 mx-auto flex items-center justify-center">
+              <div className="bg-white border border-slate-200 rounded-3xl p-12 text-center space-y-3 shadow-sm">
+                <div className="w-16 h-16 rounded-full bg-slate-100 text-slate-400 mx-auto flex items-center justify-center">
                   <Radio size={28} className="animate-pulse" />
                 </div>
-                <h4 className="text-base font-extrabold text-white">Listening for live incoming prescription requests...</h4>
-                <p className="text-xs text-slate-400 max-w-md mx-auto">
-                  When customers in your radius upload prescriptions or place orders, they will appear here instantly with audio alert.
+                <h4 className="text-base font-extrabold text-slate-900">Listening for live incoming prescription requests...</h4>
+                <p className="text-xs text-slate-500 max-w-md mx-auto">
+                  When customers in your radius upload prescriptions or place emergency medicine orders, they will appear here instantly with audio alert.
                 </p>
                 <Button
                   onClick={handleSimulateIncomingOrder}
                   variant="outline"
                   size="sm"
-                  className="mt-2 border-slate-700 text-emerald-400 hover:bg-slate-800 cursor-pointer text-xs"
+                  className="mt-2 border-emerald-300 text-emerald-700 hover:bg-emerald-50 cursor-pointer text-xs"
                 >
                   <Zap size={14} className="mr-1" /> Click to Test Incoming Ring
                 </Button>
@@ -416,46 +534,124 @@ export const PharmacyPartnerApp = () => {
                 {incomingOrders.map(order => (
                   <div
                     key={order.id}
-                    className="bg-slate-900 border-2 border-amber-500/40 rounded-3xl p-5 shadow-xl space-y-4 relative overflow-hidden"
+                    className="bg-white border-2 border-amber-300 rounded-3xl p-5 shadow-md hover:shadow-lg transition-all space-y-4 relative overflow-hidden"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping" />
-                        <span className="text-xs font-black uppercase tracking-wider text-amber-400">
+                        <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping" />
+                        <span className="text-xs font-black uppercase tracking-wider text-amber-700">
                           {order.isUrgent ? "🚨 EXPRESS 10-MIN EMERGENCY ORDER" : "Standard Prescription Order"}
                         </span>
                       </div>
-                      <span className="text-xs font-mono font-bold text-slate-400">ID: {order.id}</span>
+                      <span className="text-xs font-mono font-bold text-slate-500">ID: {order.id}</span>
                     </div>
 
                     <div>
-                      <h4 className="text-base font-extrabold text-white">
+                      <h4 className="text-base font-extrabold text-slate-900">
                         {order.customer_name || 'Verified Patient Order'}
                       </h4>
-                      <p className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
-                        <MapPin size={13} className="text-rose-400 flex-shrink-0" />
+                      <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
+                        <MapPin size={13} className="text-rose-500 flex-shrink-0" />
                         <span className="truncate">{order.delivery_address || 'Customer Neighborhood'}</span>
                       </p>
                     </div>
 
-                    {/* Prescribed Items list */}
-                    <div className="p-3 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-1.5 text-xs">
-                      <span className="text-[10px] font-black uppercase text-slate-400 block mb-1">
-                        Prescription Medicines to Dispense ({order.items?.length || 0}):
-                      </span>
+                    {/* Interactive Prescribed Items Checklist & Price Editing */}
+                    <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2 text-xs text-slate-700">
+                      <div className="flex items-center justify-between pb-1.5 border-b border-slate-200">
+                        <span className="text-[10px] font-black uppercase text-slate-500">
+                          Pharmacy Inventory Checklist ({order.items?.length || order.medicines?.length || 0} items)
+                        </span>
+                        <span className="text-[10px] font-black uppercase text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                          {(order.items || order.medicines || []).filter(i => i.available !== false).length} Available
+                        </span>
+                      </div>
+
                       {(order.items || order.medicines || []).map((it, idx) => (
-                        <div key={idx} className="flex items-center justify-between font-medium">
-                          <span className="text-slate-200">• {it.name} <strong className="text-slate-400">x{it.quantity || 1}</strong></span>
-                          <span className="text-emerald-400 font-bold">₹{it.price}</span>
+                        <div key={idx} className="p-2.5 rounded-xl bg-white border border-slate-200 space-y-1.5 shadow-xs">
+                          <div className="flex items-center justify-between gap-2">
+                            <label className="flex items-center gap-2 cursor-pointer flex-1">
+                              <input
+                                type="checkbox"
+                                checked={it.available !== false}
+                                onChange={() => handleToggleItemAvailability(order.id, idx)}
+                                className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 accent-emerald-600 cursor-pointer"
+                              />
+                              <span className={cn(
+                                "font-extrabold text-xs transition-colors",
+                                it.available !== false ? "text-slate-900" : "text-rose-600 line-through"
+                              )}>
+                                {it.name}
+                              </span>
+                            </label>
+
+                            <span className={cn(
+                              "text-[9px] font-black uppercase px-2 py-0.5 rounded",
+                              it.available !== false 
+                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200" 
+                                : "bg-rose-50 text-rose-700 border border-rose-200"
+                            )}>
+                              {it.available !== false ? "✓ In Stock" : "✗ Out of Stock"}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-between pl-6 text-[11px] text-slate-500">
+                            <div className="flex items-center gap-2">
+                              <span>Qty: <strong>x{it.quantity || 1}</strong></span>
+                              <span className="text-slate-300">|</span>
+                              <div className="flex items-center gap-1">
+                                <span className="font-bold text-slate-700">Price: ₹</span>
+                                <input
+                                  type="number"
+                                  value={it.price}
+                                  onChange={(e) => handleUpdateItemPrice(order.id, idx, e.target.value)}
+                                  disabled={it.available === false}
+                                  className="w-16 px-1.5 py-0.5 text-xs font-black bg-slate-50 border border-slate-300 rounded text-slate-900 text-right focus:bg-white focus:ring-1 focus:ring-emerald-500"
+                                />
+                              </div>
+                            </div>
+
+                            <span className="font-black text-slate-900">
+                              ₹{it.available !== false 
+                                ? (Number(it.price || 0) * (Number(it.quantity) || 1)).toFixed(2) 
+                                : (it.substitute && it.substitutePrice ? Number(it.substitutePrice).toFixed(2) : '0.00')}
+                            </span>
+                          </div>
+
+                          {it.available === false && (
+                            <div className="mt-1 pt-1.5 border-t border-slate-100 flex items-center justify-between pl-6 text-[10px]">
+                              <span className="text-rose-600 font-bold">Unchecked (Marked Unavailable)</span>
+                              {it.substitute ? (
+                                <span className="text-emerald-700 font-black bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                                  Substitute: {it.substitute} (₹{it.substitutePrice})
+                                </span>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const sub = prompt("Enter substitute / generic brand name:", `${it.name.split(' ')[0]} Generic Equivalent`);
+                                    if (sub) {
+                                      const defaultPrice = Math.round((Number(it.price) || 100) * 0.75);
+                                      const subPrice = prompt("Enter unit price (₹):", String(defaultPrice));
+                                      handleAddSubstitute(order.id, idx, sub, subPrice || defaultPrice);
+                                    }
+                                  }}
+                                  className="text-blue-600 font-black hover:underline cursor-pointer"
+                                >
+                                  + Suggest Generic Substitute
+                                </button>
+                              )}
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
 
                     {/* Actions */}
-                    <div className="flex items-center justify-between pt-2 border-t border-slate-800">
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-100">
                       <div>
                         <span className="text-[10px] text-slate-400 uppercase font-bold block">Bill Total:</span>
-                        <span className="text-lg font-black text-white">₹{Number(order.total || 250).toFixed(2)}</span>
+                        <span className="text-lg font-black text-slate-900">₹{Number(order.total || 250).toFixed(2)}</span>
                       </div>
 
                       <div className="flex items-center gap-2">
@@ -463,7 +659,7 @@ export const PharmacyPartnerApp = () => {
                           onClick={() => setSelectedOrder(order)}
                           variant="ghost"
                           size="sm"
-                          className="text-xs text-slate-400 hover:text-white"
+                          className="text-xs text-slate-600 hover:text-slate-900 hover:bg-slate-100"
                         >
                           <Eye size={14} className="mr-1" /> View Slip
                         </Button>
@@ -471,7 +667,7 @@ export const PharmacyPartnerApp = () => {
                           onClick={() => handleAcceptOrder(order)}
                           variant="primary"
                           size="sm"
-                          className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs shadow-md shadow-emerald-600/30 cursor-pointer"
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md shadow-emerald-600/20 cursor-pointer"
                         >
                           <Check size={14} className="mr-1" /> Accept & Pack
                         </Button>
@@ -488,42 +684,42 @@ export const PharmacyPartnerApp = () => {
         {activeTab === 'packing' && (
           <div className="space-y-4">
             {packingOrders.length === 0 ? (
-              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-10 text-center text-slate-400 text-xs">
+              <div className="bg-white border border-slate-200 rounded-3xl p-10 text-center text-slate-500 text-xs shadow-sm">
                 No orders currently in packing stage. Accept an incoming order to begin packing.
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {packingOrders.map(order => (
-                  <div key={order.id} className="bg-slate-900 border border-blue-500/30 rounded-3xl p-5 space-y-4 shadow-lg">
+                  <div key={order.id} className="bg-white border-2 border-blue-200 rounded-3xl p-5 space-y-4 shadow-md">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-black uppercase text-blue-400 flex items-center gap-1.5">
+                      <span className="text-xs font-black uppercase text-blue-700 flex items-center gap-1.5">
                         <Package size={14} /> Packing in Progress
                       </span>
-                      <span className="text-xs font-mono text-slate-400">{order.id}</span>
+                      <span className="text-xs font-mono text-slate-500">{order.id}</span>
                     </div>
 
                     <div>
-                      <h4 className="text-base font-extrabold text-white">{order.customer_name || 'Patient Order'}</h4>
-                      <p className="text-xs text-slate-400">Doctor: {order.doctorName || 'Registered Physician'}</p>
+                      <h4 className="text-base font-extrabold text-slate-900">{order.customer_name || 'Patient Order'}</h4>
+                      <p className="text-xs text-slate-500">Doctor: {order.doctorName || 'Registered Physician'}</p>
                     </div>
 
-                    <div className="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-1">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase">Medicines being packed:</span>
+                    <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-1">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase">Medicines being packed:</span>
                       {(order.items || []).map((m, i) => (
-                        <p key={i} className="text-xs text-slate-300 flex justify-between">
+                        <p key={i} className="text-xs text-slate-700 flex justify-between">
                           <span>✔ {m.name}</span>
-                          <span className="text-slate-400">x{m.quantity || 1}</span>
+                          <span className="text-slate-500 font-bold">x{m.quantity || 1}</span>
                         </p>
                       ))}
                     </div>
 
-                    <div className="flex items-center justify-between pt-2 border-t border-slate-800">
-                      <span className="text-xs text-slate-400">Cold Chain Thermal Pack Ready</span>
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                      <span className="text-xs text-slate-500 font-medium">Cold Chain Thermal Pack Ready</span>
                       <Button
                         onClick={() => handleMarkPacked(order)}
                         variant="primary"
                         size="sm"
-                        className="bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs shadow-md shadow-blue-600/30 cursor-pointer"
+                        className="bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs shadow-md shadow-blue-600/20 cursor-pointer"
                       >
                         <CheckCircle2 size={14} className="mr-1" /> Mark Packed & Call Rider
                       </Button>
@@ -539,32 +735,34 @@ export const PharmacyPartnerApp = () => {
         {activeTab === 'ready' && (
           <div className="space-y-4">
             {readyOrders.length === 0 ? (
-              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-10 text-center text-slate-400 text-xs">
+              <div className="bg-white border border-slate-200 rounded-3xl p-10 text-center text-slate-500 text-xs shadow-sm">
                 No orders waiting for pickup right now.
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {readyOrders.map(order => (
-                  <div key={order.id} className="bg-slate-900 border border-purple-500/30 rounded-3xl p-5 space-y-4 shadow-lg">
+                  <div key={order.id} className="bg-white border-2 border-purple-200 rounded-3xl p-5 space-y-4 shadow-md">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-black uppercase text-purple-400 flex items-center gap-1.5">
+                      <span className="text-xs font-black uppercase text-purple-700 flex items-center gap-1.5">
                         <Send size={14} /> Assigned to Rider
                       </span>
-                      <span className="text-xs font-mono font-bold text-amber-300">OTP: {order.otp || '5821'}</span>
+                      <span className="text-xs font-mono font-black text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
+                        OTP: {order.otp || '5821'}
+                      </span>
                     </div>
 
-                    <div className="flex items-center justify-between p-3 rounded-2xl bg-purple-950/30 border border-purple-800/40">
+                    <div className="flex items-center justify-between p-3 rounded-2xl bg-purple-50 border border-purple-200">
                       <div>
-                        <span className="text-[10px] text-purple-300 uppercase font-black">Dedicated Delivery Partner:</span>
-                        <h5 className="font-extrabold text-sm text-white">{order.rider?.name || 'Vikram Rathore'}</h5>
-                        <p className="text-[11px] text-purple-200">{order.rider?.vehicle || 'Ather 450X EV'}</p>
+                        <span className="text-[10px] text-purple-800 uppercase font-black">Dedicated Delivery Partner:</span>
+                        <h5 className="font-extrabold text-sm text-purple-950">{order.rider?.name || 'Vikram Rathore'}</h5>
+                        <p className="text-[11px] text-purple-700 font-medium">{order.rider?.vehicle || 'Ather 450X EV'}</p>
                       </div>
-                      <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-lg">
+                      <span className="text-xs font-bold text-emerald-800 bg-emerald-100 border border-emerald-300 px-2.5 py-1 rounded-lg">
                         Arriving in 2m
                       </span>
                     </div>
 
-                    <p className="text-xs text-slate-400">
+                    <p className="text-xs text-slate-500 leading-relaxed">
                       Bag sealed with tamper-evident security barcode. Handover to {order.rider?.name || 'Vikram'} when he reaches pharmacy counter.
                     </p>
                   </div>
@@ -578,19 +776,19 @@ export const PharmacyPartnerApp = () => {
         {activeTab === 'completed' && (
           <div className="space-y-3">
             {completedOrders.length === 0 ? (
-              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-10 text-center text-slate-400 text-xs">
+              <div className="bg-white border border-slate-200 rounded-3xl p-10 text-center text-slate-500 text-xs shadow-sm">
                 No completed orders yet today.
               </div>
             ) : (
               completedOrders.map(order => (
-                <div key={order.id} className="p-4 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-between text-xs">
+                <div key={order.id} className="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm flex items-center justify-between text-xs">
                   <div>
-                    <span className="font-bold text-white block">{order.id} • {order.customer_name || 'Customer'}</span>
-                    <span className="text-slate-400">{order.items?.length || 1} items delivered safely</span>
+                    <span className="font-bold text-slate-900 block">{order.id} • {order.customer_name || 'Customer'}</span>
+                    <span className="text-slate-500">{order.items?.length || 1} items delivered safely</span>
                   </div>
                   <div className="text-right">
-                    <span className="font-black text-emerald-400 block">₹{Number(order.total || 0).toFixed(2)}</span>
-                    <span className="text-[10px] text-emerald-500 font-bold">Delivered</span>
+                    <span className="font-black text-emerald-700 block">₹{Number(order.total || 0).toFixed(2)}</span>
+                    <span className="text-[10px] text-emerald-800 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">Delivered</span>
                   </div>
                 </div>
               ))
@@ -603,42 +801,86 @@ export const PharmacyPartnerApp = () => {
       {/* ── PRESCRIPTION PREVIEW MODAL ────────────────────────────────────── */}
       <AnimatePresence>
         {selectedOrder && (
-          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0, scale: 0.94 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.94 }}
-              className="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-lg w-full text-slate-100 space-y-4 shadow-2xl"
+              className="bg-white border border-slate-200 rounded-3xl p-6 max-w-lg w-full text-slate-900 space-y-4 shadow-2xl"
             >
-              <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <div className="flex items-center gap-2">
-                  <FileText size={18} className="text-emerald-400" />
-                  <h4 className="font-black text-sm">Prescription Verification Inspection</h4>
+                  <FileText size={18} className="text-emerald-600" />
+                  <h4 className="font-black text-sm text-slate-900">Prescription Verification Inspection</h4>
                 </div>
-                <button onClick={() => setSelectedOrder(null)} className="text-slate-400 hover:text-white p-1">
+                <button onClick={() => setSelectedOrder(null)} className="text-slate-400 hover:text-slate-700 p-1 rounded-lg">
                   <X size={18} />
                 </button>
               </div>
 
-              <div className="space-y-2 text-xs">
-                <p><strong>Order ID:</strong> {selectedOrder.id}</p>
-                <p><strong>Doctor:</strong> {selectedOrder.doctorName || 'Dr. Rajesh Sharma, MD'}</p>
-                <p><strong>Clinic:</strong> {selectedOrder.clinicHospital || 'City Healthcare Center'}</p>
-                <p><strong>Customer:</strong> {selectedOrder.customer_name || 'Verified Patient'}</p>
+              <div className="space-y-2 text-xs text-slate-600">
+                <p><strong className="text-slate-800">Order ID:</strong> {selectedOrder.id}</p>
+                <p><strong className="text-slate-800">Doctor:</strong> {selectedOrder.doctorName || 'Dr. Rajesh Sharma, MD'}</p>
+                <p><strong className="text-slate-800">Clinic:</strong> {selectedOrder.clinicHospital || 'City Healthcare Center'}</p>
+                <p><strong className="text-slate-800">Customer:</strong> {selectedOrder.customer_name || 'Verified Patient'}</p>
               </div>
 
-              <div className="p-3 bg-slate-950 rounded-2xl border border-slate-800 space-y-1 text-xs">
-                <span className="font-bold text-slate-400 uppercase text-[10px]">Identified Prescription Medicines:</span>
-                {(selectedOrder.items || []).map((it, idx) => (
-                  <p key={idx} className="flex justify-between text-slate-200">
-                    <span>{it.name}</span>
-                    <span className="font-bold">x{it.quantity || 1}</span>
-                  </p>
+              <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-2 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-slate-700 uppercase text-[10px]">Verify Stock & Dispense Price:</span>
+                  <span className="text-[10px] font-black uppercase text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                    {(selectedOrder.items || selectedOrder.medicines || []).filter(i => i.available !== false).length} / {(selectedOrder.items || selectedOrder.medicines || []).length} Available
+                  </span>
+                </div>
+
+                {(selectedOrder.items || selectedOrder.medicines || []).map((it, idx) => (
+                  <div key={idx} className="p-2 bg-white rounded-xl border border-slate-200 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={it.available !== false}
+                          onChange={() => handleToggleItemAvailability(selectedOrder.id, idx)}
+                          className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 accent-emerald-600 cursor-pointer"
+                        />
+                        <span className={cn("font-bold text-xs", it.available !== false ? "text-slate-900" : "text-rose-600 line-through")}>
+                          {it.name}
+                        </span>
+                      </label>
+                      <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded", it.available !== false ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700")}>
+                        {it.available !== false ? "In Stock" : "Out of Stock"}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between pl-6 text-[11px] text-slate-500">
+                      <div className="flex items-center gap-2">
+                        <span>Qty: <strong>x{it.quantity || 1}</strong></span>
+                        <div className="flex items-center gap-1">
+                          <span>₹</span>
+                          <input
+                            type="number"
+                            value={it.price}
+                            onChange={(e) => handleUpdateItemPrice(selectedOrder.id, idx, e.target.value)}
+                            disabled={it.available === false}
+                            className="w-14 px-1 py-0.5 text-xs font-black bg-slate-50 border border-slate-300 rounded text-slate-900 text-right"
+                          />
+                        </div>
+                      </div>
+                      <span className="font-black text-slate-900">
+                        ₹{it.available !== false ? (Number(it.price || 0) * (Number(it.quantity) || 1)).toFixed(2) : '0.00'}
+                      </span>
+                    </div>
+                  </div>
                 ))}
+
+                <div className="flex items-center justify-between pt-2 border-t border-slate-200 font-black">
+                  <span className="text-slate-600">Calculated Order Total:</span>
+                  <span className="text-sm text-slate-900">₹{Number(selectedOrder.total || 0).toFixed(2)}</span>
+                </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2">
-                <Button onClick={() => setSelectedOrder(null)} variant="outline" size="sm" className="text-xs border-slate-700 text-slate-300">
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                <Button onClick={() => setSelectedOrder(null)} variant="outline" size="sm" className="text-xs border-slate-200 text-slate-700 hover:bg-slate-50">
                   Close
                 </Button>
                 <Button
@@ -648,9 +890,9 @@ export const PharmacyPartnerApp = () => {
                   }}
                   variant="primary"
                   size="sm"
-                  className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black shadow-md shadow-emerald-600/20"
                 >
-                  Confirm & Start Packing
+                  Confirm & Start Packing (₹{Number(selectedOrder.total || 0).toFixed(2)})
                 </Button>
               </div>
             </motion.div>

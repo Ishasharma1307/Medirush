@@ -3,8 +3,9 @@ import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { SymptomChatbot } from '../components/SymptomChatbot';
 import { SymptomResultCard } from '../components/SymptomResultCard';
 import { analyzeSymptoms } from '../utils/symptomRules';
-import { ArrowLeft, Stethoscope } from 'lucide-react';
+import { ArrowLeft, Stethoscope, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { AISymptomRemedyModal } from '../components/AISymptomRemedyModal';
 
 export const SymptomChecker = () => {
   const navigate = useNavigate();
@@ -14,6 +15,7 @@ export const SymptomChecker = () => {
 
   const [analysisResult, setAnalysisResult] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isAiRemedyOpen, setIsAiRemedyOpen] = useState(false);
 
   const handleChatComplete = async (answers) => {
     setIsAnalyzing(true);
@@ -67,6 +69,15 @@ export const SymptomChecker = () => {
             <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest text-primary/70">MediRush AI Triage</p>
           </div>
         </div>
+
+        {/* AI Home Remedies Model Quick Launcher */}
+        <button
+          onClick={() => setIsAiRemedyOpen(true)}
+          className="ml-auto px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black text-xs shadow-md shadow-emerald-600/20 flex items-center gap-1.5 cursor-pointer transition-all active:scale-95"
+        >
+          <Sparkles size={14} className="text-amber-300" />
+          <span>AI Desi Remedies Model</span>
+        </button>
       </motion.div>
 
       {/* Main Content Area */}
@@ -117,6 +128,12 @@ export const SymptomChecker = () => {
           )}
         </AnimatePresence>
       </div>
+
+      {/* ── AI SYMPTOM & HOME REMEDIES MODEL MODAL ── */}
+      <AISymptomRemedyModal
+        isOpen={isAiRemedyOpen}
+        onClose={() => setIsAiRemedyOpen(false)}
+      />
     </div>
   );
 };

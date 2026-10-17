@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { mockHomeRemedies } from '../data/mockHomeRemedies';
 import { RemedySymptomChecker } from '../components/RemedySymptomChecker';
+import { AISymptomRemedyModal } from '../components/AISymptomRemedyModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../utils/cn';
 
@@ -28,6 +29,7 @@ export const HomeRemedies = () => {
   
   // Page mode: 'browse' (Search/Filter Remedies) vs 'checker' (Interactive Symptom Diagnostics)
   const [activeTab, setActiveTab] = useState('browse');
+  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [remedies, setRemedies] = useState([]);
@@ -229,11 +231,11 @@ export const HomeRemedies = () => {
           </p>
 
           {/* Page Mode Switcher Tabs */}
-          <div className="pt-4 flex justify-center gap-2 max-w-md mx-auto">
+          <div className="pt-4 flex flex-wrap justify-center gap-2 max-w-xl mx-auto">
             <button
               onClick={() => setActiveTab('browse')}
               className={cn(
-                "flex-1 py-3 px-4 rounded-2xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-2 border shadow-sm",
+                "py-2.5 px-4 rounded-2xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-2 border shadow-sm",
                 activeTab === 'browse'
                   ? "bg-white text-emerald-950 border-white shadow-lg"
                   : "bg-white/10 text-white border-white/20 hover:bg-white/20"
@@ -244,13 +246,19 @@ export const HomeRemedies = () => {
             <button
               onClick={() => setActiveTab('checker')}
               className={cn(
-                "flex-1 py-3 px-4 rounded-2xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-2 border shadow-sm",
+                "py-2.5 px-4 rounded-2xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-2 border shadow-sm",
                 activeTab === 'checker'
                   ? "bg-white text-emerald-950 border-white shadow-lg"
                   : "bg-white/10 text-white border-white/20 hover:bg-white/20"
               )}
             >
-              <Sparkles size={16} className="text-yellow-300" /> AI Symptom Checker
+              <Sparkles size={16} className="text-yellow-300" /> Interactive Triage
+            </button>
+            <button
+              onClick={() => setIsAiModalOpen(true)}
+              className="py-2.5 px-4 rounded-2xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-2 border shadow-sm bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 border-amber-300 hover:from-amber-300 hover:to-amber-400"
+            >
+              <Sparkles size={16} /> 🤖 AI Desi Nuskhe Model
             </button>
           </div>
 
@@ -500,6 +508,13 @@ export const HomeRemedies = () => {
         )}
 
       </div>
+
+      {/* ── AI SYMPTOM & HOME REMEDY MODEL MODAL ── */}
+      <AISymptomRemedyModal
+        isOpen={isAiModalOpen}
+        onClose={() => setIsAiModalOpen(false)}
+      />
+
     </div>
   );
 };

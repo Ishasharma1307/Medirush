@@ -128,6 +128,30 @@ export const AuthProvider = ({ children }) => {
     setPharmacyProfile(demoPharm);
   };
 
+  const loginAsDemoRider = () => {
+    const demoRiderUser = { 
+      id: 'demo-rider-123', 
+      email: 'rider@medirush.app', 
+      phone: '+919845019283',
+      user_metadata: { name: 'Vikram Rathore (Rapid Rider)', role: 'rider' } 
+    };
+    const demoProf = { 
+      id: 'demo-rider-123', 
+      name: 'Vikram Rathore', 
+      email: 'rider@medirush.app', 
+      phone: '+919845019283',
+      role: 'rider', 
+      vehicle: 'Ather 450X EV • DL-08-EV-4912',
+      rating: '4.9 ★',
+      verified: true 
+    };
+
+    localStorage.setItem('demo_user', JSON.stringify(demoRiderUser));
+    setUser(demoRiderUser);
+    setUserProfile(demoProf);
+    setPharmacyProfile(null);
+  };
+
   const logout = async () => {
     localStorage.removeItem('demo_user');
     await supabase.auth.signOut();
@@ -295,6 +319,7 @@ export const AuthProvider = ({ children }) => {
       loading, 
       loginAsDemo,
       loginAsDemoPharmacy,
+      loginAsDemoRider,
       logout,
       logoutAllDevices,
       loginWithGoogle,
